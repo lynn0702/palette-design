@@ -470,7 +470,11 @@
     grid-template-columns: repeat(auto-fill, minmax(min(100%, 7.2rem), 1fr));
     gap: 0.45rem;
   }
-  .chips--numbers { grid-template-columns: repeat(auto-fill, minmax(2.75rem, 1fr)); margin-block-start: var(--space-s); transition: opacity 150ms; }
+  /* Eight dice split evenly: 2 rows of 4 on phones, 1 row of 8 when it fits. */
+  .chips--numbers { grid-template-columns: repeat(4, minmax(0, 1fr)); margin-block-start: var(--space-s); transition: opacity 150ms; }
+  @media (width >= 30rem) {
+    .chips--numbers { grid-template-columns: repeat(8, minmax(0, 1fr)); }
+  }
 
   .chip {
     display: flex;
@@ -541,7 +545,13 @@
   }
   .segmented input:checked + label { background: var(--gold); color: var(--obsidian); }
 
-  .form-actions { margin-block-start: calc(-1 * var(--space-xs)); }
+  .form-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-xs);
+    margin-block-start: calc(-1 * var(--space-xs));
+  }
+  .form-actions .button { padding-inline: 0.9em; }
 
   /* Pitch card */
   .pitch-card {
@@ -661,21 +671,8 @@
   .card h4 { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; font-size: var(--step-1); }
   .mode { transition: background-color 150ms, box-shadow 150ms; }
 
-  .dose__card { border-block-start: 0.5rem solid var(--dial); }
-  .dose__card h3 { display: flex; align-items: center; gap: 0.6rem; text-transform: uppercase; }
-  .dose__letter {
-    display: grid;
-    place-items: center;
-    inline-size: 2.2rem;
-    aspect-ratio: 1;
-    border-radius: 0.4rem;
-    background: var(--dial);
-    color: #fff;
-  }
-  .dose__card .tag { justify-self: start; }
-
   .callout {
-    padding: var(--space-m) var(--space-l);
+    padding: var(--space-m) clamp(var(--space-m), 4vw, var(--space-l));
     border-radius: var(--radius);
     background: var(--surface);
     border-inline-start: 0.4rem solid var(--accent, var(--gold));

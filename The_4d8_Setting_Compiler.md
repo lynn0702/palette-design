@@ -19,10 +19,10 @@ P1–2: SYSTEM-NEUTRAL ENGINE | P3–4: CORTEX PRIME HARNESS
 
 Roll `4d8` once (no rerolls). Slot 3 into **Palette**, **Setting**, **Tone** (*512 pitches*); drop the 4th as **Undertow**.
 
-> **Matched Pair → Deep Note**
-> Double down on that Dial's extreme; zero dilution.
+> **Matched Pair → Double Down**
+> Push that Dial to its extreme.
 
-> **4-of-a-Kind** (`N-N-N-N`) **→ Pure Archetype**
+> **4-of-a-Kind → Pure Archetype**
 > Skip Undertow; run row straight at max volume.
 
 ### THE UNDERTOW · 4TH DIE
@@ -34,7 +34,7 @@ Roll `4d8` once (no rerolls). Slot 3 into **Palette**, **Setting**, **Tone** (*5
 ### The Master Dial Matrix
 *ROLL 4d8 · ASSIGN IN ANY ORDER*
 
-| d8 | 1: PALETTE (Texture) | 2: SETTING (Space) | 3: TONE (Drive) | Pure Archetype (N-N-N-N) |
+| d8 | 1: PALETTE (Texture) | 2: SETTING (Space) | 3: TONE (Drive) | Pure Archetype (4 of a kind) |
 | :-: | :-- | :-- | :-- | :-- |
 | 1 | **Prismatic:** Reality-bleed, shifting hues. | **Threshold:** Liminal hubs, portals, crossroads. | **Weird:** Uncanny mystery, impossible rules. | **Liminal Surrealism** (*Control, Piranesi*) |
 | 2 | **Neon:** Rain-slick glow, overload. | **Future:** Wired sprawl, near-out tech. | **Punk:** Asymmetric revolt vs. system. | **Classic Cyberpunk** (*Edgerunners, Akira*) |
@@ -49,25 +49,9 @@ Roll `4d8` once (no rerolls). Slot 3 into **Palette**, **Setting**, **Tone** (*5
 
 ---
 
-## PAGE 2 — 02 · WORLD CHEMISTRY & ENTANGLEMENT · *SESSION ZERO*
+## PAGE 2 — 02 · ENTANGLEMENT · *SESSION ZERO*
 
-Pitch paints the cover; **chemistry** drives play. Regulate four **DOSE** needs—**Chemically** *(visceral)* or **Mystically** *(divine)*:
-
-| Card | Axis | Covers |
-| :-- | :-- | :-- |
-| **D · DOPAMINE** | Transactional | Reward, ambition, scrip, leverage. |
-| **O · OXYTOCIN** | Relational | Trust, kinship, belonging, safe harbor. |
-| **S · SEROTONIN** | Positional | Dignity, pride, *community credit*. |
-| **E · ENDORPHINS** | Physical | Thrill, hunger, pleasure, relief. |
-
-### Step 1: Flood & Starve
-
-1. **Flood** *(Palette + Setting)*: 1–2 cheap, abundant DOSE needs *(Neon Future: Endorphins, Dopamine)*.
-2. **Starve** *(Tone)*: Rationed or corrupted DOSE need *(Punk: Serotonin, Oxytocin)*.
-
-> **CORE LOOP:** Hustle the *Flood* to survive; risk everything for the *Starve*.
-
-### Step 2: Session Zero "Spaghetti Knot"
+### Session Zero "Spaghetti Knot"
 
 Center your Pitch + Undertow on a blank sheet; run 3 passes. **Pass 1:** Place a **Rectangle (PC Name)** on the edge; answer your 3 Dial prompts:
 
@@ -89,9 +73,9 @@ Center your Pitch + Undertow on a blank sheet; run 3 passes. **Pass 1:** Place a
 
 #### Pass 3: Ignition Triangle
 
-GM drops a central **Triangle (Situation)** tied to the *Starve*, wired to 2+ nodes. Start *in medias res*.
+GM drops a central **Triangle (Situation)** where the *Undertow* bites, wired to 2+ nodes. Start *in medias res*.
 
-**SPAGHETTI-KNOT MAP SCHEMATIC** *(diagram)*: PC A, PC B, PC C linked by **CREDIT** wires; a shared **ANCHOR** ◆ between PC B and PC C; a central **STARVE** ▲ wired to PC A and the Anchor.
+**SPAGHETTI-KNOT MAP SCHEMATIC** *(diagram)*: PC A, PC B, PC C linked by **CREDIT** wires; a shared **ANCHOR** ◆ between PC B and PC C; a central **UNDERTOW** ▲ wired to PC A and the Anchor.
 Legend: **PC Name** ▭ · **Anchor** ◆ · **Ignition** ▲
 
 *Footer: THE 4D8 SETTING COMPILER · BY LYNN JONES — SYSTEM-NEUTRAL ENGINE*

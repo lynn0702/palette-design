@@ -225,7 +225,6 @@ page = f"""<!DOCTYPE html>
           <li><a href="#compile">Compile</a></li>
           <li><a href="#procedure">Procedure</a></li>
           <li><a href="#matrix">Matrix</a></li>
-          <li><a href="#chemistry">Chemistry</a></li>
           <li><a href="#session-zero">Session Zero</a></li>
           <li><a href="#cortex">Cortex</a></li>
           <li><a href="#dial-compiler">Dial Compiler</a></li>
@@ -307,7 +306,7 @@ page = f"""<!DOCTYPE html>
               </div>
             </fieldset>
 
-            <p class="form-actions"><button type="submit" class="button button--ghost" data-requires-js hidden>Save link to this pitch</button> <button type="reset" class="button button--ghost">Clear dials</button></p>
+            <p class="form-actions"><button type="submit" class="button button--ghost" data-requires-js hidden>Link to pitch</button><button type="reset" class="button button--ghost">Clear dials</button></p>
           </form>
 
           <aside class="pitch-card" aria-labelledby="pitch-heading">
@@ -319,7 +318,7 @@ page = f"""<!DOCTYPE html>
             </h3>
             <p class="pitch-undertow"><span class="ph" data-ph="ud">No Undertow yet.</span><span class="reveal-wrap">Undertow: {undertow_groups()}</span></p>
             <p class="pitch-status" id="pitch-status" role="status">
-              <span class="status-msg" data-status="deep"><strong>Matched Pair {to("becomes")} Deep Note.</strong> Double down on that Dial's extreme; zero dilution.</span>
+              <span class="status-msg" data-status="deep"><strong>Matched Pair {to("becomes")} Double Down.</strong> Push that Dial to its extreme.</span>
               <span class="status-msg" data-status="archetype"><strong>4-of-a-Kind {to("becomes")} Pure Archetype.</strong> Skip the Undertow; run the row straight at max volume.</span>
             </p>
             <dl class="pitch-facts">
@@ -368,11 +367,11 @@ page = f"""<!DOCTYPE html>
 
         <div class="cards cards--2">
           <div class="callout callout--gold">
-            <h3>Matched Pair {to("becomes")} Deep Note</h3>
-            <p>Undertow lands on its own number? Double down on that Dial's extreme; zero dilution.</p>
+            <h3>Matched Pair {to("becomes")} Double Down</h3>
+            <p>Undertow lands on its own number? Push that Dial to its extreme.</p>
           </div>
           <div class="callout callout--vermilion">
-            <h3>4-of-a-Kind ({md("`N-N-N-N`")}) {to("becomes")} Pure Archetype</h3>
+            <h3>4-of-a-Kind {to("becomes")} Pure Archetype</h3>
             <p>Skip the Undertow; run that row straight at max volume.</p>
           </div>
         </div>
@@ -395,7 +394,7 @@ page = f"""<!DOCTYPE html>
                 <th scope="col">1 · Palette <span class="th-hint">Texture</span></th>
                 <th scope="col">2 · Setting <span class="th-hint">Space</span></th>
                 <th scope="col">3 · Tone <span class="th-hint">Drive</span></th>
-                <th scope="col">Pure Archetype <span class="th-hint">N-N-N-N</span></th>
+                <th scope="col">Pure Archetype <span class="th-hint">4 of a kind</span></th>
               </tr>
             </thead>
             <tbody>
@@ -406,35 +405,10 @@ page = f"""<!DOCTYPE html>
       </div>
     </section>
 
-    <section class="band band--alt" id="chemistry" aria-labelledby="chemistry-title">
+    <section class="band band--alt" id="session-zero" aria-labelledby="session-zero-title">
       <div class="wrap">
         <header class="section-head">
           <p class="section-head__num" aria-hidden="true">04</p>
-          <h2 id="chemistry-title">World chemistry</h2>
-          <p class="section-head__lede">Pitch paints the cover; <strong>chemistry</strong> drives play. Regulate four <strong>DOSE</strong> needs—<strong>Chemically</strong> <em>(visceral)</em> or <strong>Mystically</strong> <em>(divine)</em>.</p>
-        </header>
-        <ul class="cards cards--4 dose">
-          <li class="card dose__card" data-d="5"><h3><span class="dose__letter">D</span> Dopamine</h3><p class="tag">Transactional</p><p>Reward, ambition, scrip, leverage.</p></li>
-          <li class="card dose__card" data-d="2"><h3><span class="dose__letter">O</span> Oxytocin</h3><p class="tag">Relational</p><p>Trust, kinship, belonging, safe harbor.</p></li>
-          <li class="card dose__card" data-d="3"><h3><span class="dose__letter">S</span> Serotonin</h3><p class="tag">Positional</p><p>Dignity, pride, <em>community credit</em>.</p></li>
-          <li class="card dose__card" data-d="7"><h3><span class="dose__letter">E</span> Endorphins</h3><p class="tag">Physical</p><p>Thrill, hunger, pleasure, relief.</p></li>
-        </ul>
-
-        <article class="feature">
-          <h3>Step 1: Flood &amp; Starve</h3>
-          <ol class="feature__list">
-            <li><strong>Flood</strong> <em>(Palette + Setting)</em>: 1–2 cheap, abundant DOSE needs <em>(Neon Future: Endorphins, Dopamine)</em>.</li>
-            <li><strong>Starve</strong> <em>(Tone)</em>: Rationed or corrupted DOSE need <em>(Punk: Serotonin, Oxytocin)</em>.</li>
-          </ol>
-          <p class="core-loop"><strong>Core loop:</strong> Hustle the <em>Flood</em> to survive; risk everything for the <em>Starve</em>.</p>
-        </article>
-      </div>
-    </section>
-
-    <section class="band" id="session-zero" aria-labelledby="session-zero-title">
-      <div class="wrap">
-        <header class="section-head">
-          <p class="section-head__num" aria-hidden="true">05</p>
           <h2 id="session-zero-title">Session Zero “Spaghetti Knot”</h2>
           <p class="section-head__lede">Center your Pitch + Undertow on a blank sheet; run three passes.</p>
         </header>
@@ -462,13 +436,13 @@ page = f"""<!DOCTYPE html>
             </ul>
 
             <h3 class="subhead">Pass 3: Ignition triangle</h3>
-            <p>GM drops a central <strong>Triangle (Situation)</strong> tied to the <em>Starve</em>, wired to 2+ nodes. Start <em>in medias res</em>.</p>
+            <p>GM drops a central <strong>Triangle (Situation)</strong> where the <em>Undertow</em> bites, wired to 2+ nodes. Start <em>in medias res</em>.</p>
           </div>
 
           <figure class="knot-figure">
             <svg viewBox="0 0 320 260" role="img" aria-labelledby="knot-title knot-desc">
               <title id="knot-title">Spaghetti-knot map schematic</title>
-              <desc id="knot-desc">PC A, PC B and PC C are linked by Credit wires. A shared Anchor diamond sits between PC B and PC C. A central Starve triangle is wired to PC A and the Anchor.</desc>
+              <desc id="knot-desc">PC A, PC B and PC C are linked by Credit wires. A shared Anchor diamond sits between PC B and PC C. A central Undertow triangle is wired to PC A and the Anchor.</desc>
               <g class="wire wire--credit">
                 <line x1="60" y1="50" x2="260" y2="50"/>
                 <line x1="60" y1="50" x2="160" y2="215"/>
@@ -485,7 +459,7 @@ page = f"""<!DOCTYPE html>
               <g class="node node--pc"><rect x="222" y="34" width="76" height="32" rx="6"/><text x="260" y="55">PC B</text></g>
               <g class="node node--pc"><rect x="122" y="199" width="76" height="32" rx="6"/><text x="160" y="220">PC C</text></g>
               <g class="node node--anchor"><polygon points="240,113 262,135 240,157 218,135"/><text class="label" x="240" y="175">ANCHOR</text></g>
-              <g class="node node--ignite"><polygon points="150,98 176,142 124,142"/><text class="label" x="150" y="160">STARVE</text></g>
+              <g class="node node--ignite"><polygon points="150,98 176,142 124,142"/><text class="label" x="150" y="160">UNDERTOW</text></g>
               <text class="label label--credit" x="160" y="40">CREDIT</text>
             </svg>
             <figcaption>
@@ -501,7 +475,7 @@ page = f"""<!DOCTYPE html>
     <section class="band band--cortex" id="cortex" aria-labelledby="cortex-title">
       <div class="wrap">
         <header class="section-head">
-          <p class="section-head__num" aria-hidden="true">06</p>
+          <p class="section-head__num" aria-hidden="true">05</p>
           <h2 id="cortex-title">Opinionated Cortex harness</h2>
           <p class="section-head__lede">Compile any {md("`4d8`")} pitch into fast <strong>Cortex Prime</strong> on a clean 3-Prime-Set sheet.</p>
         </header>
@@ -567,7 +541,7 @@ page = f"""<!DOCTYPE html>
     <section class="band band--cortex-alt" id="dial-compiler" aria-labelledby="dial-compiler-title">
       <div class="wrap">
         <header class="section-head">
-          <p class="section-head__num" aria-hidden="true">07</p>
+          <p class="section-head__num" aria-hidden="true">06</p>
           <h2 id="dial-compiler-title">Cortex Dial Compiler</h2>
           <p class="section-head__lede">Match three Dials for <strong>Engine Mod</strong>, <strong>Prime Set 2</strong> and <strong>Prime Set 3</strong>. <strong>Undertow (4th die):</strong> gain 1 shared {md("`d8`")} Side Char / Special, OR apply its Engine Mod in contrast scenes.</p>
         </header>
