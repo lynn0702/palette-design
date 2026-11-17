@@ -33,7 +33,7 @@ PALETTE = [
     ("Neon", "Rain-slick glow, overload.", "Vice", "Burnout",
      "Highlights expire in 1 roll (`1 Chip` sustains). **Lean In:** roll own Fallout, then step up."),
     ("Chrome", "Mirrored sheen, sterile polish.", "Pedigree", "Spec Sheet",
-     "Two `d8` **Signature Assets** (*Gear Limit:* shut down for frame â†’ `+1 Chip`)."),
+     "Two `d8` **Signature Assets** (*Gear Limit:* shut down for frame → `+1 Chip`)."),
     ("Dark", "Deep shadows, sodium-lit corners.", "Secret", "Doom Pool",
      "Escalating `d8, d6, d4` GM pool replaces static difficulty; grows on Openings, buys twists/Romps."),
     ("Sepia", "Brass warmth, weathered maps.", "Relic", "Living Serial",
@@ -49,35 +49,35 @@ SETTING = [
     ("Threshold", "Liminal hubs, portals, crossroads.", "Crossed Over", "Arenas",
      "Arenas (`d10, d8, d6`): *Anchor, Transit, Beyond.*"),
     ("Future", "Wired sprawl, near-out tech.", "Augment", "Roles",
-     "Roles (`d10, 2Ã—d8, d6, d4`): *Hacker, Fixer, Operator, Tech, Face.*"),
+     "Roles (`d10, 2×d8, d6, d4`): *Hacker, Fixer, Operator, Tech, Face.*"),
     ("Space", "Jump-lanes, habitats, void transit.", "Hull / World", "Arenas + Ship",
      "Arenas (`d10, d8, d6`): *Void, Station, Worlds* + `d8` **Ship** (*Engines, Frame, Systems*)."),
     ("Modern", "Current streets & institutions.", "Day Job", "Roles",
      "Roles (`d10, d8, d6`): *Mouth, Mind, Muscle.*"),
     ("Industrial", "Coal smoke, ironworks, gears.", "Trade", "Guilds",
-     "Guilds (`d10, 2Ã—d8, 3Ã—d6, 2Ã—d4`): *Machinist, Saboteur, Alchemist, Bruiser, Broker, Medic, Scout, Orator.*"),
+     "Guilds (`d10, 2×d8, 3×d6, 2×d4`): *Machinist, Saboteur, Alchemist, Bruiser, Broker, Medic, Scout, Orator.*"),
     ("Mythic", "Active gods, spirits, sacred realms.", "Calling", "Attributes",
      "Attributes (`d10, d8, d6`: *Might, Grace, Lore*) + **Calling Special** (`d6` Pressure die)."),
     ("Hearth", "Workshops, ovens, tended valleys.", "Workshop", "Crafts",
-     "Crafts (`d10, 2Ã—d8, 3Ã—d6, 2Ã—d4`: *Mend, Cook, Grow, Travel, Parley, Notice, Tinker, Ward*) + two `d6` Specialties."),
+     "Crafts (`d10, 2×d8, 3×d6, 2×d4`: *Mend, Cook, Grow, Travel, Parley, Notice, Tinker, Ward*) + two `d6` Specialties."),
     ("Primal", "Megafauna, untamed wilds, bone.", "Pack / Kin", "Arenas + Beast",
      "Arenas (`d10, d8, d6`: *Camp, Wilds, Lair*) + `d8` **Beast/Pack** or **Trophy**."),
 ]
 TONE = [
     ("Weird", "Uncanny mystery, impossible rules.", "Obsession", "Tether Drives",
-     "Tether Drives (`d10, d8, 2Ã—d6`: *Reward, Bond, Pride, Thrill*): Anchor statements; **Question** to **triple** die, step down & rewrite."),
+     "Tether Drives (`d10, d8, 2×d6`: *Reward, Bond, Pride, Thrill*): Anchor statements; **Question** to **triple** die, step down & rewrite."),
     ("Punk", "Asymmetric revolt vs. system.", "Grievance", "Bloc Stances",
      "Bloc Stances (`d10, d8, d6` across 3 Factions): Faction stances; **Question** to **triple** die & fracture allegiance."),
     ("Adventure", "Bold crews, uncharted horizons.", "Horizon", "Horizon Values",
-     "Horizon Values (`d10, 2Ã—d8, 2Ã—d6, d4`: *Daring, Cleverness, Crew, Wonder, Fortune, Duty*) + 3 **Goals** (`d6, d8, d10`)."),
+     "Horizon Values (`d10, 2×d8, 2×d6, d4`: *Daring, Cleverness, Crew, Wonder, Fortune, Duty*) + 3 **Goals** (`d6, d8, d10`)."),
     ("Noir", "Moral rot, compromised choices.", "Code", "Compromised Drives",
      "Compromised Drives (`d10, d8, d6, d4`: *Ambition, Trust, Dignity, Vice*): Statements fracture as the case corrupts."),
     ("Pulp", "Two-fisted stunts, cliffhangers.", "Trademark", "Action Modes",
      "Action Modes (`d10, d8, d6`: *Solo, Duo, Team*) + **Hero Dice** (win by 5+ to bank foe's top die)."),
     ("Heroic", "Clear stakes, shielding the weak.", "Oath", "Oath Values",
-     "Oath Values (`d10, d8, 2Ã—d6`: *Justice, Mercy, Courage, Truth*) + **Moral Support** (step down yours to step up an ally's)."),
+     "Oath Values (`d10, d8, 2×d6`: *Justice, Mercy, Courage, Truth*) + **Moral Support** (step down yours to step up an ally's)."),
     ("Cozy", "Mutual aid, mending rifts, routine.", "Routine", "Bonds",
-     "Bonds (`d10, 2Ã—d8, rest d6` to PCs/neighbors) + **Team Up** (lend Bond die risk-free)."),
+     "Bonds (`d10, 2×d8, rest d6` to PCs/neighbors) + **Team Up** (lend Bond die risk-free)."),
     ("Peril", "Scarce safety, unforgiving hazards.", "Liability", "Nerve",
      "Nerve (`d10, d8, d6`: *Grit, Focus, Trust*) + **Trauma** (Fallout past `d12` leaves `d6` Trauma, needs recovery)."),
 ]
@@ -166,26 +166,32 @@ def compiler_list(prefix, items):
         if prefix == "p":
             body = f'<strong>{it[0]}</strong> <em>({it[3]})</em>: {md(it[4])}'
         else:
-            body = f'<strong>{it[0]}</strong> â€” {md(it[4])}'
+            body = f'<strong>{it[0]}</strong> — {md(it[4])}'
         lis.append(f'<li class="hl" data-{prefix}="{i}" data-d="{i}"><span class="die">{i}</span><p>{body}</p></li>')
     return "\n              ".join(lis)
 
 
+def to(word):
+    """Font Awesome arrow for sighted readers, a plain word for screen readers.
+
+    Class names follow cortex-toolkit's self-hosted FA 6 subset (`fas fa-*`)."""
+    return (f'<i class="fas fa-arrow-right" aria-hidden="true"></i>'
+            f'<span class="visually-hidden">{word}</span>')
+
+
+# Flat d8 diecon: same geometry and number placement as the cortex-toolkit
+# DIECON_SPECS[8] (js/functions.ts) so the icons match once this page moves
+# into characters.lynnjones.rocks.
 D8_SYMBOL = """<svg class="sprite" aria-hidden="true" focusable="false">
-    <symbol id="d8" viewBox="0 0 100 120">
-      <polygon points="50,4 96,52 50,116 4,52" fill="currentColor"/>
-      <polygon points="50,4 4,52 50,66" fill="#fff" fill-opacity=".28"/>
-      <polygon points="96,52 50,66 50,116" fill="#000" fill-opacity=".28"/>
-      <polygon points="4,52 50,66 50,116" fill="#000" fill-opacity=".12"/>
-      <polygon points="50,4 96,52 50,116 4,52" fill="none" stroke="#fff" stroke-opacity=".85" stroke-width="3" stroke-linejoin="round"/>
-      <polyline points="4,52 50,66 96,52 M50,66 50,116" fill="none" stroke="#fff" stroke-opacity=".6" stroke-width="2"/>
+    <symbol id="d8" viewBox="0 0 24 24">
+      <polygon points="12,2.5 21.5,12 12,21.5 2.5,12" fill="currentColor"/>
     </symbol>
   </svg>"""
 
 
 def hero_die(cls, label, num):
-    return (f'<figure class="hero-die {cls}"><svg viewBox="0 0 100 120" aria-hidden="true" focusable="false">'
-            f'<use href="#d8"/><text x="50" y="58" text-anchor="middle">{num}</text></svg>'
+    return (f'<figure class="hero-die {cls}"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">'
+            f'<use href="#d8"/><text x="12" y="15.67" text-anchor="middle">{num}</text></svg>'
             f'<figcaption>{label}</figcaption></figure>')
 
 
@@ -195,11 +201,12 @@ page = f"""<!DOCTYPE html>
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>PaletteDesign â€” The 4d8 Setting Compiler</title>
+  <title>PaletteDesign — The 4d8 Setting Compiler</title>
   <meta name="description" content="Roll 4d8, compile a three-word world pitch, entangle your cast at Session Zero, and turn it into a Cortex Prime character sheet.">
   <meta name="color-scheme" content="light dark">
   <meta name="theme-color" content="#1a1718">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="fontawesome.css">
   <link rel="stylesheet" href="styles.css">
   <script src="app.js" type="module"></script>
 </head>
@@ -210,7 +217,7 @@ page = f"""<!DOCTYPE html>
   <header class="site-header">
     <div class="wrap site-header__inner">
       <a class="brand" href="#top" aria-label="PaletteDesign, back to top">
-        <svg class="brand__mark" viewBox="0 0 100 120" aria-hidden="true" focusable="false"><use href="#d8"/></svg>
+        <svg class="brand__mark" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#d8"/></svg>
         <span>PaletteDesign</span>
       </a>
       <nav aria-label="Sections">
@@ -231,7 +238,7 @@ page = f"""<!DOCTYPE html>
     <section class="hero" id="top" aria-labelledby="hero-title">
       <div class="wrap hero__inner">
         <div class="hero__copy">
-          <p class="eyebrow eyebrow--gold">Combinatoric worldbuilding Â· by Lynn Jones</p>
+          <p class="eyebrow eyebrow--gold">Combinatoric worldbuilding · by Lynn Jones</p>
           <h1 id="hero-title"><span class="hero__big">The 4d8</span> <span class="hero__sub">Setting Compiler</span></h1>
           <p class="hero__lede">Three words sell a world. Four d8s ignite a campaign.</p>
           <p class="hero__meta">System-neutral engine <span aria-hidden="true">|</span> Cortex Prime harness</p>
@@ -284,7 +291,7 @@ page = f"""<!DOCTYPE html>
             </fieldset>
 
             <fieldset class="dial dial--undertow">
-              <legend><span class="dial__name">Undertow</span> <span class="dial__hint">4th die Â· friction</span></legend>
+              <legend><span class="dial__name">Undertow</span> <span class="dial__hint">4th die · friction</span></legend>
               <div class="segmented">
                 <input class="visually-hidden" type="radio" name="undertow-dial" id="ud-none" value="none" checked>
                 <label for="ud-none">None</label>
@@ -312,18 +319,18 @@ page = f"""<!DOCTYPE html>
             </h3>
             <p class="pitch-undertow"><span class="ph" data-ph="ud">No Undertow yet.</span><span class="reveal-wrap">Undertow: {undertow_groups()}</span></p>
             <p class="pitch-status" id="pitch-status" role="status">
-              <span class="status-msg" data-status="deep"><strong>Matched Pair â†’ Deep Note.</strong> Double down on that Dial's extreme; zero dilution.</span>
-              <span class="status-msg" data-status="archetype"><strong>4-of-a-Kind â†’ Pure Archetype.</strong> Skip the Undertow; run the row straight at max volume.</span>
+              <span class="status-msg" data-status="deep"><strong>Matched Pair {to("becomes")} Deep Note.</strong> Double down on that Dial's extreme; zero dilution.</span>
+              <span class="status-msg" data-status="archetype"><strong>4-of-a-Kind {to("becomes")} Pure Archetype.</strong> Skip the Undertow; run the row straight at max volume.</span>
             </p>
             <dl class="pitch-facts">
               <div><dt>Identity prompts</dt><dd>
-                <span class="fact"><span class="muted">Texture</span> <span class="ph" data-ph="p">â€”</span>{reveal_names("p", PALETTE, 2)}</span>
-                <span class="fact"><span class="muted">Place</span> <span class="ph" data-ph="s">â€”</span>{reveal_names("s", SETTING, 2)}</span>
-                <span class="fact"><span class="muted">Hook</span> <span class="ph" data-ph="t">â€”</span>{reveal_names("t", TONE, 2)}</span>
+                <span class="fact"><span class="muted">Texture</span> <span class="ph" data-ph="p">—</span>{reveal_names("p", PALETTE, 2)}</span>
+                <span class="fact"><span class="muted">Place</span> <span class="ph" data-ph="s">—</span>{reveal_names("s", SETTING, 2)}</span>
+                <span class="fact"><span class="muted">Hook</span> <span class="ph" data-ph="t">—</span>{reveal_names("t", TONE, 2)}</span>
               </dd></div>
-              <div><dt>Engine Mod</dt><dd><span class="ph" data-ph="p">â€”</span>{reveal_names("p", PALETTE, 3)}</dd></div>
-              <div><dt>Prime Set 2</dt><dd><span class="ph" data-ph="s">â€”</span>{reveal_names("s", SETTING, 3)}</dd></div>
-              <div><dt>Prime Set 3</dt><dd><span class="ph" data-ph="t">â€”</span>{reveal_names("t", TONE, 3)}</dd></div>
+              <div><dt>Engine Mod</dt><dd><span class="ph" data-ph="p">—</span>{reveal_names("p", PALETTE, 3)}</dd></div>
+              <div><dt>Prime Set 2</dt><dd><span class="ph" data-ph="s">—</span>{reveal_names("s", SETTING, 3)}</dd></div>
+              <div><dt>Prime Set 3</dt><dd><span class="ph" data-ph="t">—</span>{reveal_names("t", TONE, 3)}</dd></div>
             </dl>
             <p class="pitch-links"><a href="#session-zero">Run Session Zero</a> <a href="#dial-compiler">See the compiled sheet</a></p>
           </aside>
@@ -343,7 +350,7 @@ page = f"""<!DOCTYPE html>
           <li><strong>Drop</strong> the fourth onto any Dial as the Undertow.</li>
         </ol>
 
-        <h3 class="subhead">The Undertow Â· 4th die friction</h3>
+        <h3 class="subhead">The Undertow · 4th die friction</h3>
         <div class="cards cards--3">
           <article class="card mode hl" data-ud="p" data-d="1">
             <h4>On Palette <span class="tag">Divide</span></h4>
@@ -361,11 +368,11 @@ page = f"""<!DOCTYPE html>
 
         <div class="cards cards--2">
           <div class="callout callout--gold">
-            <h3>Matched Pair â†’ Deep Note</h3>
+            <h3>Matched Pair {to("becomes")} Deep Note</h3>
             <p>Undertow lands on its own number? Double down on that Dial's extreme; zero dilution.</p>
           </div>
           <div class="callout callout--vermilion">
-            <h3>4-of-a-Kind ({md("`N-N-N-N`")}) â†’ Pure Archetype</h3>
+            <h3>4-of-a-Kind ({md("`N-N-N-N`")}) {to("becomes")} Pure Archetype</h3>
             <p>Skip the Undertow; run that row straight at max volume.</p>
           </div>
         </div>
@@ -377,7 +384,7 @@ page = f"""<!DOCTYPE html>
         <header class="section-head">
           <p class="section-head__num" aria-hidden="true">03</p>
           <h2 id="matrix-title">The Master Dial Matrix</h2>
-          <p class="section-head__lede">Roll 4d8 Â· assign in any order. Your picks light up below.</p>
+          <p class="section-head__lede">Roll 4d8 · assign in any order. Your picks light up below.</p>
         </header>
         <section class="table-scroll" aria-labelledby="matrix-caption" tabindex="0">
           <table class="matrix">
@@ -385,9 +392,9 @@ page = f"""<!DOCTYPE html>
             <thead>
               <tr>
                 <th scope="col">d8</th>
-                <th scope="col">1 Â· Palette <span class="th-hint">Texture</span></th>
-                <th scope="col">2 Â· Setting <span class="th-hint">Space</span></th>
-                <th scope="col">3 Â· Tone <span class="th-hint">Drive</span></th>
+                <th scope="col">1 · Palette <span class="th-hint">Texture</span></th>
+                <th scope="col">2 · Setting <span class="th-hint">Space</span></th>
+                <th scope="col">3 · Tone <span class="th-hint">Drive</span></th>
                 <th scope="col">Pure Archetype <span class="th-hint">N-N-N-N</span></th>
               </tr>
             </thead>
@@ -404,7 +411,7 @@ page = f"""<!DOCTYPE html>
         <header class="section-head">
           <p class="section-head__num" aria-hidden="true">04</p>
           <h2 id="chemistry-title">World chemistry</h2>
-          <p class="section-head__lede">Pitch paints the cover; <strong>chemistry</strong> drives play. Regulate four <strong>DOSE</strong> needsâ€”<strong>Chemically</strong> <em>(visceral)</em> or <strong>Mystically</strong> <em>(divine)</em>.</p>
+          <p class="section-head__lede">Pitch paints the cover; <strong>chemistry</strong> drives play. Regulate four <strong>DOSE</strong> needs—<strong>Chemically</strong> <em>(visceral)</em> or <strong>Mystically</strong> <em>(divine)</em>.</p>
         </header>
         <ul class="cards cards--4 dose">
           <li class="card dose__card" data-d="5"><h3><span class="dose__letter">D</span> Dopamine</h3><p class="tag">Transactional</p><p>Reward, ambition, scrip, leverage.</p></li>
@@ -416,7 +423,7 @@ page = f"""<!DOCTYPE html>
         <article class="feature">
           <h3>Step 1: Flood &amp; Starve</h3>
           <ol class="feature__list">
-            <li><strong>Flood</strong> <em>(Palette + Setting)</em>: 1â€“2 cheap, abundant DOSE needs <em>(Neon Future: Endorphins, Dopamine)</em>.</li>
+            <li><strong>Flood</strong> <em>(Palette + Setting)</em>: 1–2 cheap, abundant DOSE needs <em>(Neon Future: Endorphins, Dopamine)</em>.</li>
             <li><strong>Starve</strong> <em>(Tone)</em>: Rationed or corrupted DOSE need <em>(Punk: Serotonin, Oxytocin)</em>.</li>
           </ol>
           <p class="core-loop"><strong>Core loop:</strong> Hustle the <em>Flood</em> to survive; risk everything for the <em>Starve</em>.</p>
@@ -428,7 +435,7 @@ page = f"""<!DOCTYPE html>
       <div class="wrap">
         <header class="section-head">
           <p class="section-head__num" aria-hidden="true">05</p>
-          <h2 id="session-zero-title">Session Zero â€œSpaghetti Knotâ€</h2>
+          <h2 id="session-zero-title">Session Zero “Spaghetti Knot”</h2>
           <p class="section-head__lede">Center your Pitch + Undertow on a blank sheet; run three passes.</p>
         </header>
 
@@ -450,7 +457,7 @@ page = f"""<!DOCTYPE html>
 
             <h3 class="subhead">Pass 2: Cross the wires</h3>
             <ul class="bullets">
-              <li><strong>Left</strong> <em>(Credit)</em>: Declare your left neighbor's public creditâ€”and the messy truth.</li>
+              <li><strong>Left</strong> <em>(Credit)</em>: Declare your left neighbor's public credit—and the messy truth.</li>
               <li><strong>Right</strong> <em>(Anchor)</em>: Link right with a shared <strong>Diamond</strong> (<em>Ride, Hideout, Workshop, Beast, Patron</em>).</li>
             </ul>
 
@@ -500,17 +507,17 @@ page = f"""<!DOCTYPE html>
         </header>
 
         <figure class="equation">
-          <figcaption>Baseline pool equation <span class="muted">Â· + Assets, Resources, Foe Fallout</span></figcaption>
+          <figcaption>Baseline pool equation <span class="muted">· + Assets, Resources, Foe Fallout</span></figcaption>
           <ol class="equation__terms">
-            <li class="term term--magenta"><span>1 Â· Distinction</span><code>d8 / d4</code></li>
-            <li class="term"><span>2 Â· Setting</span><code>Prime 2</code></li>
-            <li class="term"><span>3 Â· Tone</span><code>Prime 3</code></li>
+            <li class="term term--magenta"><span>1 · Distinction</span><code>d8 / d4</code></li>
+            <li class="term"><span>2 · Setting</span><code>Prime 2</code></li>
+            <li class="term"><span>3 · Tone</span><code>Prime 3</code></li>
           </ol>
-          <span class="equation__arrow" aria-hidden="true">â†’</span>
+          <span class="equation__arrow">{to("gives")}</span>
           <ul class="equation__results">
             <li class="result result--magenta"><strong>1s</strong> Openings</li>
             <li class="result"><strong>Sum 2</strong> Total</li>
-            <li class="result"><strong>1 die size</strong> Impact d6â€“d12</li>
+            <li class="result"><strong>1 die size</strong> Impact d6–d12</li>
           </ul>
         </figure>
 
@@ -518,22 +525,22 @@ page = f"""<!DOCTYPE html>
           <div>
             <div class="callout callout--magenta">
               <h3>Openings (Hitches)</h3>
-              <p>Set {md("`1`")}s aside (not Total/Impact). Foesâ€”or PCs with {md("`1 Chip`")}â€”seize one for {md("`d6`")} Fallout, a step-up, or an edge. GM pays {md("`1 Chip`")} to seize yours.</p>
+              <p>Set {md("`1`")}s aside (not Total/Impact). Foes—or PCs with {md("`1 Chip`")}—seize one for {md("`d6`")} Fallout, a step-up, or an edge. GM pays {md("`1 Chip`")} to seize yours.</p>
             </div>
 
             <h3 class="subhead">Three conflict speeds</h3>
             <div class="speeds">
               <details class="speed" name="speed" open>
-                <summary><span class="speed__num">01</span> Roll <span class="muted">Â· single test</span></summary>
+                <summary><span class="speed__num">01</span> Roll <span class="muted">· single test</span></summary>
                 <p>One toss vs. GM ({md("`2d6`")} + traits, or Doom Pool). High Total wins; <strong>instigator wins ties</strong>.</p>
               </details>
               <details class="speed speed--magenta" name="speed">
-                <summary><span class="speed__num">02</span> Row <span class="muted">Â· escalating contest</span></summary>
+                <summary><span class="speed__num">02</span> Row <span class="muted">· escalating contest</span></summary>
                 <p>Beat the lead Total to take control, or <strong>Concede</strong> on your terms ({md("`+1 Chip`")}). Failing inflicts winner's Impact as Fallout.</p>
               </details>
               <details class="speed" name="speed">
-                <summary><span class="speed__num">03</span> Romp <span class="muted">Â· multi-die challenge</span></summary>
-                <p>Roll vs. central <strong>Romp Pool</strong> ({md("`4d8`")}). Win + Impact <strong>&gt;</strong> Romp die drops it; <strong>â‰¤</strong> steps down smallest ({md("`d4`")} gone). Romp acts last.</p>
+                <summary><span class="speed__num">03</span> Romp <span class="muted">· multi-die challenge</span></summary>
+                <p>Roll vs. central <strong>Romp Pool</strong> ({md("`4d8`")}). Win + Impact <strong>&gt;</strong> Romp die drops it; <strong>≤</strong> steps down smallest ({md("`d4`")} gone). Romp acts last.</p>
               </details>
             </div>
           </div>
@@ -544,12 +551,12 @@ page = f"""<!DOCTYPE html>
               <li><strong>Full-Force Hits:</strong> Never compare Impact vs. loser's Effect Die. Win Total, land full Impact.</li>
               <li><strong>Real Fallout Only:</strong> Starts at {md("`d6`")} (no {md("`d4`")} Chip-farming). Past {md("`d12`")} drops out of frame.</li>
               <li><strong>In-Pool Resources:</strong> Roll inside pool to <strong>keep +1 Total die</strong>, then expend until recovery.</li>
-              <li><strong>Side Chars</strong> <em>(Session 0)</em>: Shared Diamonds hold 2â€“3 {md("`d8`")} traits; swap up to 2 and absorb fitting Fallout.</li>
+              <li><strong>Side Chars</strong> <em>(Session 0)</em>: Shared Diamonds hold 2–3 {md("`d8`")} traits; swap up to 2 and absorb fitting Fallout.</li>
             </ul>
 
             <article class="feature feature--cortex">
               <h3>Prime Set 1: Distinctions</h3>
-              <p>Write <strong>three</strong> {md("`d8`")} <strong>Distinctions</strong> titled after your world's <a href="#session-zero">Identity Prompts</a> (<em>Texture Â· Place Â· Hook</em>).</p>
+              <p>Write <strong>three</strong> {md("`d8`")} <strong>Distinctions</strong> titled after your world's <a href="#session-zero">Identity Prompts</a> (<em>Texture · Place · Hook</em>).</p>
               <p class="core-loop core-loop--cortex"><strong>Universal Hinder rule:</strong> Roll any Distinction as {md("`d4`")} instead of {md("`d8`")} to gain {md("`1 Chip`")}.</p>
             </article>
           </div>
@@ -567,19 +574,19 @@ page = f"""<!DOCTYPE html>
 
         <div class="compiler-grid">
           <section class="compiler-col" aria-labelledby="engine-title">
-            <h3 id="engine-title" class="col-head col-head--cyan">1 Â· Palette â†’ Engine Mod</h3>
+            <h3 id="engine-title" class="col-head col-head--cyan">1 · Palette {to("feeds")} Engine Mod</h3>
             <ol class="ref-list">
               {compiler_list("p", PALETTE)}
             </ol>
           </section>
           <section class="compiler-col" aria-labelledby="prime2-title">
-            <h3 id="prime2-title" class="col-head col-head--cyan">2 Â· Setting â†’ Prime Set 2</h3>
+            <h3 id="prime2-title" class="col-head col-head--cyan">2 · Setting {to("feeds")} Prime Set 2</h3>
             <ol class="ref-list">
               {compiler_list("s", SETTING)}
             </ol>
           </section>
           <section class="compiler-col" aria-labelledby="prime3-title">
-            <h3 id="prime3-title" class="col-head col-head--magenta">3 Â· Tone â†’ Prime Set 3</h3>
+            <h3 id="prime3-title" class="col-head col-head--magenta">3 · Tone {to("feeds")} Prime Set 3</h3>
             <ol class="ref-list">
               {compiler_list("t", TONE)}
             </ol>
@@ -589,13 +596,13 @@ page = f"""<!DOCTYPE html>
         <h3 class="subhead">Quick-compile examples</h3>
         <div class="cards cards--2">
           <article class="card example">
-            <h4><code>8Â·3Â·2 [+5]</code> Rust Space Punk <em>(Sepia)</em></h4>
+            <h4><code>8·3·2 [+5]</code> Rust Space Punk <em>(Sepia)</em></h4>
             <p><em>Sheet:</em> Distinctions (<em>Scar / Hull / Grievance</em>) + Void Arenas &amp; Ship + 3 Bloc Stances.</p>
             <p><em>Engine:</em> {md("`2d6`")} Salvage, Stricken, pre-war Flashbacks.</p>
             <p data-requires-js hidden><button type="button" class="button button--ghost" data-preset="8 3 2 palette 5">Load this pitch</button></p>
           </article>
           <article class="card example">
-            <h4><code>6Â·8Â·3 [+7]</code> Bright Primal Adventure <em>(Cozy)</em></h4>
+            <h4><code>6·8·3 [+7]</code> Bright Primal Adventure <em>(Cozy)</em></h4>
             <p><em>Sheet:</em> Distinctions (<em>Banner / Pack / Horizon</em>) + Survival Arenas &amp; {md("`d8`")} Beast + Horizon Values.</p>
             <p><em>Engine:</em> Open Table Chips &amp; campfire recovery.</p>
             <p data-requires-js hidden><button type="button" class="button button--ghost" data-preset="6 8 3 tone 7">Load this pitch</button></p>
@@ -607,8 +614,8 @@ page = f"""<!DOCTYPE html>
 
   <footer class="site-footer">
     <div class="wrap site-footer__inner">
-      <p><strong>PaletteDesign</strong> Â· The 4d8 Setting Compiler Â· by Lynn Jones</p>
-      <p class="muted">System-neutral engine Â· Cortex Prime compatible</p>
+      <p><strong>PaletteDesign</strong> · The 4d8 Setting Compiler · by Lynn Jones</p>
+      <p class="muted">System-neutral engine · Cortex Prime compatible</p>
     </div>
   </footer>
 </body>
@@ -659,6 +666,20 @@ selection_css = (
 )
 
 css_template = Path(__file__).with_name("styles_template.css").read_text(encoding="utf-8")
-(OUT / "styles.css").write_text(css_template.replace("/*__SELECTION__*/", selection_css), encoding="utf-8")
+styles = css_template.replace("/*__SELECTION__*/", selection_css)
+
+# Guard: UTF-8 text that was once decoded as Windows-1252 shows up as
+# a-circumflex + euro ("\u00e2\u20ac"), A-circumflex + middot, A-tilde + dash, or
+# stray C1 controls. Fail the build instead of shipping it again. (Escapes only,
+# so this line can never be mangled the same way.)
+MOJIBAKE = re.compile(
+    "[\u0080-\u009f]|\u00e2[\u20ac\u2020\u2030]|\u00c2[\u00a0-\u00bf]|\u00c3[\u0080-\u00bf\u2013\u2014]")
+for label, text in (("index.html", page), ("styles.css", styles)):
+    bad = MOJIBAKE.search(text)
+    if bad:
+        line = text.count("\n", 0, bad.start()) + 1
+        raise SystemExit(f"mojibake in {label} line {line}: {text[bad.start():bad.start() + 20]!r}")
+
+(OUT / "styles.css").write_text(styles, encoding="utf-8")
 (OUT / "index.html").write_text(page, encoding="utf-8")
 print("wrote", OUT / "index.html", OUT / "styles.css")

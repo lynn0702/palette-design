@@ -1,0 +1,27 @@
+/* Font Awesome Free 6.5.1 (Solid) — self-hosted subset.
+   fonts/fa-solid-subset.woff2 is copied from cortex-toolkit (fonts/), which builds it with
+   scripts/generate-fa-subset.py. Class names match cortex-toolkit/css/fontawesome.css so
+   markup carries over unchanged when this page moves into characters.lynnjones.rocks.
+   Font Awesome Free: icons CC BY 4.0, font SIL OFL 1.1 — https://fontawesome.com/license/free */
+@font-face {
+  font-family: 'Font Awesome 6 Free';
+  font-style: normal;
+  font-weight: 900;
+  font-display: block;
+  src: url('fonts/fa-solid-subset.woff2') format('woff2');
+}
+
+.fas {
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-font-smoothing: antialiased;
+  display: var(--fa-display, inline-block);
+  font-family: 'Font Awesome 6 Free';
+  font-weight: 900;
+  font-style: normal;
+  font-variant: normal;
+  line-height: 1;
+  text-rendering: auto;
+}
+
+/* Icon glyphs (only those this page uses; each must exist in the subset) */
+.fa-arrow-right::before { content: '\f061'; }
