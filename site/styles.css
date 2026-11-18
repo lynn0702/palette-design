@@ -125,7 +125,8 @@
     line-height: 1.1;
     text-wrap: balance;
   }
-  h2 { font-size: var(--step-3); text-transform: uppercase; letter-spacing: 0.01em; }
+  /* Only the hero and the pitch card shout in caps; section heads speak in sentence case. */
+  h2 { font-size: var(--step-3); letter-spacing: -0.01em; }
   h3 { font-size: var(--step-1); }
   h4 { font-size: var(--step-0); }
   p, li { text-wrap: pretty; max-inline-size: 70ch; }
@@ -177,14 +178,6 @@
     gap: var(--space-xs);
     margin-block-end: var(--space-l);
   }
-  .section-head__num {
-    font-family: var(--font-display);
-    font-weight: 700;
-    color: var(--vermilion);
-    letter-spacing: 0.1em;
-  }
-  .band--cortex .section-head__num,
-  .band--cortex-alt .section-head__num { color: var(--magenta); }
   .section-head__lede { font-size: var(--step-1); color: var(--muted); }
 
   /* Single-column grids default to minmax(0, 1fr) so wide children can never stretch
@@ -301,8 +294,6 @@
     padding-block: 0.25rem;
     color: #f1ebe3;
     text-decoration: none;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
     font-weight: 600;
     white-space: nowrap;
   }
@@ -347,13 +338,6 @@
   .hero__big { font-size: var(--step-4); line-height: 0.92; }
   .hero__sub { font-size: var(--step-3); color: var(--gold); letter-spacing: 0.03em; }
   .hero__lede { font-size: var(--step-1); font-style: italic; color: #e2d6c6; }
-  .hero__meta {
-    font-family: var(--font-display);
-    font-size: var(--step--1);
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--vermilion);
-  }
   .hero__dice {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -377,24 +361,25 @@
     display: grid;
     justify-items: center;
     gap: 0.08rem;
-    min-block-size: 2.35rem;
+    min-block-size: 3.1rem;
+    align-content: start;
     text-align: center;
     font-family: var(--font-display);
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
   }
   .hero-die__role {
-    font-size: 0.66rem;
+    font-size: 0.74rem;
     color: #b8ab9c;
-    letter-spacing: 0.08em;
   }
   .hero-die__val {
-    font-size: clamp(0.72rem, 0.58rem + 0.65vw, 0.9rem);
+    font-size: clamp(0.78rem, 0.62rem + 0.7vw, 0.98rem);
     font-weight: 700;
+    line-height: 1.15;
     color: color-mix(in oklab, var(--dial) 45%, #ffffff);
     min-block-size: 1.15em;
     white-space: nowrap;
   }
+  /* The Undertow names its target Dial ("Mythic on Setting"), so it may take two lines. */
+  .hero-die--u .hero-die__val { white-space: normal; text-wrap: balance; }
 
   @media (prefers-reduced-motion: no-preference) {
     .hero-die.is-rolling svg {
@@ -410,8 +395,6 @@
     font-family: var(--font-display);
     font-size: var(--step--1);
     font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
     color: var(--vermilion-ink);
   }
   .eyebrow--gold { color: var(--gold); }
@@ -424,8 +407,6 @@
     font-family: var(--font-display);
     font-size: var(--step--1);
     font-weight: 600;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
   }
   .muted { color: var(--muted); font-weight: 400; }
 
@@ -442,8 +423,7 @@
     border-radius: var(--radius);
     font-family: var(--font-display);
     font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
+    letter-spacing: 0.01em;
     text-decoration: none;
     cursor: pointer;
     box-shadow: var(--offset) var(--offset) 0 var(--shadow);
@@ -591,15 +571,12 @@
   }
   .pitch-card .eyebrow {
     font-size: clamp(1rem, 4.3vw, 1.18rem);
-    letter-spacing: 0.12em;
     color: color-mix(in oklab, var(--pitch-u) 62%, #ffd277);
   }
   .share-toast {
     font-family: var(--font-display);
-    font-size: 0.82rem;
+    font-size: 0.86rem;
     font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
     padding: 0.12rem 0.6rem;
     border-radius: 999px;
     background: color-mix(in oklab, var(--d7) 30%, #000);
@@ -702,17 +679,14 @@
 
   .pitch-facts dt {
     font-family: var(--font-display);
-    font-size: clamp(0.71rem, 3.05vw, 0.92rem);
+    font-size: clamp(0.8rem, 3.35vw, 1rem);
     font-weight: 700;
     line-height: 1.1;
-    text-transform: uppercase;
-    letter-spacing: 0.02em;
     color: var(--gold);
     white-space: nowrap;
   }
   .pitch-facts > div:first-child dt {
-    font-size: clamp(0.92rem, 3.8vw, 1.1rem);
-    letter-spacing: 0.07em;
+    font-size: clamp(0.98rem, 4vw, 1.16rem);
   }
   .pitch-facts dd {
     display: flex;
@@ -746,10 +720,8 @@
   }
   .fact .muted {
     font-family: var(--font-display);
-    font-size: clamp(0.8rem, 3.3vw, 0.96rem);
+    font-size: clamp(0.84rem, 3.45vw, 1rem);
     font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
     line-height: 1.15;
   }
 
@@ -793,9 +765,8 @@
   .dial legend {
     padding-inline: 0.4rem;
     font-family: var(--font-display);
+    font-size: var(--step-1);
     font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
   }
   .dial__hint { color: var(--muted); font-weight: 500; font-size: var(--step--1); margin-inline-start: 0.35rem; }
   .dial--undertow { border-style: dashed; border-color: var(--gold-ink); }
@@ -871,9 +842,7 @@
     cursor: pointer;
     font-family: var(--font-display);
     font-weight: 600;
-    font-size: var(--step--1);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+    font-size: var(--step-0);
     background: var(--bg);
     min-block-size: 2.75rem;
     display: grid;
@@ -921,8 +890,7 @@
 
   .subhead {
     margin-block: var(--space-l) var(--space-s);
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
+    font-size: var(--step-2);
   }
 
   /* Cards */
@@ -969,7 +937,7 @@
     background: var(--obsidian);
     color: #fff;
   }
-  .core-loop strong { color: var(--gold); text-transform: uppercase; letter-spacing: 0.04em; }
+  .core-loop strong { color: var(--gold); }
   .core-loop--cortex { background: var(--midnight); }
   .core-loop--cortex strong { color: var(--magenta); }
   .core-loop code { background: #22304c; color: var(--cyan); }
@@ -1003,8 +971,6 @@
     text-align: start;
     font-family: var(--font-display);
     font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
     border-block-end: 3px solid var(--vermilion);
   }
   .th-hint { display: block; font-weight: 500; color: #c9bcad; font-size: 0.85em; }
@@ -1062,7 +1028,7 @@
   .node--anchor polygon { fill: var(--gold); stroke: var(--ink); stroke-width: 2.5; }
   .node--ignite polygon { fill: var(--vermilion); stroke: var(--ink); stroke-width: 2.5; }
   .knot-figure text { fill: var(--ink); font: 700 14px var(--font-display); text-anchor: middle; }
-  .knot-figure .label { font-size: 11px; letter-spacing: 0.08em; paint-order: stroke; stroke: var(--surface); stroke-width: 5px; }
+  .knot-figure .label { font-size: 12.5px; paint-order: stroke; stroke: var(--surface); stroke-width: 5px; }
   .knot-figure .label--credit { fill: var(--d3); }
   .node--anchor .label { fill: var(--gold-ink); }
   .node--ignite .label { fill: var(--vermilion-ink); }
@@ -1100,9 +1066,8 @@
   }
   .equation figcaption {
     font-family: var(--font-display);
+    font-size: var(--step-1);
     font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
     color: var(--cyan);
     --muted: #8fa3b8;
   }
@@ -1123,9 +1088,7 @@
     text-align: center;
     font-family: var(--font-display);
     font-weight: 700;
-    font-size: var(--step--1);
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
+    font-size: var(--step-0);
   }
   .term { border: 2px solid var(--cyan); background: #22304c; }
   .term--magenta { border-color: var(--magenta); }
@@ -1149,8 +1112,8 @@
     .equation__terms .term + .term::before { position: static; }
     .term, .result { min-block-size: 0; padding-block: var(--space-s); }
   }
-  .result { background: var(--cyan); color: var(--midnight); text-transform: none; }
-  .result strong { font-size: 1.15rem; text-transform: uppercase; }
+  .result { background: var(--cyan); color: var(--midnight); }
+  .result strong { font-size: 1.15rem; }
   .result--magenta { background: var(--magenta); color: #fff; }
 
   /* Conflict speeds (exclusive accordion via details[name]) */
@@ -1165,15 +1128,13 @@
   .speed--magenta { --accent: var(--magenta); }
   .speed summary {
     display: flex;
-    align-items: center;
+    align-items: baseline;
     gap: 0.6rem;
     padding: var(--space-s) var(--space-m);
     cursor: pointer;
     list-style: none;
     font-family: var(--font-display);
     font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
     font-size: var(--step-1);
   }
   .speed summary::-webkit-details-marker { display: none; }
@@ -1185,18 +1146,7 @@
     transition: transform 150ms;
   }
   .speed[open] summary::after { transform: rotate(45deg); }
-  .speed__num {
-    display: grid;
-    place-items: center;
-    inline-size: 2.2rem;
-    block-size: 1.6rem;
-    border-radius: 0.35rem;
-    background: var(--accent);
-    color: var(--midnight);
-    font-size: 0.85rem;
-  }
-  .speed--magenta .speed__num { color: #fff; }
-  .speed summary .muted { font-size: var(--step--1); }
+  .speed summary .muted { font-size: var(--step-0); }
   .speed > p { padding: 0 var(--space-m) var(--space-m); }
 
   /* Dial compiler */
@@ -1205,9 +1155,7 @@
     border-radius: var(--radius) var(--radius) 0 0;
     background: var(--midnight);
     color: #fff;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    font-size: var(--step-0);
+    font-size: var(--step-1);
     border-block-end: 0.3rem solid var(--accent);
   }
   .col-head--cyan { --accent: var(--cyan); }

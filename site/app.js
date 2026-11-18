@@ -103,7 +103,7 @@ function syncHeroDice(values, undertowDial, { slow = false, onComplete = null } 
     WORDS.palette[p],
     WORDS.setting[s],
     WORDS.tone[t],
-    `${WORDS[effectiveUDial][u]} · ${DIAL_TITLES[effectiveUDial]}`,
+    `${WORDS[effectiveUDial][u]} on ${DIAL_TITLES[effectiveUDial]}`,
   ];
   const roles = ['Palette', 'Setting', 'Tone', 'Undertow'];
 
