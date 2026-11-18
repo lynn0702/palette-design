@@ -657,7 +657,7 @@
     font-size: clamp(0.96rem, 4.05vw, 1.14rem);
     line-height: 1.22;
     background: color-mix(in oklab, var(--pitch-u) 24%, rgba(0, 0, 0, 0.45));
-    border-inline-start: 0.3rem solid var(--gold);
+    border: 1px solid color-mix(in oklab, var(--gold) 70%, transparent);
   }
   .status-msg[data-status="archetype"] {
     background: color-mix(in oklab, var(--pitch-p) 30%, rgba(0, 0, 0, 0.45));
@@ -688,11 +688,17 @@
   .pitch-facts > div:first-child {
     grid-column: 1 / -1;
     padding-inline: clamp(0.6rem, 2vw, 0.9rem);
-    border-block-start: 3px solid color-mix(in oklab, var(--gold) 78%, transparent);
+    border-color: color-mix(in oklab, var(--gold) 55%, transparent);
   }
-  .pitch-facts > div:nth-child(2) { border-block-start: 3px solid var(--pitch-p); }
-  .pitch-facts > div:nth-child(3) { border-block-start: 3px solid var(--pitch-s); }
-  .pitch-facts > div:nth-child(4) { border-block-start: 3px solid var(--pitch-t); }
+  /* Dial colour lives in the whole tile edge and a faint wash, never a
+     one-sided stripe that the corner radius would crop. */
+  .pitch-facts > div:nth-child(2) { --tile: var(--pitch-p); }
+  .pitch-facts > div:nth-child(3) { --tile: var(--pitch-s); }
+  .pitch-facts > div:nth-child(4) { --tile: var(--pitch-t); }
+  .pitch-facts > div:nth-child(n + 2) {
+    border-color: color-mix(in oklab, var(--tile) 62%, transparent);
+    background: color-mix(in oklab, var(--tile) 10%, rgba(255, 255, 255, 0.03));
+  }
 
   .pitch-facts dt {
     font-family: var(--font-display);
@@ -937,7 +943,7 @@
     padding: var(--space-m) clamp(var(--space-m), 4vw, var(--space-l));
     border-radius: var(--radius);
     background: var(--surface);
-    border-inline-start: 0.4rem solid var(--accent, var(--gold));
+    border: 2px solid var(--accent, var(--gold));
   }
   .callout h3 { margin-block-end: var(--space-xs); }
   .callout--gold { --accent: var(--gold); }
@@ -1002,7 +1008,8 @@
     border-block-end: 3px solid var(--vermilion);
   }
   .th-hint { display: block; font-weight: 500; color: #c9bcad; font-size: 0.85em; }
-  .matrix th[scope="row"] { inline-size: 3.5rem; text-align: center; box-shadow: inset 0.3rem 0 0 var(--dial); }
+  /* Dial stripe on the inner edge of the pinned column, clear of the rounded scroller corners. */
+  .matrix th[scope="row"] { inline-size: 3.5rem; text-align: center; box-shadow: inset -0.3rem 0 0 var(--dial); }
   /* Keep the d8 column pinned while the table scrolls sideways on phones. */
   .matrix th[scope="row"],
   .matrix thead th:first-child {
@@ -1201,7 +1208,7 @@
     text-transform: uppercase;
     letter-spacing: 0.04em;
     font-size: var(--step-0);
-    border-inline-start: 0.4rem solid var(--accent);
+    border-block-end: 0.3rem solid var(--accent);
   }
   .col-head--cyan { --accent: var(--cyan); }
   .col-head--magenta { --accent: var(--magenta); }
@@ -1353,8 +1360,12 @@
   :root:has(#p7:checked):has(#s7:checked):has(#t7:checked):has(#u7:checked) .hl[data-a="7"],
   :root:has(#p8:checked):has(#s8:checked):has(#t8:checked):has(#u8:checked) .hl[data-a="8"] {
     background: color-mix(in oklab, var(--dial) 16%, var(--surface));
-    box-shadow: inset 0.3rem 0 0 var(--dial);
+    box-shadow: var(--hl-shadow, inset 0.3rem 0 0 var(--dial));
   }
+  /* Rounded hosts get a full ring instead of a corner-cropped side stripe. */
+  .card.hl { --hl-shadow: var(--offset) var(--offset) 0 var(--dial), inset 0 0 0 2px var(--dial); }
+  .ref-list li.hl { --hl-shadow: none; }
+  .ref-list li:last-child { border-radius: 0 0 calc(var(--radius) - 2px) calc(var(--radius) - 2px); }
 
   :root:has([name="palette"]:checked) .ph[data-ph="p"],
   :root:has([name="setting"]:checked) .ph[data-ph="s"],

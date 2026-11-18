@@ -589,7 +589,7 @@
     padding: var(--space-s);
     border-radius: var(--radius);
     background: color-mix(in oklab, var(--gold) 20%, transparent);
-    border-inline-start: 0.3rem solid var(--gold);
+    border: 1px solid color-mix(in oklab, var(--gold) 70%, transparent);
   }
   .status-msg[data-status="archetype"] {
     background: color-mix(in oklab, var(--vermilion) 25%, transparent);
@@ -675,7 +675,7 @@
     padding: var(--space-m) clamp(var(--space-m), 4vw, var(--space-l));
     border-radius: var(--radius);
     background: var(--surface);
-    border-inline-start: 0.4rem solid var(--accent, var(--gold));
+    border: 2px solid var(--accent, var(--gold));
   }
   .callout h3 { margin-block-end: var(--space-xs); }
   .callout--gold { --accent: var(--gold); }
@@ -740,7 +740,8 @@
     border-block-end: 3px solid var(--vermilion);
   }
   .th-hint { display: block; font-weight: 500; color: #c9bcad; font-size: 0.85em; }
-  .matrix th[scope="row"] { inline-size: 3.5rem; text-align: center; box-shadow: inset 0.3rem 0 0 var(--dial); }
+  /* Dial stripe on the inner edge of the pinned column, clear of the rounded scroller corners. */
+  .matrix th[scope="row"] { inline-size: 3.5rem; text-align: center; box-shadow: inset -0.3rem 0 0 var(--dial); }
   /* Keep the d8 column pinned while the table scrolls sideways on phones. */
   .matrix th[scope="row"],
   .matrix thead th:first-child {
@@ -939,7 +940,7 @@
     text-transform: uppercase;
     letter-spacing: 0.04em;
     font-size: var(--step-0);
-    border-inline-start: 0.4rem solid var(--accent);
+    border-block-end: 0.3rem solid var(--accent);
   }
   .col-head--cyan { --accent: var(--cyan); }
   .col-head--magenta { --accent: var(--magenta); }
