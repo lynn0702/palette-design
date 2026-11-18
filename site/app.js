@@ -1,32 +1,61 @@
 // 4D Combinatoric Worldbuilding — progressive enhancement.
-// All selection, highlighting, Matched Pair / 4-of-a-Kind detection and compiled output work
+// All selection, highlighting, Matched Pair / 4-of-a-Kind detection and dial output work
 // through native radios + CSS :has(). This module adds: the 4d8 roller (with randomized Undertow
-// dial), a slowed roll that writes out each dial's label as the dice settle (gliding smoothly to
-// the Pitch card when clicked from the hero), share/copy icon actions, and example presets.
+// dial), a slowed sequential pitch-poster roll, share/copy icon actions, and sample pitch presets.
 
-const form = document.getElementById('compiler');
+const form = document.getElementById('dials-form');
 const rollButton = document.getElementById('roll');
-const heroRollButton = document.getElementById('hero-roll');
 const shareButton = document.getElementById('share-pitch');
 const shareToast = document.getElementById('share-toast');
 const tray = document.getElementById('roll-result');
-const heroDice = Array.from(document.querySelectorAll('[data-hero-slot]'));
+const pitchCard = document.getElementById('pitch-card');
+const pitchStatus = document.getElementById('pitch-status');
 
 const DIALS = ['palette', 'setting', 'tone'];
 const DIAL_TITLES = { palette: 'Palette', setting: 'Setting', tone: 'Tone' };
 const WORDS = {
   palette: ['', 'Prismatic', 'Neon', 'Chrome', 'Dark', 'Sepia', 'Bright', 'Pastel', 'Rust'],
-  setting: ['', 'Threshold', 'Future', 'Space', 'Modern', 'Industrial', 'Mythic', 'Hearth', 'Primal'],
+  setting: ['', 'Liminal', 'Future', 'Space', 'Modern', 'Industrial', 'Mythic', 'Hearth', 'Primal'],
   tone: ['', 'Weird', 'Punk', 'Adventure', 'Noir', 'Pulp', 'Heroic', 'Cozy', 'Peril'],
+};
+
+const liveWords = {
+  palette: document.querySelector('[data-live="p"]'),
+  setting: document.querySelector('[data-live="s"]'),
+  tone: document.querySelector('[data-live="t"]'),
+};
+const liveUndertows = {
+  palette: document.querySelector('[data-live-u="p"]'),
+  setting: document.querySelector('[data-live-u="s"]'),
+  tone: document.querySelector('[data-live-u="t"]'),
+};
+const subSlots = {
+  palette: document.querySelector('.pitch-sub[data-ud="p"]'),
+  setting: document.querySelector('.pitch-sub[data-ud="s"]'),
+  tone: document.querySelector('.pitch-sub[data-ud="t"]'),
 };
 
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 let activeTimers = [];
+let activeTicker = null;
 let toastTimer = null;
 
 function clearTimers() {
   for (const id of activeTimers) clearTimeout(id);
   activeTimers = [];
+  if (activeTicker !== null) {
+    clearInterval(activeTicker);
+    activeTicker = null;
+  }
+}
+
+/** Stop any in-progress slow roll and hand rendering back to declarative CSS :has(). */
+function stopRollingUI() {
+  clearTimers();
+  pitchCard?.classList.remove('is-rolling');
+  Object.values(liveWords).forEach((el) => { if (el) el.textContent = ''; });
+  Object.values(liveUndertows).forEach((el) => { if (el) el.textContent = ''; });
+  Object.values(subSlots).forEach((el) => { el?.classList.remove('is-typing'); });
 }
 
 /** Uniform integer in 0..(max - 1) using the platform CSPRNG with rejection sampling. */
@@ -42,33 +71,51 @@ function d8() {
   return randomIndex(8) + 1;
 }
 
-/** Check the radio in `name` with `value`, firing `change` so anything listening stays in sync. */
+/** Check the radio in `name` with `value`, firing `change` so listeners and :has() stay in sync. */
 function check(name, value) {
-  const input = form?.querySelector(`input[name="${name}"][value="${value}"]`);
+  const safeName = CSS.escape(String(name));
+  const safeValue = CSS.escape(String(value));
+  const input = form?.querySelector(`input[name="${safeName}"][value="${safeValue}"]`);
   if (!input) return;
   input.checked = true;
   input.dispatchEvent(new Event('change', { bubbles: true }));
 }
 
-function showTray(values, undertowDial) {
+function clearDialGroup(name) {
+  form?.querySelectorAll(`input[name="${name}"]`).forEach((input) => {
+    input.checked = false;
+  });
+}
+
+function createDieElement(value, title) {
+  const die = document.createElement('span');
+  die.className = 'dice-tray__die';
+  die.dataset.d = String(value);
+  die.textContent = String(value);
+  if (title) die.title = title;
+  return die;
+}
+
+function buildTrayLabels(undertowDial) {
   const uTitle = undertowDial && undertowDial !== 'none'
     ? `Undertow on ${DIAL_TITLES[undertowDial]}`
     : 'Undertow';
-  const labels = ['Palette', 'Setting', 'Tone', uTitle];
-  tray.replaceChildren(
-    ...values.map((v, i) => {
-      const die = document.createElement('span');
-      die.className = 'dice-tray__die';
-      die.dataset.d = String(v);
-      die.textContent = String(v);
-      die.title = labels[i];
-      return die;
-    }),
-  );
-  const sr = document.createElement('span');
-  sr.className = 'visually-hidden';
-  sr.textContent = `Rolled ${values.slice(0, 3).join(', ')}, ${uTitle} ${values[3]}.`;
-  tray.append(sr);
+  return ['Palette', 'Setting', 'Tone', uTitle];
+}
+
+function showTray(values, undertowDial) {
+  if (!tray) return;
+  const labels = buildTrayLabels(undertowDial);
+  const items = values
+    .map((v, i) => (v ? createDieElement(v, labels[i]) : null))
+    .filter(Boolean);
+  tray.replaceChildren(...items);
+  if (values.every(Boolean)) {
+    const sr = document.createElement('span');
+    sr.className = 'visually-hidden';
+    sr.textContent = `Rolled ${values.slice(0, 3).join(', ')}, ${labels[3]} ${values[3]}.`;
+    tray.append(sr);
+  }
 }
 
 function apply([p, s, t, u], undertowDial) {
@@ -77,117 +124,154 @@ function apply([p, s, t, u], undertowDial) {
   check('undertow-dial', undertowDial);
 }
 
-/** Typewriter reveal for a hero die's label as its slow tumble settles; returns total duration. */
+function announceStatus([p, s, t, u], undertowDial) {
+  if (!pitchStatus || !p || !s || !t) return;
+  const base = `${WORDS.palette[p]} ${WORDS.setting[s]} ${WORDS.tone[t]}`;
+  if (u && p === s && s === t && t === u) {
+    pitchStatus.textContent = `${base} — 4-of-a-Kind: Pure Archetype.`;
+    return;
+  }
+  const dialValues = { palette: p, setting: s, tone: t };
+  if (u && undertowDial && undertowDial !== 'none') {
+    if (u === dialValues[undertowDial]) {
+      pitchStatus.textContent = `${base} — Matched Pair on ${DIAL_TITLES[undertowDial]}.`;
+    } else {
+      pitchStatus.textContent = `${base} — Undertow ${WORDS[undertowDial][u]} on ${DIAL_TITLES[undertowDial]}.`;
+    }
+    return;
+  }
+  pitchStatus.textContent = base;
+}
+
+/** Typewriter reveal into `el`; returns total typing duration in ms. */
 function typeOut(el, text, charMs = 36) {
-  if (!el) return 0;
-  if (reducedMotion.matches) {
+  if (!el || !text) return 0;
+  const chars = [...text];
+  if (reducedMotion.matches || chars.length <= 1) {
     el.textContent = text;
     return 0;
   }
-  el.textContent = '';
-  [...text].forEach((ch, idx) => {
+  el.textContent = chars[0];
+  for (let idx = 1; idx < chars.length; idx++) {
     const id = setTimeout(() => {
-      el.textContent += ch;
+      el.textContent += chars[idx];
     }, idx * charMs);
     activeTimers.push(id);
-  });
-  return text.length * charMs;
+  }
+  return (chars.length - 1) * charMs;
 }
 
-/** Sync the 4 hero dice visuals & labels (either animated slow-roll or instant). */
-function syncHeroDice(values, undertowDial, { slow = false, onComplete = null } = {}) {
-  clearTimers();
+/** Slow-write sequence directly in the hero Pitch Poster + bottom dice tray. */
+function renderPitchRoll(values, undertowDial, { slow = true } = {}) {
   const [p, s, t, u] = values.map(Number);
-  const effectiveUDial = undertowDial && undertowDial !== 'none' ? undertowDial : 'setting';
-  const targetLabels = [
-    WORDS.palette[p],
-    WORDS.setting[s],
-    WORDS.tone[t],
-    `${WORDS[effectiveUDial][u]} on ${DIAL_TITLES[effectiveUDial]}`,
-  ];
-  const roles = ['Palette', 'Setting', 'Tone', 'Undertow'];
 
   if (!slow || reducedMotion.matches) {
-    heroDice.forEach((fig, i) => {
-      fig.classList.remove('is-rolling');
-      fig.dataset.d = String(values[i]);
-      const textNode = fig.querySelector('svg text');
-      const roleNode = fig.querySelector('.hero-die__role');
-      const valNode = fig.querySelector('.hero-die__val');
-      if (textNode) textNode.textContent = String(values[i]);
-      if (roleNode) roleNode.textContent = roles[i];
-      if (valNode) valNode.textContent = targetLabels[i];
-    });
-    if (onComplete) onComplete();
+    stopRollingUI();
+    apply([p, s, t, u], undertowDial);
+    showTray([p, s, t, u], undertowDial);
+    announceStatus([p, s, t, u], undertowDial);
     return;
   }
 
-  // Slowed-down tumble (1150ms staggered by 210ms) cycling faces & typing out labels as each settles
-  heroDice.forEach((fig, i) => {
-    const delay = i * 210;
-    const textNode = fig.querySelector('svg text');
-    const roleNode = fig.querySelector('.hero-die__role');
-    const valNode = fig.querySelector('.hero-die__val');
+  stopRollingUI();
+  pitchCard?.classList.add('is-rolling');
 
-    if (roleNode) roleNode.textContent = roles[i];
-    if (valNode) valNode.textContent = '···';
-
-    fig.classList.remove('is-rolling');
-    fig.style.setProperty('--roll-delay', `${delay}ms`);
-    void fig.offsetWidth;
-    fig.classList.add('is-rolling');
-
-    const ticks = 5;
-    for (let step = 0; step < ticks; step++) {
-      const tickId = setTimeout(() => {
-        const tempFace = d8();
-        fig.dataset.d = String(tempFace);
-        if (textNode) textNode.textContent = String(tempFace);
-      }, delay + step * 145);
-      activeTimers.push(tickId);
-    }
-
-    const settleId = setTimeout(() => {
-      fig.dataset.d = String(values[i]);
-      if (textNode) textNode.textContent = String(values[i]);
-      const writeMs = typeOut(valNode, targetLabels[i], 36);
-
-      if (i < 3) {
-        check(DIALS[i], values[i]);
-      } else {
-        check('undertow', values[3]);
-        check('undertow-dial', effectiveUDial);
-        showTray(values.map(Number), effectiveUDial);
-
-        if (onComplete) {
-          const finishId = setTimeout(onComplete, writeMs + 220);
-          activeTimers.push(finishId);
-        }
-      }
-    }, delay + ticks * 145);
-    activeTimers.push(settleId);
+  DIALS.forEach((name) => {
+    clearDialGroup(name);
+    if (liveWords[name]) liveWords[name].textContent = '\u00A0';
   });
+  clearDialGroup('undertow');
+  check('undertow-dial', 'none');
+
+  const dies = Array.from({ length: 4 }, (_, i) =>
+    createDieElement(d8(), ['Palette', 'Setting', 'Tone', 'Undertow'][i]),
+  );
+  tray?.replaceChildren(...dies);
+
+  let lockedCount = 0;
+  activeTicker = setInterval(() => {
+    for (let i = lockedCount; i < 4; i++) {
+      const tempFace = d8();
+      dies[i].dataset.d = String(tempFace);
+      dies[i].textContent = String(tempFace);
+    }
+  }, 110);
+
+  const lockDie = (idx, face, label) => {
+    lockedCount = Math.max(lockedCount, idx + 1);
+    dies[idx].dataset.d = String(face);
+    dies[idx].textContent = String(face);
+    if (label) dies[idx].title = label;
+  };
+
+  // Beat 1: Palette
+  const beat1At = 180;
+  const t1 = setTimeout(() => {
+    lockDie(0, p, 'Palette');
+    check('palette', p);
+    const write1Ms = typeOut(liveWords.palette, WORDS.palette[p], 36);
+
+    // Beat 2: Setting
+    const t2 = setTimeout(() => {
+      lockDie(1, s, 'Setting');
+      check('setting', s);
+      const write2Ms = typeOut(liveWords.setting, WORDS.setting[s], 36);
+
+      // Beat 3: Tone
+      const t3 = setTimeout(() => {
+        lockDie(2, t, 'Tone');
+        check('tone', t);
+        const write3Ms = typeOut(liveWords.tone, WORDS.tone[t], 36);
+
+        // Beat 4: Undertow (or scale-up for Matched Pair / 4-of-a-Kind)
+        const t4 = setTimeout(() => {
+          if (activeTicker !== null) {
+            clearInterval(activeTicker);
+            activeTicker = null;
+          }
+          const labels = buildTrayLabels(undertowDial);
+          lockDie(3, u, labels[3]);
+          check('undertow', u);
+          check('undertow-dial', undertowDial);
+
+          const sr = document.createElement('span');
+          sr.className = 'visually-hidden';
+          sr.textContent = `Rolled ${p}, ${s}, ${t}, ${labels[3]} ${u}.`;
+          tray?.append(sr);
+
+          const dialValues = { palette: p, setting: s, tone: t };
+          const isPure = p === s && s === t && t === u;
+          const isPair = !isPure && u === dialValues[undertowDial];
+
+          if (isPure || isPair || undertowDial === 'none') {
+            const settleId = setTimeout(() => {
+              stopRollingUI();
+              announceStatus([p, s, t, u], undertowDial);
+            }, 260);
+            activeTimers.push(settleId);
+          } else {
+            subSlots[undertowDial]?.classList.add('is-typing');
+            const write4Ms = typeOut(liveUndertows[undertowDial], WORDS[undertowDial][u], 34);
+            const settleId = setTimeout(() => {
+              stopRollingUI();
+              announceStatus([p, s, t, u], undertowDial);
+            }, write4Ms + 100);
+            activeTimers.push(settleId);
+          }
+        }, write3Ms + 110);
+        activeTimers.push(t4);
+      }, write2Ms + 85);
+      activeTimers.push(t3);
+    }, write1Ms + 85);
+    activeTimers.push(t2);
+  }, beat1At);
+  activeTimers.push(t1);
 }
 
-function glideToPitch() {
-  document.getElementById('pitch-stage')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-}
-
-function roll({ slowHero = false, glideAfterSettle = false } = {}) {
+function roll({ slow = true } = {}) {
   const values = [d8(), d8(), d8(), d8()];
   const undertowDial = DIALS[randomIndex(DIALS.length)];
-
-  if (slowHero && !reducedMotion.matches) {
-    syncHeroDice(values, undertowDial, {
-      slow: true,
-      onComplete: glideAfterSettle ? glideToPitch : null,
-    });
-  } else {
-    apply(values, undertowDial);
-    showTray(values, undertowDial);
-    syncHeroDice(values, undertowDial, { slow: false });
-    if (glideAfterSettle) glideToPitch();
-  }
+  renderPitchRoll(values, undertowDial, { slow });
 }
 
 function readCurrentState() {
@@ -198,13 +282,16 @@ function readCurrentState() {
   const u = form.elements.namedItem('undertow')?.value;
   const ud = form.elements.namedItem('undertow-dial')?.value || 'none';
   if (!p || !s || !t) return null;
-  return { values: [Number(p), Number(s), Number(t), Number(u || 1)], undertowDial: ud };
+  return {
+    values: [Number(p), Number(s), Number(t), u ? Number(u) : null],
+    undertowDial: ud,
+  };
 }
 
 function buildShareUrl() {
   const url = new URL(location.href);
   url.search = '';
-  url.hash = 'pitch-stage';
+  url.hash = 'top';
   const data = new FormData(form);
   for (const [k, v] of data.entries()) {
     url.searchParams.set(k, String(v));
@@ -226,7 +313,7 @@ function flashToast(msg) {
 
 document.querySelectorAll('[data-requires-js]').forEach((el) => { el.hidden = false; });
 
-// Restore pitch from URL if present; otherwise run the slowed-down 4d8 roll on page load.
+// Restore pitch from URL if present; otherwise run the slowed-down 4d8 roll in the Pitch Poster.
 {
   const params = new URLSearchParams(location.search);
   const hasSavedPitch = DIALS.some((name) => params.has(name));
@@ -239,23 +326,21 @@ document.querySelectorAll('[data-requires-js]').forEach((el) => { el.hidden = fa
     const restored = readCurrentState();
     if (restored) {
       showTray(restored.values, restored.undertowDial);
-      syncHeroDice(restored.values, restored.undertowDial, { slow: false });
+      announceStatus(restored.values, restored.undertowDial);
     }
   } else {
-    roll({ slowHero: true, glideAfterSettle: false });
+    roll({ slow: true });
   }
 }
 
-rollButton?.addEventListener('click', () => roll({ slowHero: false }));
-
-heroRollButton?.addEventListener('click', () => {
-  roll({ slowHero: true, glideAfterSettle: true });
-});
+rollButton?.addEventListener('click', () => roll({ slow: true }));
 
 form?.addEventListener('change', () => {
+  if (pitchCard?.classList.contains('is-rolling')) return;
   const current = readCurrentState();
-  if (current && activeTimers.length === 0) {
-    syncHeroDice(current.values, current.undertowDial, { slow: false });
+  if (current) {
+    showTray(current.values, current.undertowDial);
+    announceStatus(current.values, current.undertowDial);
   }
 });
 
@@ -288,15 +373,11 @@ form?.addEventListener('submit', async (event) => {
 });
 
 form?.addEventListener('reset', () => {
-  clearTimers();
+  stopRollingUI();
   queueMicrotask(() => {
-    tray.replaceChildren();
+    tray?.replaceChildren();
+    if (pitchStatus) pitchStatus.textContent = '';
     history.replaceState(null, '', `${location.pathname}`);
-    heroDice.forEach((fig, i) => {
-      fig.classList.remove('is-rolling');
-      const valNode = fig.querySelector('.hero-die__val');
-      if (valNode) valNode.textContent = ['Palette', 'Setting', 'Tone', 'Undertow'][i];
-    });
   });
 });
 
@@ -305,9 +386,10 @@ document.addEventListener('click', (event) => {
   if (!button) return;
   const [p, s, t, dial, u] = button.dataset.preset.split(' ');
   const nums = [p, s, t, u].map(Number);
-  apply([p, s, t, u], dial);
+  stopRollingUI();
+  apply(nums, dial);
   showTray(nums, dial);
-  syncHeroDice(nums, dial, { slow: false });
-  glideToPitch();
+  announceStatus(nums, dial);
+  document.getElementById('top')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   document.getElementById('pitch-heading')?.focus({ preventScroll: true });
 });

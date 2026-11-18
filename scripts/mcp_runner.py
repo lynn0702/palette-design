@@ -7,7 +7,7 @@ import os
 import subprocess
 import sys
 
-BRIDGE_PATH = r"c:\Users\lynnj\source\repos\lynn0702\PaletteDesign\scripts\affinity-mcp-bridge.mjs"
+BRIDGE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "affinity-mcp-bridge.mjs")
 
 
 class AffinityMcpSession:
