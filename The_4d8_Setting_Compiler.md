@@ -1,4 +1,4 @@
-# THE 4D8 SETTING COMPILER
+# 4D SETTING COMBINE
 
 *Text extract of the Half-Letter zine as laid out by `scripts/build_zine.js`. Page order follows the zine.*
 
@@ -8,8 +8,8 @@
 
 **COMBINATORIC WORLDBUILDING · BY LYNN JONES**
 
-# THE 4D8
-## SETTING COMPILER
+# 4D
+## SETTING COMBINE
 
 *Three words sell a world. Four d8s ignite a campaign.*
 
@@ -55,16 +55,16 @@ Roll `4d8` once (no rerolls). Slot 3 into **Palette**, **Setting**, **Tone** (*5
 
 Center your Pitch + Undertow on a blank sheet; run 3 passes. **Pass 1:** Place a **Rectangle (PC Name)** on the edge; answer your 3 Dial prompts:
 
-| d8 | Palette (Texture) | Setting (Place / Craft) | Tone (Hook) |
+| d8 | Palette (Texture) | Setting (Foothold) | Tone (Hook) |
 | :-: | :-- | :-- | :-- |
 | 1 | **Warped** *(Prismatic)* | **Crossed Over** *(Threshold)* | **Obsession** *(Weird)* |
 | 2 | **Vice** *(Neon)* | **Augment** *(Future)* | **Grievance** *(Punk)* |
-| 3 | **Pedigree** *(Chrome)* | **Hull / World** *(Space)* | **Horizon** *(Adventure)* |
+| 3 | **Pedigree** *(Chrome)* | **World** *(Space)* | **Horizon** *(Adventure)* |
 | 4 | **Secret** *(Dark)* | **Day Job** *(Modern)* | **Code** *(Noir)* |
 | 5 | **Relic** *(Sepia)* | **Trade** *(Industrial)* | **Trademark** *(Pulp)* |
 | 6 | **Banner** *(Bright)* | **Calling** *(Mythic)* | **Oath** *(Heroic)* |
 | 7 | **Comfort** *(Pastel)* | **Workshop** *(Hearth)* | **Routine** *(Cozy)* |
-| 8 | **Scar** *(Rust)* | **Pack / Kin** *(Primal)* | **Liability** *(Peril)* |
+| 8 | **Scar** *(Rust)* | **Kin** *(Primal)* | **Liability** *(Peril)* |
 
 #### Pass 2: Cross the Wires
 
@@ -114,7 +114,7 @@ Roll vs. central **Romp Pool** (`4d8`). Win + Impact **>** Romp die drops it; **
 
 ### Prime Set 1: Distinctions
 
-Write **three** `d8` **Distinctions** titled after your world's **Page 2 Identity Prompts** (*Texture · Place · Hook*).
+Write **three** `d8` **Distinctions** titled after your world's **Page 2 Identity Prompts** (*Texture · Foothold · Hook*).
 
 > **UNIVERSAL HINDER RULE**
 > Roll any Distinction as `d4` instead of `d8` to gain `1 Chip`.
@@ -163,11 +163,11 @@ Match 3 Dials for **Engine Mod**, **Prime Set 2**, **Prime Set 3**. **Undertow (
 ### Quick-Compile Examples
 
 **`8·3·2 [+5]` Rust Space Punk** *(Sepia)*
-*Sheet:* Distinctions (*Scar / Hull / Grievance*) + Void Arenas & Ship + 3 Bloc Stances.
+*Sheet:* Distinctions (*Scar / World / Grievance*) + Void Arenas & Ship + 3 Bloc Stances.
 *Engine:* `2d6` Salvage, Stricken, pre-war Flashbacks.
 
 **`6·8·3 [+7]` Bright Primal Adventure** *(Cozy)*
-*Sheet:* Distinctions (*Banner / Pack / Horizon*) + Survival Arenas & `d8` Beast + Horizon Values.
+*Sheet:* Distinctions (*Banner / Kin / Horizon*) + Survival Arenas & `d8` Beast + Horizon Values.
 *Engine:* Open Table Chips & campfire recovery.
 
 *Footer: THE 4D8 SETTING COMPILER · CORTEX HARNESS — CORTEX PRIME COMPATIBLE*

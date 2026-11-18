@@ -1,6 +1,6 @@
-/* PaletteDesign — The 4d8 Setting Compiler
+/* 4D Combinatoric Worldbuilding
    Native HTML + CSS first: dial state lives in radio inputs and is read with :has().
-   JavaScript (app.js) only adds the dice roller and example presets. */
+   JavaScript (app.js) adds the 4d8 roller, initial page-load roll, share/copy, and presets. */
 
 @layer reset, tokens, base, layout, components, state, utilities;
 
@@ -47,6 +47,12 @@
     --d5: #b86c18; --d6: #f4ae1e; --d7: #249278; --d8: #c03c20;
     --dial: var(--vermilion);
 
+    /* Live pitch card accents (updated via :has() in @layer state) */
+    --pitch-p: var(--d1);
+    --pitch-s: var(--d3);
+    --pitch-t: var(--d2);
+    --pitch-u: var(--gold);
+
     --font-display: "Bahnschrift", "DIN Alternate", "Franklin Gothic Medium", "Arial Narrow", system-ui, sans-serif;
     --font-body: "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
     --font-mono: "Cascadia Code", "Cascadia Mono", ui-monospace, Consolas, monospace;
@@ -56,19 +62,19 @@
     --step-1: clamp(1.2rem, 1.1rem + 0.5vw, 1.45rem);
     --step-2: clamp(1.5rem, 1.3rem + 1vw, 2.1rem);
     --step-3: clamp(2rem, 1.5rem + 2.4vw, 3.4rem);
-    --step-4: clamp(2.8rem, 1.8rem + 5vw, 6rem);
+    --step-4: clamp(2.5rem, 1.65rem + 4.4vw, 5.2rem);
 
     --space-xs: 0.5rem;
     --space-s: 0.75rem;
     --space-m: 1.25rem;
     --space-l: 2rem;
-    --space-xl: clamp(3rem, 2rem + 4vw, 5.5rem);
+    --space-xl: clamp(2.5rem, 1.8rem + 3.5vw, 5rem);
 
     --radius: 0.5rem;
     --offset: 0.3rem;
     --wrap: 72rem;
-    /* Flat d8 diecon, matching cortex-toolkit DIECON_SPECS[8] (24-unit box, 2.5 inset). */
-    --diecon-d8: polygon(50% 10.4%, 89.6% 50%, 50% 89.6%, 10.4% 50%);
+    /* Tighter d8 diecon diamond so numbers and face areas read boldly. */
+    --diecon-d8: polygon(50% 4%, 96% 50%, 50% 96%, 4% 50%);
   }
 
   [data-d="1"] { --dial: var(--d1); }
@@ -94,11 +100,11 @@
 @layer base {
   html {
     scroll-behavior: smooth;
-    scroll-padding-block-start: 5rem;
+    scroll-padding-block-start: 4.25rem;
     hanging-punctuation: first last;
   }
   @media (width < 48rem) {
-    html { scroll-padding-block-start: var(--space-s); }
+    html { scroll-padding-block-start: var(--space-xs); }
   }
   @media (prefers-reduced-motion: reduce) {
     html { scroll-behavior: auto; }
@@ -155,6 +161,7 @@
   }
 
   .band { padding-block: var(--space-xl); }
+  #compile.band { padding-block-start: clamp(1.25rem, 1rem + 2vw, 3rem); }
   .band--alt { background: var(--bg-alt); }
   .band--cortex,
   .band--cortex-alt {
@@ -180,17 +187,25 @@
   .band--cortex-alt .section-head__num { color: var(--magenta); }
   .section-head__lede { font-size: var(--step-1); color: var(--muted); }
 
-  /* Single-column grids default to minmax(0, 1fr) so wide children (scrolling
-     tables, long code) can never stretch the column past the viewport. */
+  /* Single-column grids default to minmax(0, 1fr) so wide children can never stretch
+     the column past the viewport. On mobile, pitch-stage sits first for single-screen view. */
   .compile-grid {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
-    gap: var(--space-l);
+    gap: clamp(2.25rem, 6svh, 3.25rem);
     align-items: start;
   }
   @media (width >= 60rem) {
-    .compile-grid { grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); }
-    .pitch-card { position: sticky; inset-block-start: 5.5rem; }
+    .compile-grid {
+      grid-template-columns: minmax(0, 1.25fr) 29.5rem;
+      gap: var(--space-l);
+    }
+    .pickers { order: 1; }
+    .pitch-stage {
+      order: 2;
+      position: sticky;
+      inset-block-start: 4.5rem;
+    }
   }
 
   .knot-grid,
@@ -252,11 +267,11 @@
   }
   .site-header__inner {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     align-items: center;
     justify-content: space-between;
     gap: var(--space-xs) var(--space-m);
-    padding-block: var(--space-xs);
+    padding-block: 0.25rem;
   }
   .brand {
     display: inline-flex;
@@ -269,42 +284,55 @@
     text-decoration: none;
     letter-spacing: 0.02em;
   }
-  .brand__mark { inline-size: 1.4rem; color: var(--vermilion); }
+  .brand__mark { inline-size: 1.4rem; flex: none; color: var(--vermilion); }
   .site-nav {
     display: flex;
-    flex-wrap: wrap;
-    gap: 0 0.9rem;
+    flex-wrap: nowrap;
+    gap: 0 1.15rem;
     padding: 0;
     list-style: none;
+    font-family: var(--font-display);
     font-size: var(--step--1);
   }
   .site-nav a {
-    display: inline-block;
-    min-block-size: 2.25rem;
-    padding-block: 0.4rem;
+    display: inline-flex;
+    align-items: center;
+    min-block-size: 2.75rem;
+    padding-block: 0.25rem;
     color: #f1ebe3;
     text-decoration: none;
     text-transform: uppercase;
-    letter-spacing: 0.06em;
+    letter-spacing: 0.05em;
     font-weight: 600;
+    white-space: nowrap;
   }
   .site-nav a:hover { color: var(--gold); text-decoration: underline; }
 
-  /* Phones: a wrapped two-row nav would eat a fifth of the screen if it stayed
-     pinned, so the header scrolls away with the page below 48rem. */
+  /* Phones: compact single-row icon + 4-link bar; scrolls away below 48rem. */
   @media (width < 48rem) {
     .site-header { position: static; backdrop-filter: none; background: var(--obsidian); }
-    .site-header__inner { padding-block: var(--space-xs) 0; }
+    .brand {
+      display: inline-grid;
+      place-items: center;
+      inline-size: 2.75rem;
+      block-size: 2.75rem;
+      flex: none;
+    }
+    .brand__mark { inline-size: 1.5rem; }
+    .brand__text { display: none; }
+    .site-nav { gap: clamp(0.65rem, 3.5vw, 1.15rem); }
   }
 
   /* Hero */
   .hero {
     background:
-      radial-gradient(60rem 30rem at 85% 10%, color-mix(in oklab, var(--vermilion) 35%, transparent), transparent 70%),
+      radial-gradient(60rem 30rem at 85% 10%, color-mix(in oklab, var(--pitch-p) 38%, transparent), transparent 70%),
+      radial-gradient(45rem 25rem at 15% 90%, color-mix(in oklab, var(--pitch-t) 24%, transparent), transparent 70%),
       var(--obsidian);
     color: #fff;
     padding-block: var(--space-xl);
     border-block-end: 0.4rem solid var(--gold);
+    transition: background 320ms ease;
   }
   .hero__inner {
     display: grid;
@@ -316,7 +344,7 @@
   }
   .hero__copy { display: grid; gap: var(--space-m); justify-items: start; }
   .hero h1 { display: grid; text-transform: uppercase; }
-  .hero__big { font-size: var(--step-4); line-height: 0.9; }
+  .hero__big { font-size: var(--step-4); line-height: 0.92; }
   .hero__sub { font-size: var(--step-3); color: var(--gold); letter-spacing: 0.03em; }
   .hero__lede { font-size: var(--step-1); font-style: italic; color: #e2d6c6; }
   .hero__meta {
@@ -331,33 +359,48 @@
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: var(--space-s);
     inline-size: 100%;
-    max-inline-size: 24rem;
+    max-inline-size: 26rem;
     justify-self: center;
   }
-  .hero-die { display: grid; grid-template-columns: minmax(0, 1fr); justify-items: center; gap: 0.3rem; }
-  .hero-die svg { inline-size: 100%; max-inline-size: 5.5rem; }
+  .hero-die {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: center;
+    gap: 0.35rem;
+    color: var(--dial);
+    transition: color 180ms ease;
+  }
+  .hero-die svg { inline-size: 100%; max-inline-size: 6.25rem; }
   .hero-die text { fill: #fff; font: 700 10.2px var(--font-display); }
+  .hero-die[data-d="6"] text { fill: var(--obsidian); }
   .hero-die figcaption {
+    display: grid;
+    justify-items: center;
+    gap: 0.08rem;
+    min-block-size: 2.35rem;
+    text-align: center;
     font-family: var(--font-display);
-    font-size: clamp(0.7rem, 0.55rem + 0.8vw, 0.92rem);
     text-transform: uppercase;
     letter-spacing: 0.04em;
-    color: #e2d6c6;
   }
-  .hero-die--p { color: var(--d1); }
-  .hero-die--s { color: var(--d3); }
-  .hero-die--t { color: var(--d2); }
-  .hero-die--u { color: var(--gold); }
-  .hero-die--u text { fill: var(--obsidian); }
+  .hero-die__role {
+    font-size: 0.66rem;
+    color: #b8ab9c;
+    letter-spacing: 0.08em;
+  }
+  .hero-die__val {
+    font-size: clamp(0.72rem, 0.58rem + 0.65vw, 0.9rem);
+    font-weight: 700;
+    color: color-mix(in oklab, var(--dial) 45%, #ffffff);
+    min-block-size: 1.15em;
+    white-space: nowrap;
+  }
 
   @media (prefers-reduced-motion: no-preference) {
-    .hero-die svg { animation: bob 5s ease-in-out infinite; }
-    .hero-die:nth-child(2) svg { animation-delay: -1.2s; }
-    .hero-die:nth-child(3) svg { animation-delay: -2.4s; }
-    .hero-die:nth-child(4) svg { animation-delay: -3.6s; }
-  }
-  @keyframes bob {
-    50% { transform: translateY(-0.45rem) rotate(-4deg); }
+    .hero-die.is-rolling svg {
+      animation: tumble 1150ms cubic-bezier(.2,.8,.3,1.2) both;
+      animation-delay: var(--roll-delay, 0ms);
+    }
   }
 
   .sprite { position: absolute; inline-size: 0; block-size: 0; overflow: hidden; }
@@ -389,12 +432,12 @@
   /* Inline Font Awesome arrows inside headings and status text */
   :is(h3, h4, .status-msg) .fa-arrow-right { font-size: 0.8em; margin-inline: 0.15em; vertical-align: 0.05em; }
 
-  /* Buttons */
+  /* Buttons & Icon Buttons */
   .button {
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
-    padding: 0.65em 1.2em;
+    padding: 0.6em 1.15em;
     border: 2px solid var(--obsidian);
     border-radius: var(--radius);
     font-family: var(--font-display);
@@ -413,24 +456,92 @@
   .button--ghost { background: var(--surface); color: var(--ink); border-color: var(--border); box-shadow: none; }
   .button--ghost:hover { border-color: var(--ink); box-shadow: none; }
 
-  /* Pickers */
-  .pickers { display: grid; gap: var(--space-m); }
+  .icon-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    flex: none;
+  }
+  .icon-btn {
+    display: inline-grid;
+    place-items: center;
+    inline-size: 2.75rem;
+    block-size: 2.75rem;
+    padding: 0;
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    color: var(--ink);
+    cursor: pointer;
+    transition: border-color 120ms ease, color 120ms ease, transform 120ms ease;
+  }
+  .icon-btn svg { inline-size: 1.25rem; block-size: 1.25rem; }
+  .icon-btn:hover {
+    border-color: var(--vermilion);
+    color: var(--vermilion-ink);
+    transform: translateY(-1px);
+  }
+  .icon-btn:active { transform: translateY(1px); }
+  .icon-btn.is-copied {
+    border-color: var(--d7);
+    color: var(--d7);
+  }
+
+  /* Pitch Stage + Roll Bar */
+  .pitch-stage {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    inline-size: min(100%, 29.5rem);
+    justify-self: center;
+    min-block-size: clamp(34rem, calc(100svh - 1.5rem), 54rem);
+    scroll-margin-block-start: 0.25rem;
+  }
+  @media (48rem <= width < 60rem) {
+    .pitch-stage {
+      min-block-size: clamp(32rem, calc(100svh - 5.5rem), 46rem);
+      scroll-margin-block-start: 0;
+    }
+  }
+  @media (width >= 60rem) {
+    .pitch-stage {
+      inline-size: 100%;
+      min-block-size: 0;
+      scroll-margin-block-start: 0.25rem;
+    }
+  }
+
   .roll-bar {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     align-items: center;
-    gap: var(--space-m);
+    justify-content: space-between;
+    gap: clamp(0.28rem, 1.3vw, 0.6rem);
   }
   .roll-bar:not([hidden]) { display: flex; }
-  .dice-tray { display: flex; gap: 0.4rem; min-block-size: 2.6rem; align-items: center; }
+  .roll-bar .button {
+    flex: none;
+    min-block-size: 2.75rem;
+    padding: 0.45em clamp(0.6rem, 2.5vw, 1.05em);
+    font-size: clamp(0.84rem, 3.4vw, 1rem);
+    white-space: nowrap;
+  }
+  .dice-tray {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: clamp(0.15rem, 0.8vw, 0.35rem);
+    min-block-size: 2.75rem;
+    margin-inline: auto;
+  }
   .dice-tray__die {
     display: grid;
     place-items: center;
-    inline-size: 2.4rem;
+    inline-size: clamp(1.9rem, 8.2vw, 2.6rem);
     aspect-ratio: 1;
     background: var(--dial);
     color: #fff;
-    font: 700 1.1rem var(--font-display);
+    font: 700 clamp(1.05rem, 4.1vw, 1.35rem)/1 var(--font-display);
     clip-path: var(--diecon-d8);
   }
   .dice-tray__die[data-d="6"] { color: var(--obsidian); }
@@ -442,6 +553,224 @@
   }
   @keyframes tumble { from { transform: rotate(-200deg) scale(0.3); opacity: 0; } }
 
+  /* Pitch Card — high-impact poster typography + 2-row Dial-Aligned Bento Grid */
+  .pitch-card {
+    --muted: #cbbfb2;
+    inline-size: 100%;
+    flex: 1;
+    min-block-size: 31rem;
+    display: flex;
+    flex-direction: column;
+    gap: clamp(0.5rem, 1.4svh, 0.9rem);
+    padding: clamp(1rem, 2.4svh, 1.65rem) clamp(0.85rem, 3vw, 1.5rem);
+    border-radius: var(--radius);
+    border: 2px solid color-mix(in oklab, var(--pitch-p) 62%, #3c3634);
+    background:
+      radial-gradient(26rem 15rem at 8% 4%, color-mix(in oklab, var(--pitch-p) 34%, transparent), transparent 72%),
+      radial-gradient(24rem 15rem at 95% 22%, color-mix(in oklab, var(--pitch-s) 28%, transparent), transparent 72%),
+      radial-gradient(26rem 16rem at 50% 100%, color-mix(in oklab, var(--pitch-t) 26%, transparent), transparent 75%),
+      linear-gradient(160deg, color-mix(in oklab, var(--pitch-u) 10%, #1b1719), #141113 72%);
+    color: #fff;
+    box-shadow: 0.45rem 0.45rem 0 var(--pitch-p);
+    transition: box-shadow 240ms ease, border-color 240ms ease, background 240ms ease;
+  }
+  @media (width >= 60rem) {
+    .pitch-card {
+      flex: none;
+      min-block-size: clamp(33rem, calc(100dvh - 9rem), 38rem);
+    }
+  }
+
+  .pitch-card__top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    block-size: 1.5rem;
+    flex: none;
+  }
+  .pitch-card .eyebrow {
+    font-size: clamp(1rem, 4.3vw, 1.18rem);
+    letter-spacing: 0.12em;
+    color: color-mix(in oklab, var(--pitch-u) 62%, #ffd277);
+  }
+  .share-toast {
+    font-family: var(--font-display);
+    font-size: 0.82rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 0.12rem 0.6rem;
+    border-radius: 999px;
+    background: color-mix(in oklab, var(--d7) 30%, #000);
+    border: 1px solid var(--d7);
+    color: #9ff3dc;
+  }
+
+  /* Always 3 stacked poster lines — zero wrap jitter between short and long words */
+  .pitch-title {
+    display: grid;
+    grid-template-rows: repeat(3, 1.02em);
+    gap: 0.03em;
+    font-size: clamp(2.75rem, min(14.2vw, 6.6svh), 3.9rem);
+    text-transform: uppercase;
+    line-height: 1.02;
+    letter-spacing: 0.01em;
+    flex: none;
+  }
+  @media (width >= 60rem) {
+    .pitch-title {
+      font-size: 3.55rem;
+    }
+  }
+  .pitch-title:focus { outline: none; }
+  .pitch-title .slot {
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .slot[data-dial="p"] { color: color-mix(in oklab, var(--pitch-p) 58%, #ffffff); }
+  .slot[data-dial="s"] { color: color-mix(in oklab, var(--pitch-s) 58%, #ffffff); }
+  .slot[data-dial="t"] { color: color-mix(in oklab, var(--pitch-t) 58%, #ffffff); }
+  .pitch-title .ph { color: #7a7069; }
+
+  /* Fixed-height callout slot: shows Undertow normally, swaps cleanly to Matched Pair / 4-of-a-Kind */
+  .pitch-meta-slot {
+    block-size: clamp(3.15rem, 6.6svh, 3.9rem);
+    display: flex;
+    align-items: center;
+    flex: none;
+  }
+  .pitch-undertow {
+    font-size: clamp(1.12rem, 4.9vw, 1.38rem);
+    line-height: 1.22;
+    color: #efe6dc;
+  }
+  .pitch-undertow strong { color: color-mix(in oklab, var(--pitch-u) 48%, #fff3d6); }
+
+  .status-msg {
+    display: none;
+    inline-size: 100%;
+    padding: 0.45rem 0.75rem;
+    border-radius: var(--radius);
+    font-size: clamp(0.96rem, 4.05vw, 1.14rem);
+    line-height: 1.22;
+    background: color-mix(in oklab, var(--pitch-u) 24%, rgba(0, 0, 0, 0.45));
+    border-inline-start: 0.3rem solid var(--gold);
+  }
+  .status-msg[data-status="archetype"] {
+    background: color-mix(in oklab, var(--pitch-p) 30%, rgba(0, 0, 0, 0.45));
+    border-color: var(--vermilion);
+  }
+
+  /* 2-Row Bento Grid: Row 1 = full-width Identity Prompts card (3 columns inside);
+     Row 2 = Engine Mod | Prime Set 2 | Prime Set 3 side-by-side Bento tiles */
+  .pitch-facts {
+    flex: 1;
+    display: grid;
+    grid-template-columns: minmax(0, 0.83fr) minmax(0, 0.97fr) minmax(0, 1.2fr);
+    grid-template-rows: minmax(0, 1.04fr) minmax(0, 1fr);
+    gap: clamp(0.5rem, 1.5svh, 0.85rem) 0.3rem;
+    margin-block: clamp(0.05rem, 0.5svh, 0.3rem);
+  }
+  .pitch-facts > div {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 0.28rem;
+    min-inline-size: 0;
+    padding: clamp(0.55rem, 1.6svh, 0.95rem) clamp(0.35rem, 1.3vw, 0.65rem);
+    border-radius: var(--radius);
+    background: rgba(255, 255, 255, 0.048);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+  }
+  .pitch-facts > div:first-child {
+    grid-column: 1 / -1;
+    padding-inline: clamp(0.6rem, 2vw, 0.9rem);
+    border-block-start: 3px solid color-mix(in oklab, var(--gold) 78%, transparent);
+  }
+  .pitch-facts > div:nth-child(2) { border-block-start: 3px solid var(--pitch-p); }
+  .pitch-facts > div:nth-child(3) { border-block-start: 3px solid var(--pitch-s); }
+  .pitch-facts > div:nth-child(4) { border-block-start: 3px solid var(--pitch-t); }
+
+  .pitch-facts dt {
+    font-family: var(--font-display);
+    font-size: clamp(0.71rem, 3.05vw, 0.92rem);
+    font-weight: 700;
+    line-height: 1.1;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    color: var(--gold);
+    white-space: nowrap;
+  }
+  .pitch-facts > div:first-child dt {
+    font-size: clamp(0.92rem, 3.8vw, 1.1rem);
+    letter-spacing: 0.07em;
+  }
+  .pitch-facts dd {
+    display: flex;
+    align-items: flex-end;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(0.98rem, 4.4vw, 1.32rem);
+    line-height: 1.1;
+    min-block-size: 3.3em;
+    color: #fff;
+  }
+  .pitch-facts > div:first-child dd {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: stretch;
+    gap: 0.4rem;
+    font-size: clamp(1.02rem, 4.4vw, 1.44rem);
+    min-block-size: 0;
+  }
+  .fact {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 0.2rem;
+    min-inline-size: 0;
+    min-block-size: 3.45em;
+  }
+  .fact + .fact {
+    padding-inline-start: 0.38rem;
+    border-inline-start: 1px solid rgba(255, 255, 255, 0.12);
+  }
+  .fact .muted {
+    font-family: var(--font-display);
+    font-size: clamp(0.8rem, 3.3vw, 0.96rem);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    line-height: 1.15;
+  }
+
+  /* Anchored in opposite bottom corners, never clipped */
+  .pitch-links {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-block-start: 0;
+    padding-block-start: clamp(0.5rem, 1.2svh, 0.8rem);
+    border-block-start: 1px solid rgba(255, 255, 255, 0.14);
+    font-size: clamp(0.96rem, 4vw, 1.1rem);
+    line-height: 1.3;
+    flex: none;
+  }
+  .pitch-links a {
+    color: var(--gold);
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .pitch-links a:last-child {
+    text-align: end;
+  }
+
+  /* Pickers */
+  .pickers { display: grid; gap: var(--space-m); }
   .note {
     padding: var(--space-s);
     border-inline-start: 0.3rem solid var(--gold);
@@ -495,11 +824,12 @@
     display: grid;
     place-items: center;
     flex: none;
-    inline-size: 2rem;
+    inline-size: 2.15rem;
     aspect-ratio: 1;
     background: var(--dial);
     color: #fff;
     font-family: var(--font-display);
+    font-size: 1.05rem;
     font-weight: 700;
     clip-path: var(--diecon-d8);
   }
@@ -545,75 +875,7 @@
   }
   .segmented input:checked + label { background: var(--gold); color: var(--obsidian); }
 
-  .form-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-xs);
-    margin-block-start: calc(-1 * var(--space-xs));
-  }
-  .form-actions .button { padding-inline: 0.9em; }
-
-  /* Pitch card */
-  .pitch-card {
-    display: grid;
-    gap: var(--space-m);
-    padding: var(--space-l);
-    border-radius: var(--radius);
-    background: var(--obsidian);
-    color: #fff;
-    box-shadow: 0.45rem 0.45rem 0 var(--vermilion);
-    --muted: #b8ab9c;
-  }
-  @media (width < 30rem) {
-    .pitch-card { padding: var(--space-m); }
-  }
-  .pitch-card .eyebrow { color: var(--gold); }
-  .pitch-title {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.15em 0.35em;
-    font-size: var(--step-3);
-    text-transform: uppercase;
-    line-height: 1;
-  }
-  .pitch-title:focus { outline: none; }
-  .slot[data-dial="p"] { color: #c99bff; }
-  .slot[data-dial="s"] { color: #7cc4ff; }
-  .slot[data-dial="t"] { color: #ff86b8; }
-  .pitch-title .ph { color: #6e655f; }
-  .pitch-undertow { color: #e2d6c6; }
-  .pitch-undertow strong { color: var(--gold); }
-  .pitch-status:empty { display: none; }
-  .status-msg {
-    display: none;
-    padding: var(--space-s);
-    border-radius: var(--radius);
-    background: color-mix(in oklab, var(--gold) 20%, transparent);
-    border-inline-start: 0.3rem solid var(--gold);
-  }
-  .status-msg[data-status="archetype"] {
-    background: color-mix(in oklab, var(--vermilion) 25%, transparent);
-    border-color: var(--vermilion);
-  }
-
-  .pitch-facts { display: grid; gap: var(--space-s); }
-  .pitch-facts > div {
-    display: grid;
-    gap: 0.15rem;
-    padding-block-start: var(--space-s);
-    border-block-start: 1px solid #3c3634;
-  }
-  .pitch-facts dt {
-    font-family: var(--font-display);
-    font-size: var(--step--1);
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--gold);
-  }
-  .pitch-facts dd { display: flex; flex-wrap: wrap; gap: 0.2rem 1rem; font-weight: 600; }
-  .fact { display: inline-flex; gap: 0.35rem; }
-  .pitch-links { display: flex; flex-wrap: wrap; gap: 0.5rem 1.25rem; }
-  .pitch-links a { color: var(--gold); font-weight: 600; }
+  .form-actions { display: flex; gap: var(--space-xs); }
 
   /* Placeholders vs. revealed values: values hidden until their radio is checked */
   .reveal { display: none; }
@@ -763,11 +1025,11 @@
   .die {
     display: inline-grid;
     place-items: center;
-    inline-size: 2rem;
+    inline-size: 2.2rem;
     aspect-ratio: 1;
     background: var(--dial);
     color: #fff;
-    font: 700 0.95rem var(--font-display);
+    font: 700 1.05rem var(--font-display);
     clip-path: var(--diecon-d8);
   }
   [data-d="6"] > .die, .die:where([data-d="6"] *) { color: var(--obsidian); }
@@ -980,146 +1242,217 @@
 
 /* ------------------------------------------------------------------ state */
 @layer state {
-/* ---- Selection state (generated lists; pure CSS :has()) ---- */
-:root:has(#p1:checked) .reveal[data-p="1"],
-:root:has(#p2:checked) .reveal[data-p="2"],
-:root:has(#p3:checked) .reveal[data-p="3"],
-:root:has(#p4:checked) .reveal[data-p="4"],
-:root:has(#p5:checked) .reveal[data-p="5"],
-:root:has(#p6:checked) .reveal[data-p="6"],
-:root:has(#p7:checked) .reveal[data-p="7"],
-:root:has(#p8:checked) .reveal[data-p="8"],
-:root:has(#s1:checked) .reveal[data-s="1"],
-:root:has(#s2:checked) .reveal[data-s="2"],
-:root:has(#s3:checked) .reveal[data-s="3"],
-:root:has(#s4:checked) .reveal[data-s="4"],
-:root:has(#s5:checked) .reveal[data-s="5"],
-:root:has(#s6:checked) .reveal[data-s="6"],
-:root:has(#s7:checked) .reveal[data-s="7"],
-:root:has(#s8:checked) .reveal[data-s="8"],
-:root:has(#t1:checked) .reveal[data-t="1"],
-:root:has(#t2:checked) .reveal[data-t="2"],
-:root:has(#t3:checked) .reveal[data-t="3"],
-:root:has(#t4:checked) .reveal[data-t="4"],
-:root:has(#t5:checked) .reveal[data-t="5"],
-:root:has(#t6:checked) .reveal[data-t="6"],
-:root:has(#t7:checked) .reveal[data-t="7"],
-:root:has(#t8:checked) .reveal[data-t="8"],
-:root:has(#u1:checked) .reveal[data-u="1"],
-:root:has(#u2:checked) .reveal[data-u="2"],
-:root:has(#u3:checked) .reveal[data-u="3"],
-:root:has(#u4:checked) .reveal[data-u="4"],
-:root:has(#u5:checked) .reveal[data-u="5"],
-:root:has(#u6:checked) .reveal[data-u="6"],
-:root:has(#u7:checked) .reveal[data-u="7"],
-:root:has(#u8:checked) .reveal[data-u="8"],
-:root:has(#ud-p:checked) .reveal[data-ud="p"],
-:root:has(#ud-s:checked) .reveal[data-ud="s"],
-:root:has(#ud-t:checked) .reveal[data-ud="t"] {
-  display: revert;
-}
+  :root:has(#p1:checked) { --pitch-p: var(--d1); }
+  :root:has(#p2:checked) { --pitch-p: var(--d2); }
+  :root:has(#p3:checked) { --pitch-p: var(--d3); }
+  :root:has(#p4:checked) { --pitch-p: var(--d4); }
+  :root:has(#p5:checked) { --pitch-p: var(--d5); }
+  :root:has(#p6:checked) { --pitch-p: var(--d6); }
+  :root:has(#p7:checked) { --pitch-p: var(--d7); }
+  :root:has(#p8:checked) { --pitch-p: var(--d8); }
 
-:root:has(#p1:checked) .hl[data-p="1"],
-:root:has(#p2:checked) .hl[data-p="2"],
-:root:has(#p3:checked) .hl[data-p="3"],
-:root:has(#p4:checked) .hl[data-p="4"],
-:root:has(#p5:checked) .hl[data-p="5"],
-:root:has(#p6:checked) .hl[data-p="6"],
-:root:has(#p7:checked) .hl[data-p="7"],
-:root:has(#p8:checked) .hl[data-p="8"],
-:root:has(#s1:checked) .hl[data-s="1"],
-:root:has(#s2:checked) .hl[data-s="2"],
-:root:has(#s3:checked) .hl[data-s="3"],
-:root:has(#s4:checked) .hl[data-s="4"],
-:root:has(#s5:checked) .hl[data-s="5"],
-:root:has(#s6:checked) .hl[data-s="6"],
-:root:has(#s7:checked) .hl[data-s="7"],
-:root:has(#s8:checked) .hl[data-s="8"],
-:root:has(#t1:checked) .hl[data-t="1"],
-:root:has(#t2:checked) .hl[data-t="2"],
-:root:has(#t3:checked) .hl[data-t="3"],
-:root:has(#t4:checked) .hl[data-t="4"],
-:root:has(#t5:checked) .hl[data-t="5"],
-:root:has(#t6:checked) .hl[data-t="6"],
-:root:has(#t7:checked) .hl[data-t="7"],
-:root:has(#t8:checked) .hl[data-t="8"],
-:root:has(#ud-p:checked) .hl[data-ud="p"],
-:root:has(#ud-s:checked) .hl[data-ud="s"],
-:root:has(#ud-t:checked) .hl[data-ud="t"],
-:root:has(#p1:checked):has(#s1:checked):has(#t1:checked):has(#u1:checked) .hl[data-a="1"],
-:root:has(#p2:checked):has(#s2:checked):has(#t2:checked):has(#u2:checked) .hl[data-a="2"],
-:root:has(#p3:checked):has(#s3:checked):has(#t3:checked):has(#u3:checked) .hl[data-a="3"],
-:root:has(#p4:checked):has(#s4:checked):has(#t4:checked):has(#u4:checked) .hl[data-a="4"],
-:root:has(#p5:checked):has(#s5:checked):has(#t5:checked):has(#u5:checked) .hl[data-a="5"],
-:root:has(#p6:checked):has(#s6:checked):has(#t6:checked):has(#u6:checked) .hl[data-a="6"],
-:root:has(#p7:checked):has(#s7:checked):has(#t7:checked):has(#u7:checked) .hl[data-a="7"],
-:root:has(#p8:checked):has(#s8:checked):has(#t8:checked):has(#u8:checked) .hl[data-a="8"] {
-  background: color-mix(in oklab, var(--dial) 16%, var(--surface));
-  box-shadow: inset 0.3rem 0 0 var(--dial);
-}
+  :root:has(#s1:checked) { --pitch-s: var(--d1); }
+  :root:has(#s2:checked) { --pitch-s: var(--d2); }
+  :root:has(#s3:checked) { --pitch-s: var(--d3); }
+  :root:has(#s4:checked) { --pitch-s: var(--d4); }
+  :root:has(#s5:checked) { --pitch-s: var(--d5); }
+  :root:has(#s6:checked) { --pitch-s: var(--d6); }
+  :root:has(#s7:checked) { --pitch-s: var(--d7); }
+  :root:has(#s8:checked) { --pitch-s: var(--d8); }
 
-:root:has([name="palette"]:checked) .ph[data-ph="p"],
-:root:has([name="setting"]:checked) .ph[data-ph="s"],
-:root:has([name="tone"]:checked) .ph[data-ph="t"],
-:root:has([name="undertow"]:checked) .ph[data-ph="u"],
-:root:has([name="undertow-dial"]:checked:not(#ud-none)) .ph[data-ph="ud"] {
-  display: none;
-}
+  :root:has(#t1:checked) { --pitch-t: var(--d1); }
+  :root:has(#t2:checked) { --pitch-t: var(--d2); }
+  :root:has(#t3:checked) { --pitch-t: var(--d3); }
+  :root:has(#t4:checked) { --pitch-t: var(--d4); }
+  :root:has(#t5:checked) { --pitch-t: var(--d5); }
+  :root:has(#t6:checked) { --pitch-t: var(--d6); }
+  :root:has(#t7:checked) { --pitch-t: var(--d7); }
+  :root:has(#t8:checked) { --pitch-t: var(--d8); }
 
-:root:has(#ud-none:checked) .reveal-wrap {
-  display: none;
-}
+  :root:has(#u1:checked) { --pitch-u: var(--d1); }
+  :root:has(#u2:checked) { --pitch-u: var(--d2); }
+  :root:has(#u3:checked) { --pitch-u: var(--d3); }
+  :root:has(#u4:checked) { --pitch-u: var(--d4); }
+  :root:has(#u5:checked) { --pitch-u: var(--d5); }
+  :root:has(#u6:checked) { --pitch-u: var(--d6); }
+  :root:has(#u7:checked) { --pitch-u: var(--d7); }
+  :root:has(#u8:checked) { --pitch-u: var(--d8); }
 
-:root:has(#ud-none:checked) .chips--numbers {
-  opacity: 0.55;
-}
+  /* ---- Selection state (generated lists; pure CSS :has()) ---- */
+  :root:has(#p1:checked) .reveal[data-p="1"],
+  :root:has(#p2:checked) .reveal[data-p="2"],
+  :root:has(#p3:checked) .reveal[data-p="3"],
+  :root:has(#p4:checked) .reveal[data-p="4"],
+  :root:has(#p5:checked) .reveal[data-p="5"],
+  :root:has(#p6:checked) .reveal[data-p="6"],
+  :root:has(#p7:checked) .reveal[data-p="7"],
+  :root:has(#p8:checked) .reveal[data-p="8"],
+  :root:has(#s1:checked) .reveal[data-s="1"],
+  :root:has(#s2:checked) .reveal[data-s="2"],
+  :root:has(#s3:checked) .reveal[data-s="3"],
+  :root:has(#s4:checked) .reveal[data-s="4"],
+  :root:has(#s5:checked) .reveal[data-s="5"],
+  :root:has(#s6:checked) .reveal[data-s="6"],
+  :root:has(#s7:checked) .reveal[data-s="7"],
+  :root:has(#s8:checked) .reveal[data-s="8"],
+  :root:has(#t1:checked) .reveal[data-t="1"],
+  :root:has(#t2:checked) .reveal[data-t="2"],
+  :root:has(#t3:checked) .reveal[data-t="3"],
+  :root:has(#t4:checked) .reveal[data-t="4"],
+  :root:has(#t5:checked) .reveal[data-t="5"],
+  :root:has(#t6:checked) .reveal[data-t="6"],
+  :root:has(#t7:checked) .reveal[data-t="7"],
+  :root:has(#t8:checked) .reveal[data-t="8"],
+  :root:has(#u1:checked) .reveal[data-u="1"],
+  :root:has(#u2:checked) .reveal[data-u="2"],
+  :root:has(#u3:checked) .reveal[data-u="3"],
+  :root:has(#u4:checked) .reveal[data-u="4"],
+  :root:has(#u5:checked) .reveal[data-u="5"],
+  :root:has(#u6:checked) .reveal[data-u="6"],
+  :root:has(#u7:checked) .reveal[data-u="7"],
+  :root:has(#u8:checked) .reveal[data-u="8"],
+  :root:has(#ud-p:checked) .reveal[data-ud="p"],
+  :root:has(#ud-s:checked) .reveal[data-ud="s"],
+  :root:has(#ud-t:checked) .reveal[data-ud="t"] {
+    display: revert;
+  }
 
-:root:has(#ud-p:checked):has(#u1:checked):has(#p1:checked) .status-msg[data-status="deep"],
-:root:has(#ud-s:checked):has(#u1:checked):has(#s1:checked) .status-msg[data-status="deep"],
-:root:has(#ud-t:checked):has(#u1:checked):has(#t1:checked) .status-msg[data-status="deep"],
-:root:has(#ud-p:checked):has(#u2:checked):has(#p2:checked) .status-msg[data-status="deep"],
-:root:has(#ud-s:checked):has(#u2:checked):has(#s2:checked) .status-msg[data-status="deep"],
-:root:has(#ud-t:checked):has(#u2:checked):has(#t2:checked) .status-msg[data-status="deep"],
-:root:has(#ud-p:checked):has(#u3:checked):has(#p3:checked) .status-msg[data-status="deep"],
-:root:has(#ud-s:checked):has(#u3:checked):has(#s3:checked) .status-msg[data-status="deep"],
-:root:has(#ud-t:checked):has(#u3:checked):has(#t3:checked) .status-msg[data-status="deep"],
-:root:has(#ud-p:checked):has(#u4:checked):has(#p4:checked) .status-msg[data-status="deep"],
-:root:has(#ud-s:checked):has(#u4:checked):has(#s4:checked) .status-msg[data-status="deep"],
-:root:has(#ud-t:checked):has(#u4:checked):has(#t4:checked) .status-msg[data-status="deep"],
-:root:has(#ud-p:checked):has(#u5:checked):has(#p5:checked) .status-msg[data-status="deep"],
-:root:has(#ud-s:checked):has(#u5:checked):has(#s5:checked) .status-msg[data-status="deep"],
-:root:has(#ud-t:checked):has(#u5:checked):has(#t5:checked) .status-msg[data-status="deep"],
-:root:has(#ud-p:checked):has(#u6:checked):has(#p6:checked) .status-msg[data-status="deep"],
-:root:has(#ud-s:checked):has(#u6:checked):has(#s6:checked) .status-msg[data-status="deep"],
-:root:has(#ud-t:checked):has(#u6:checked):has(#t6:checked) .status-msg[data-status="deep"],
-:root:has(#ud-p:checked):has(#u7:checked):has(#p7:checked) .status-msg[data-status="deep"],
-:root:has(#ud-s:checked):has(#u7:checked):has(#s7:checked) .status-msg[data-status="deep"],
-:root:has(#ud-t:checked):has(#u7:checked):has(#t7:checked) .status-msg[data-status="deep"],
-:root:has(#ud-p:checked):has(#u8:checked):has(#p8:checked) .status-msg[data-status="deep"],
-:root:has(#ud-s:checked):has(#u8:checked):has(#s8:checked) .status-msg[data-status="deep"],
-:root:has(#ud-t:checked):has(#u8:checked):has(#t8:checked) .status-msg[data-status="deep"],
-:root:has(#p1:checked):has(#s1:checked):has(#t1:checked):has(#u1:checked) .status-msg[data-status="archetype"],
-:root:has(#p2:checked):has(#s2:checked):has(#t2:checked):has(#u2:checked) .status-msg[data-status="archetype"],
-:root:has(#p3:checked):has(#s3:checked):has(#t3:checked):has(#u3:checked) .status-msg[data-status="archetype"],
-:root:has(#p4:checked):has(#s4:checked):has(#t4:checked):has(#u4:checked) .status-msg[data-status="archetype"],
-:root:has(#p5:checked):has(#s5:checked):has(#t5:checked):has(#u5:checked) .status-msg[data-status="archetype"],
-:root:has(#p6:checked):has(#s6:checked):has(#t6:checked):has(#u6:checked) .status-msg[data-status="archetype"],
-:root:has(#p7:checked):has(#s7:checked):has(#t7:checked):has(#u7:checked) .status-msg[data-status="archetype"],
-:root:has(#p8:checked):has(#s8:checked):has(#t8:checked):has(#u8:checked) .status-msg[data-status="archetype"] {
-  display: block;
-}
+  :root:has(#p1:checked) .hl[data-p="1"],
+  :root:has(#p2:checked) .hl[data-p="2"],
+  :root:has(#p3:checked) .hl[data-p="3"],
+  :root:has(#p4:checked) .hl[data-p="4"],
+  :root:has(#p5:checked) .hl[data-p="5"],
+  :root:has(#p6:checked) .hl[data-p="6"],
+  :root:has(#p7:checked) .hl[data-p="7"],
+  :root:has(#p8:checked) .hl[data-p="8"],
+  :root:has(#s1:checked) .hl[data-s="1"],
+  :root:has(#s2:checked) .hl[data-s="2"],
+  :root:has(#s3:checked) .hl[data-s="3"],
+  :root:has(#s4:checked) .hl[data-s="4"],
+  :root:has(#s5:checked) .hl[data-s="5"],
+  :root:has(#s6:checked) .hl[data-s="6"],
+  :root:has(#s7:checked) .hl[data-s="7"],
+  :root:has(#s8:checked) .hl[data-s="8"],
+  :root:has(#t1:checked) .hl[data-t="1"],
+  :root:has(#t2:checked) .hl[data-t="2"],
+  :root:has(#t3:checked) .hl[data-t="3"],
+  :root:has(#t4:checked) .hl[data-t="4"],
+  :root:has(#t5:checked) .hl[data-t="5"],
+  :root:has(#t6:checked) .hl[data-t="6"],
+  :root:has(#t7:checked) .hl[data-t="7"],
+  :root:has(#t8:checked) .hl[data-t="8"],
+  :root:has(#ud-p:checked) .hl[data-ud="p"],
+  :root:has(#ud-s:checked) .hl[data-ud="s"],
+  :root:has(#ud-t:checked) .hl[data-ud="t"],
+  :root:has(#p1:checked):has(#s1:checked):has(#t1:checked):has(#u1:checked) .hl[data-a="1"],
+  :root:has(#p2:checked):has(#s2:checked):has(#t2:checked):has(#u2:checked) .hl[data-a="2"],
+  :root:has(#p3:checked):has(#s3:checked):has(#t3:checked):has(#u3:checked) .hl[data-a="3"],
+  :root:has(#p4:checked):has(#s4:checked):has(#t4:checked):has(#u4:checked) .hl[data-a="4"],
+  :root:has(#p5:checked):has(#s5:checked):has(#t5:checked):has(#u5:checked) .hl[data-a="5"],
+  :root:has(#p6:checked):has(#s6:checked):has(#t6:checked):has(#u6:checked) .hl[data-a="6"],
+  :root:has(#p7:checked):has(#s7:checked):has(#t7:checked):has(#u7:checked) .hl[data-a="7"],
+  :root:has(#p8:checked):has(#s8:checked):has(#t8:checked):has(#u8:checked) .hl[data-a="8"] {
+    background: color-mix(in oklab, var(--dial) 16%, var(--surface));
+    box-shadow: inset 0.3rem 0 0 var(--dial);
+  }
 
-:root:has(#p1:checked):has(#s1:checked):has(#t1:checked):has(#u1:checked) .status-msg[data-status="deep"],
-:root:has(#p2:checked):has(#s2:checked):has(#t2:checked):has(#u2:checked) .status-msg[data-status="deep"],
-:root:has(#p3:checked):has(#s3:checked):has(#t3:checked):has(#u3:checked) .status-msg[data-status="deep"],
-:root:has(#p4:checked):has(#s4:checked):has(#t4:checked):has(#u4:checked) .status-msg[data-status="deep"],
-:root:has(#p5:checked):has(#s5:checked):has(#t5:checked):has(#u5:checked) .status-msg[data-status="deep"],
-:root:has(#p6:checked):has(#s6:checked):has(#t6:checked):has(#u6:checked) .status-msg[data-status="deep"],
-:root:has(#p7:checked):has(#s7:checked):has(#t7:checked):has(#u7:checked) .status-msg[data-status="deep"],
-:root:has(#p8:checked):has(#s8:checked):has(#t8:checked):has(#u8:checked) .status-msg[data-status="deep"] {
-  display: none;
-}
+  :root:has([name="palette"]:checked) .ph[data-ph="p"],
+  :root:has([name="setting"]:checked) .ph[data-ph="s"],
+  :root:has([name="tone"]:checked) .ph[data-ph="t"],
+  :root:has([name="undertow"]:checked) .ph[data-ph="u"],
+  :root:has([name="undertow-dial"]:checked:not(#ud-none)) .ph[data-ph="ud"] {
+    display: none;
+  }
 
+  :root:has(#ud-none:checked) .reveal-wrap {
+    display: none;
+  }
+
+  :root:has(#ud-none:checked) .chips--numbers {
+    opacity: 0.55;
+  }
+
+  /* Swap the single meta slot cleanly between Undertow and Matched Pair / 4-of-a-Kind */
+  :root:has(#ud-p:checked):has(#u1:checked):has(#p1:checked) .status-msg[data-status="deep"],
+  :root:has(#ud-s:checked):has(#u1:checked):has(#s1:checked) .status-msg[data-status="deep"],
+  :root:has(#ud-t:checked):has(#u1:checked):has(#t1:checked) .status-msg[data-status="deep"],
+  :root:has(#ud-p:checked):has(#u2:checked):has(#p2:checked) .status-msg[data-status="deep"],
+  :root:has(#ud-s:checked):has(#u2:checked):has(#s2:checked) .status-msg[data-status="deep"],
+  :root:has(#ud-t:checked):has(#u2:checked):has(#t2:checked) .status-msg[data-status="deep"],
+  :root:has(#ud-p:checked):has(#u3:checked):has(#p3:checked) .status-msg[data-status="deep"],
+  :root:has(#ud-s:checked):has(#u3:checked):has(#s3:checked) .status-msg[data-status="deep"],
+  :root:has(#ud-t:checked):has(#u3:checked):has(#t3:checked) .status-msg[data-status="deep"],
+  :root:has(#ud-p:checked):has(#u4:checked):has(#p4:checked) .status-msg[data-status="deep"],
+  :root:has(#ud-s:checked):has(#u4:checked):has(#s4:checked) .status-msg[data-status="deep"],
+  :root:has(#ud-t:checked):has(#u4:checked):has(#t4:checked) .status-msg[data-status="deep"],
+  :root:has(#ud-p:checked):has(#u5:checked):has(#p5:checked) .status-msg[data-status="deep"],
+  :root:has(#ud-s:checked):has(#u5:checked):has(#s5:checked) .status-msg[data-status="deep"],
+  :root:has(#ud-t:checked):has(#u5:checked):has(#t5:checked) .status-msg[data-status="deep"],
+  :root:has(#ud-p:checked):has(#u6:checked):has(#p6:checked) .status-msg[data-status="deep"],
+  :root:has(#ud-s:checked):has(#u6:checked):has(#s6:checked) .status-msg[data-status="deep"],
+  :root:has(#ud-t:checked):has(#u6:checked):has(#t6:checked) .status-msg[data-status="deep"],
+  :root:has(#ud-p:checked):has(#u7:checked):has(#p7:checked) .status-msg[data-status="deep"],
+  :root:has(#ud-s:checked):has(#u7:checked):has(#s7:checked) .status-msg[data-status="deep"],
+  :root:has(#ud-t:checked):has(#u7:checked):has(#t7:checked) .status-msg[data-status="deep"],
+  :root:has(#ud-p:checked):has(#u8:checked):has(#p8:checked) .status-msg[data-status="deep"],
+  :root:has(#ud-s:checked):has(#u8:checked):has(#s8:checked) .status-msg[data-status="deep"],
+  :root:has(#ud-t:checked):has(#u8:checked):has(#t8:checked) .status-msg[data-status="deep"],
+  :root:has(#p1:checked):has(#s1:checked):has(#t1:checked):has(#u1:checked) .status-msg[data-status="archetype"],
+  :root:has(#p2:checked):has(#s2:checked):has(#t2:checked):has(#u2:checked) .status-msg[data-status="archetype"],
+  :root:has(#p3:checked):has(#s3:checked):has(#t3:checked):has(#u3:checked) .status-msg[data-status="archetype"],
+  :root:has(#p4:checked):has(#s4:checked):has(#t4:checked):has(#u4:checked) .status-msg[data-status="archetype"],
+  :root:has(#p5:checked):has(#s5:checked):has(#t5:checked):has(#u5:checked) .status-msg[data-status="archetype"],
+  :root:has(#p6:checked):has(#s6:checked):has(#t6:checked):has(#u6:checked) .status-msg[data-status="archetype"],
+  :root:has(#p7:checked):has(#s7:checked):has(#t7:checked):has(#u7:checked) .status-msg[data-status="archetype"],
+  :root:has(#p8:checked):has(#s8:checked):has(#t8:checked):has(#u8:checked) .status-msg[data-status="archetype"] {
+    display: block;
+  }
+
+  :root:has(#ud-p:checked):has(#u1:checked):has(#p1:checked) .pitch-undertow,
+  :root:has(#ud-s:checked):has(#u1:checked):has(#s1:checked) .pitch-undertow,
+  :root:has(#ud-t:checked):has(#u1:checked):has(#t1:checked) .pitch-undertow,
+  :root:has(#ud-p:checked):has(#u2:checked):has(#p2:checked) .pitch-undertow,
+  :root:has(#ud-s:checked):has(#u2:checked):has(#s2:checked) .pitch-undertow,
+  :root:has(#ud-t:checked):has(#u2:checked):has(#t2:checked) .pitch-undertow,
+  :root:has(#ud-p:checked):has(#u3:checked):has(#p3:checked) .pitch-undertow,
+  :root:has(#ud-s:checked):has(#u3:checked):has(#s3:checked) .pitch-undertow,
+  :root:has(#ud-t:checked):has(#u3:checked):has(#t3:checked) .pitch-undertow,
+  :root:has(#ud-p:checked):has(#u4:checked):has(#p4:checked) .pitch-undertow,
+  :root:has(#ud-s:checked):has(#u4:checked):has(#s4:checked) .pitch-undertow,
+  :root:has(#ud-t:checked):has(#u4:checked):has(#t4:checked) .pitch-undertow,
+  :root:has(#ud-p:checked):has(#u5:checked):has(#p5:checked) .pitch-undertow,
+  :root:has(#ud-s:checked):has(#u5:checked):has(#s5:checked) .pitch-undertow,
+  :root:has(#ud-t:checked):has(#u5:checked):has(#t5:checked) .pitch-undertow,
+  :root:has(#ud-p:checked):has(#u6:checked):has(#p6:checked) .pitch-undertow,
+  :root:has(#ud-s:checked):has(#u6:checked):has(#s6:checked) .pitch-undertow,
+  :root:has(#ud-t:checked):has(#u6:checked):has(#t6:checked) .pitch-undertow,
+  :root:has(#ud-p:checked):has(#u7:checked):has(#p7:checked) .pitch-undertow,
+  :root:has(#ud-s:checked):has(#u7:checked):has(#s7:checked) .pitch-undertow,
+  :root:has(#ud-t:checked):has(#u7:checked):has(#t7:checked) .pitch-undertow,
+  :root:has(#ud-p:checked):has(#u8:checked):has(#p8:checked) .pitch-undertow,
+  :root:has(#ud-s:checked):has(#u8:checked):has(#s8:checked) .pitch-undertow,
+  :root:has(#ud-t:checked):has(#u8:checked):has(#t8:checked) .pitch-undertow,
+  :root:has(#p1:checked):has(#s1:checked):has(#t1:checked):has(#u1:checked) .pitch-undertow,
+  :root:has(#p2:checked):has(#s2:checked):has(#t2:checked):has(#u2:checked) .pitch-undertow,
+  :root:has(#p3:checked):has(#s3:checked):has(#t3:checked):has(#u3:checked) .pitch-undertow,
+  :root:has(#p4:checked):has(#s4:checked):has(#t4:checked):has(#u4:checked) .pitch-undertow,
+  :root:has(#p5:checked):has(#s5:checked):has(#t5:checked):has(#u5:checked) .pitch-undertow,
+  :root:has(#p6:checked):has(#s6:checked):has(#t6:checked):has(#u6:checked) .pitch-undertow,
+  :root:has(#p7:checked):has(#s7:checked):has(#t7:checked):has(#u7:checked) .pitch-undertow,
+  :root:has(#p8:checked):has(#s8:checked):has(#t8:checked):has(#u8:checked) .pitch-undertow {
+    display: none;
+  }
+
+  :root:has(#p1:checked):has(#s1:checked):has(#t1:checked):has(#u1:checked) .status-msg[data-status="deep"],
+  :root:has(#p2:checked):has(#s2:checked):has(#t2:checked):has(#u2:checked) .status-msg[data-status="deep"],
+  :root:has(#p3:checked):has(#s3:checked):has(#t3:checked):has(#u3:checked) .status-msg[data-status="deep"],
+  :root:has(#p4:checked):has(#s4:checked):has(#t4:checked):has(#u4:checked) .status-msg[data-status="deep"],
+  :root:has(#p5:checked):has(#s5:checked):has(#t5:checked):has(#u5:checked) .status-msg[data-status="deep"],
+  :root:has(#p6:checked):has(#s6:checked):has(#t6:checked):has(#u6:checked) .status-msg[data-status="deep"],
+  :root:has(#p7:checked):has(#s7:checked):has(#t7:checked):has(#u7:checked) .status-msg[data-status="deep"],
+  :root:has(#p8:checked):has(#s8:checked):has(#t8:checked):has(#u8:checked) .status-msg[data-status="deep"] {
+    display: none;
+  }
 }
 
 /* ------------------------------------------------------------------ utilities */
