@@ -7,7 +7,7 @@ Cross-platform CLI utilities for automating Affinity (by Canva) via its local MC
 - `affinity.ts` — CLI & importable `AffinityClient` for Affinity's local MCP SSE server (`http://[::1]:6767/sse` on Windows, with `http://localhost:6767/sse` fallback). Inspects layer trees (`tree`), measures text frame bounds and true ink bottoms (`frames`), runs inline/file SDK JS (`eval`/`run`), replaces text while keeping styles (`set-text`), reconstructs SVGs as native `PolyCurve`s (`place-svg`), exports layers/PDFs (`export`/`pdf`), and renders spreads (`render`).
 - `affinity-ui.ts` — Companion accessibility UI driver using `agent-desktop` (`select`, `style-create`, `style-update`, `styles-clean`, `menu`, `dialog`, `tool`, `valign`, `restart`, `shot`, `selftest`) for UI-only features like named Paragraph/Character Styles and vertical frame alignment.
 - `affinity-mcp-bridge.mjs` — Zero-dependency `stdio` MCP bridge wired into Antigravity's `mcp_config.json`. Normalizes `protocolVersion` (`2025-11-25`), auto-reads `preamble`, and tears down idle SSE streams after 60s so idle sessions do not exhaust Affinity's ~13-connection SSE pool.
-- `build_zine.js` & `impose_zine.py` — Project-specific 4-page Half-Letter zine generator and 2-up US Letter saddle-stitch PDF imposer.
+- `build_zine.js` & `impose_zine.py` — Project-specific 8-page A5 zine generator and 2-up A4 saddle-stitch PDF imposer.
 
 ## Setup
 

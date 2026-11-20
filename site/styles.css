@@ -996,6 +996,7 @@
   .knot-figure svg { inline-size: 100%; }
   .wire line { stroke-width: 3; stroke-linecap: round; }
   .wire--credit line { stroke: var(--d3); }
+  .wire--drive line { stroke: var(--d1); }
   .wire--anchor line { stroke: var(--gold-ink); }
   .wire--ignite line { stroke: var(--vermilion); stroke-dasharray: 6 5; }
   @media (prefers-reduced-motion: no-preference) {
@@ -1003,11 +1004,13 @@
   }
   @keyframes march { to { stroke-dashoffset: -22; } }
   .node--pc rect { fill: var(--surface); stroke: var(--ink); stroke-width: 2.5; }
+  .node--drive circle { fill: var(--d1); stroke: var(--ink); stroke-width: 2.5; }
   .node--anchor polygon { fill: var(--gold); stroke: var(--ink); stroke-width: 2.5; }
   .node--ignite polygon { fill: var(--vermilion); stroke: var(--ink); stroke-width: 2.5; }
   .knot-figure text { fill: var(--ink); font: 700 14px var(--font-display); text-anchor: middle; }
   .knot-figure .label { font-size: 12.5px; paint-order: stroke; stroke: var(--surface); stroke-width: 5px; }
   .knot-figure .label--credit { fill: var(--d3); }
+  .node--drive .label { fill: var(--d1); }
   .node--anchor .label { fill: var(--gold-ink); }
   .node--ignite .label { fill: var(--vermilion-ink); }
   .knot-figure figcaption {
@@ -1024,7 +1027,8 @@
   .knot-figure figcaption svg { inline-size: 1.1rem; }
   .knot-figure figcaption span:nth-child(1) rect { fill: var(--surface); stroke: var(--ink); stroke-width: 1.5; }
   .knot-figure figcaption span:nth-child(2) polygon { fill: var(--gold); stroke: var(--ink); }
-  .knot-figure figcaption span:nth-child(3) polygon { fill: var(--vermilion); stroke: var(--ink); }
+  .knot-figure figcaption span:nth-child(3) circle { fill: var(--d1); stroke: var(--ink); }
+  .knot-figure figcaption span:nth-child(4) polygon { fill: var(--vermilion); stroke: var(--ink); }
 
   /* Cortex equation */
   .equation {
@@ -1183,6 +1187,7 @@
     --muted: #b8ab9c;
   }
   .site-footer__inner { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--space-xs) var(--space-l); font-size: var(--step--1); }
+  .site-footer__legal { flex-basis: 100%; max-inline-size: none; font-size: 0.85em; }
 }
 
 /* ------------------------------------------------------------------ state */

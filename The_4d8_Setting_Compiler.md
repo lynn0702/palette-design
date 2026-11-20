@@ -139,7 +139,7 @@ Write **three** `d8` **Distinctions** titled after your world's **Page 2 Identit
 5. **Sepia · Living Serial** — Log **Session Titles**; 1/session invoke one for a free `1 PP` effect or **Flashback**, or cross it off between sessions to step up a trait or add a `d8` Signature Asset.
 6. **Bright · Open Table** — **No GM Bank:** GM `PP` spends go straight to targeted PCs, and allies share created Assets for free.
 7. **Pastel · Gentle Stakes** — PC Fallout lands at `d6`—or steps up existing Fallout by one—and steps down automatically in quiet scenes.
-8. **Rust · Scarcity** — Gain `2d6` **Salvage Resources**. **Stricken:** Fallout larger than its attached trait restricts you to keeping 1 Total die.
+8. **Rust · Scarcity** — Gain `2d6` **Salvage Resources**. **Stricken:** Any `d10+` Fallout restricts you to keeping 1 Total die.
 
 ### 2 · SETTING → PRIME SET 2
 

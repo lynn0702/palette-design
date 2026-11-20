@@ -1,14 +1,28 @@
 'use strict';
 
 /**
- * Builds the 4-page Half-Letter bifold zine "The 4d8 Setting Compiler"
+ * Builds the 16-page A5 saddle-stitch zine "4D Combinatoric Worldbuilding"
  * inside Affinity Publisher via the Affinity JavaScript SDK.
  *
- * Outputs staging files under <Desktop>\PaletteDesign_Staging\:
- *   - The_4d8_Setting_Compiler.af
- *   - The_4d8_Setting_Compiler_Review_SinglePages.pdf
- * Logs a complete JSON audit of pages, spreads, masters, frame overflow states,
- * tightened frames, and exact ink bottom coordinates.
+ * Format: 16 × A5 (148 × 210 mm / 5.8268 × 8.2677 in), 3 mm bleed, 300 DPI.
+ * Strict typographic floor: >= 10.0 pt across all text elements.
+ * Layout:
+ *   P1:  Front Cover (Dark Obsidian) + 4D Geometric Grid + Roll · Place · Grind
+ *   P2:  Pitch Poster Anatomy + Matched Pair & 4-of-a-Kind
+ *   P3:  The Undertow (Divide · Layer · Counter + visual mini-posters)
+ *   P4:  Master Dial Matrix (Left Spread: 1 · Palette & 2 · Setting)
+ *   P5:  Master Dial Matrix (Right Spread: 3 · Tone & Pure Archetype)
+ *   P6:  Session Zero: Pass 1 (Identity Prompts + Using This in Cortex)
+ *   P7:  Session Zero: Pass 2 & 3 + Spaghetti-Knot Map Schematic
+ *   P8:  House Ruled Cortex: Core Engine (Baseline Pool Equation & Openings)
+ *   P9:  Three Conflict Speeds (01 Roll · 02 Row · 03 Romp)
+ *   P10: Four House Cuts, Prime Set 1: Distinctions, Hinder & Undertow
+ *   P11: 1 · Palette → Engine Mod (1–8)
+ *   P12: 2 · Setting → Prime Set 2 (1–8)
+ *   P13: 3 · Tone → Prime Set 3 (1–8)
+ *   P14: Sample Pitch 01 — Rust Space Punk (Sepia Undertow)
+ *   P15: Sample Pitch 02 — Bright Primal Adventure (Cozy Undertow)
+ *   P16: Back Cover (Dark Table Cheat-Sheet + Vector QR + Attribution)
  */
 
 const { BlendMode, UnitType } = require('affinity:common');
@@ -33,7 +47,7 @@ const { Application } = require('/application.js');
 const { fs } = require('/fs.js');
 const { FillDescriptor } = require('/fills.js');
 const { FontFamily, FontField } = require('/fonts.js');
-const { Curve, CurveBuilder, PolyCurve, Rectangle } = require('/geometry.js');
+const { Curve, CurveBuilder, PolyCurve, Rectangle, Transform } = require('/geometry.js');
 const { LineStyleDescriptor } = require('/linestyle.js');
 const {
   FrameTextNodeDefinition,
@@ -54,62 +68,104 @@ const { StoryBuilder } = require('/storybuilder.js');
 const { StoryDelta } = require('/storydelta.js');
 
 // ---------------------------------------------------------------------------
-// 1. Constants, Grid & High-Pop Chromatic Palette
+// 1. Constants, A5 Grid & Chromatic Palette
 // ---------------------------------------------------------------------------
 
 const DPI = 300;
-const IN = DPI;             // 300 px per inch
-const PT = DPI / 72;        // 4.1666667 px per pt
-const PAGE_W_IN = 5.5;
-const PAGE_H_IN = 8.5;
-const MARGIN_IN = 0.42;
-const BLEED_IN = 0.125;
-const GUTTER_IN = 0.20;
-const CONTENT_W_IN = PAGE_W_IN - 2 * MARGIN_IN;              // 4.66 in
-const COL_W_IN = (CONTENT_W_IN - GUTTER_IN) / 2;             // 2.23 in
+const IN = DPI;
+const PT = DPI / 72;
+const MM_TO_IN = 1 / 25.4;
+
+const PAGE_W_IN = 148 * MM_TO_IN;          // 5.8268 in (A5 width)
+const PAGE_H_IN = 210 * MM_TO_IN;          // 8.2677 in (A5 height)
+const MARGIN_IN = 0.38;                    // ~9.65 mm
+const BLEED_IN = 3 * MM_TO_IN;             // 0.1181 in (3 mm print bleed)
+const GUTTER_IN = 0.20;                    // ~5.1 mm
+const CONTENT_W_IN = PAGE_W_IN - 2 * MARGIN_IN;      // 5.0668 in
+const COL_W_IN = (CONTENT_W_IN - GUTTER_IN) / 2;     // 2.4334 in
+const MIN_FONT_PT = 10.0;                  // Strict 10 pt floor across entire zine
+let minFontPtUsed = Infinity;
 
 const PALETTE = {
   ink: RGB8(24, 22, 24),
   mutedInk: RGB8(88, 82, 78),
   white: RGB8(255, 255, 255),
-  // Pages 1-2: System-Neutral Obsidian + Vermilion + Solar Gold
+  // System-Neutral (P1–P4): Obsidian + Vermilion + Solar Gold
   neutralDark: RGB8(26, 23, 24),
+  neutralCard: RGB8(20, 17, 19),
+  neutralPanel: RGB8(34, 30, 32),
   neutralShadow: RGB8(48, 42, 44),
   neutralAccent: RGB8(224, 96, 24),
   neutralGold: RGB8(248, 184, 56),
-  neutralGoldText: RGB8(166, 90, 0),
+  neutralGoldText: RGB8(152, 82, 0),
   neutralCream: RGB8(251, 247, 240),
   neutralAltRow: RGB8(245, 239, 230),
   neutralBorder: RGB8(208, 196, 182),
-  neutralSubtleText: RGB8(226, 214, 198),
+  neutralDarkBorder: RGB8(72, 64, 62),
+  neutralSubtleText: RGB8(218, 206, 192),
   neutralPillBg: RGBA8(243, 230, 212, 255),
   neutralPillInk: RGB8(120, 46, 8),
-  // Pages 3-4: Cortex Harness Midnight + Electric Cyan + Hot Magenta
+  // Cortex Harness (P5–P8): Midnight + Electric Cyan + Contrast-Safe Magenta
   cortexDark: RGB8(15, 21, 36),
+  cortexPanel: RGB8(26, 36, 58),
   cortexCyan: RGB8(0, 196, 224),
-  cortexCyanDark: RGB8(0, 128, 156),
+  cortexCyanDark: RGB8(0, 95, 117),
   cortexMagenta: RGB8(232, 30, 116),
-  cortexMagentaDark: RGB8(178, 14, 84),
+  cortexMagentaFill: RGB8(196, 20, 96),     // >5.8:1 contrast with white
+  cortexMagentaLight: RGB8(255, 124, 179),  // >6.2:1 contrast on dark navy
+  cortexMagentaDark: RGB8(176, 14, 84),
   cortexIce: RGB8(241, 249, 252),
   cortexPinkTint: RGB8(253, 242, 247),
-  cortexBorder: RGB8(0, 158, 188),
   cortexRule: RGB8(176, 214, 226),
   cortexPillBg: RGBA8(216, 244, 250, 255),
-  cortexPillInk: RGB8(10, 56, 76),
+  cortexPillInk: RGB8(0, 82, 102),
   cortexDarkPillBg: RGBA8(34, 48, 76, 255),
 };
 
 // 8-Row Chromatic Dial Spectrum (rows 1..8)
 const DIAL_SWATCHES = [
-  { name: 'Prismatic', bg: RGB8(139, 44, 226), fg: RGB8(255, 255, 255), text: RGB8(106, 24, 180), tint: RGB8(248, 243, 254) },
-  { name: 'Neon',      bg: RGB8(230, 25, 115), fg: RGB8(255, 255, 255), text: RGB8(176, 14, 82),  tint: RGB8(254, 243, 248) },
-  { name: 'Chrome',    bg: RGB8(14, 124, 204), fg: RGB8(255, 255, 255), text: RGB8(10, 94, 158),  tint: RGB8(242, 249, 254) },
-  { name: 'Dark',      bg: RGB8(42, 52, 86),   fg: RGB8(255, 255, 255), text: RGB8(36, 44, 74),   tint: RGB8(243, 245, 249) },
-  { name: 'Sepia',     bg: RGB8(184, 108, 24), fg: RGB8(255, 255, 255), text: RGB8(142, 78, 10),  tint: RGB8(253, 247, 240) },
-  { name: 'Bright',    bg: RGB8(244, 174, 30), fg: RGB8(24, 22, 24),    text: RGB8(152, 86, 0),   tint: RGB8(254, 250, 238) },
-  { name: 'Pastel',    bg: RGB8(36, 146, 120), fg: RGB8(255, 255, 255), text: RGB8(22, 112, 90),  tint: RGB8(241, 250, 247) },
-  { name: 'Rust',      bg: RGB8(192, 60, 32),  fg: RGB8(255, 255, 255), text: RGB8(152, 42, 18),  tint: RGB8(253, 244, 242) },
+  { name: 'Prismatic', bg: RGB8(139, 44, 226), fg: RGB8(255, 255, 255), text: RGB8(106, 24, 180), light: RGB8(198, 152, 246) },
+  { name: 'Neon',      bg: RGB8(230, 25, 115), fg: RGB8(255, 255, 255), text: RGB8(176, 14, 82),  light: RGB8(248, 134, 184) },
+  { name: 'Chrome',    bg: RGB8(14, 124, 204), fg: RGB8(255, 255, 255), text: RGB8(10, 94, 158),  light: RGB8(126, 192, 242) },
+  { name: 'Dark',      bg: RGB8(42, 52, 86),   fg: RGB8(255, 255, 255), text: RGB8(36, 44, 74),   light: RGB8(152, 164, 198) },
+  { name: 'Sepia',     bg: RGB8(184, 108, 24), fg: RGB8(255, 255, 255), text: RGB8(142, 78, 10),  light: RGB8(232, 180, 120) },
+  { name: 'Bright',    bg: RGB8(244, 174, 30), fg: RGB8(24, 22, 24),    text: RGB8(146, 82, 0),   light: RGB8(252, 214, 124) },
+  { name: 'Pastel',    bg: RGB8(36, 146, 120), fg: RGB8(255, 255, 255), text: RGB8(20, 108, 86),  light: RGB8(134, 212, 192) },
+  { name: 'Rust',      bg: RGB8(192, 60, 32),  fg: RGB8(255, 255, 255), text: RGB8(152, 42, 18),  light: RGB8(234, 142, 122) },
 ];
+
+// Exact 29×29 Version-3 ECC-M QR code path for https://palette.lynnjones.rocks/
+const QR_SIZE = 29;
+const QR_PATH =
+  'M0 0.5h7m2 0h1m1 0h5m1 0h4m1 0h7' +
+  'M0 1.5h1m5 0h1m2 0h9m2 0h1m1 0h1m5 0h1' +
+  'M0 2.5h1m1 0h3m1 0h1m1 0h4m1 0h1m1 0h1m2 0h3m1 0h1m1 0h3m1 0h1' +
+  'M0 3.5h1m1 0h3m1 0h1m1 0h3m1 0h1m1 0h2m1 0h1m1 0h1m2 0h1m1 0h3m1 0h1' +
+  'M0 4.5h1m1 0h3m1 0h1m1 0h5m2 0h2m1 0h3m1 0h1m1 0h3m1 0h1' +
+  'M0 5.5h1m5 0h1m1 0h2m2 0h1m9 0h1m5 0h1' +
+  'M0 6.5h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7' +
+  'M8 7.5h1m1 0h2m2 0h1m1 0h1m2 0h1' +
+  'M0 8.5h1m1 0h5m3 0h1m1 0h1m4 0h1m1 0h1m2 0h5' +
+  'M0 9.5h1m2 0h2m2 0h1m1 0h1m2 0h4m3 0h2m1 0h3m3 0h1' +
+  'M0 10.5h1m1 0h1m2 0h3m1 0h1m1 0h5m1 0h2m4 0h2' +
+  'M3 11.5h1m1 0h1m2 0h1m1 0h4m5 0h3m1 0h3m1 0h1' +
+  'M0 12.5h2m1 0h1m2 0h1m2 0h4m1 0h1m2 0h3m5 0h2' +
+  'M0 13.5h1m1 0h1m1 0h2m1 0h4m1 0h1m2 0h1m1 0h4m1 0h3m3 0h1' +
+  'M0 14.5h1m1 0h1m1 0h4m1 0h3m3 0h3m6 0h3' +
+  'M2 15.5h2m3 0h2m2 0h1m2 0h3m1 0h4m1 0h1m3 0h1' +
+  'M3 16.5h6m2 0h2m4 0h1m1 0h1m5 0h2' +
+  'M0 17.5h2m1 0h3m1 0h3m1 0h1m1 0h3m3 0h6m1 0h1m1 0h1' +
+  'M0 18.5h1m2 0h2m1 0h1m2 0h2m1 0h7m1 0h1m2 0h2m1 0h1' +
+  'M0 19.5h1m4 0h1m1 0h1m1 0h2m2 0h1m2 0h1m1 0h1m5 0h1m2 0h1' +
+  'M0 20.5h1m1 0h2m1 0h3m2 0h2m2 0h1m2 0h1m1 0h6m1 0h3' +
+  'M8 21.5h4m5 0h4m3 0h5' +
+  'M0 22.5h7m2 0h1m2 0h1m2 0h3m1 0h2m1 0h1m1 0h3' +
+  'M0 23.5h1m5 0h1m1 0h2m1 0h1m2 0h1m4 0h2m3 0h1m2 0h2' +
+  'M0 24.5h1m1 0h3m1 0h1m1 0h3m4 0h3m2 0h5m1 0h2' +
+  'M0 25.5h1m1 0h3m1 0h1m1 0h1m1 0h1m2 0h2m1 0h1m1 0h1m2 0h1m3 0h4' +
+  'M0 26.5h1m1 0h3m1 0h1m1 0h1m3 0h2m1 0h13' +
+  'M0 27.5h1m5 0h1m2 0h2m1 0h1m7 0h1m1 0h1m1 0h2m1 0h1' +
+  'M0 28.5h7m1 0h1m1 0h1m1 0h3m2 0h1m1 0h1m1 0h2m1 0h3';
 
 // ---------------------------------------------------------------------------
 // 2. Font & Style Registry
@@ -146,11 +202,6 @@ function createStyleRegistry(fontMap) {
       monoBold: pickFont(fontMap, ['CascadiaCodeRoman-Bold', 'Consolas-Bold']),
       mono: pickFont(fontMap, ['CascadiaCodeRoman-Regular', 'Consolas']),
     },
-    text: {
-      h2: { fontPt: 9.25, caps: CapsType.AllCaps },
-      h3: { fontPt: 8.25, caps: CapsType.AllCaps },
-      body: { fontPt: 8.0, leadingPt: 9.8, spaceAfterPt: 2.5 },
-    },
   };
 }
 
@@ -158,9 +209,6 @@ function createStyleRegistry(fontMap) {
 // 3. Inline Markup Parser & StoryBuilder Engine
 // ---------------------------------------------------------------------------
 
-/**
- * Parses **bold**, *italic*, and `code/dice` tokens in a plain string.
- */
 function parseInlineRuns(src) {
   const runs = [];
   const tokenRe = /(\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`)/g;
@@ -220,12 +268,13 @@ function buildStoryFromBlocks(doc, styles, blocks, theme) {
       StoryDelta.createParagraphDouble(ParagraphAttDoubleType.SpaceBefore, (blk.spaceBeforePt ?? 0) * PT)
     );
     sb.applyParagraphDelta(
-      StoryDelta.createParagraphDouble(ParagraphAttDoubleType.SpaceAfter, (blk.spaceAfterPt ?? 2.2) * PT)
+      StoryDelta.createParagraphDouble(ParagraphAttDoubleType.SpaceAfter, (blk.spaceAfterPt ?? 2.5) * PT)
     );
 
     if (kind === 'h2') {
-      const pt = blk.fontPt ?? styles.text.h2.pt;
-      const leadPt = blk.leadingPt ?? (pt + 1.5);
+      const pt = Math.max(MIN_FONT_PT, blk.fontPt ?? 11.5);
+      const leadPt = blk.leadingPt ?? pt + 1.8;
+      if (pt < minFontPtUsed) minFontPtUsed = pt;
       sb.applyParagraphDelta(StoryDelta.createParagraphDouble(ParagraphAttDoubleType.AbsoluteLeading, leadPt * PT));
       sb.applyGlyphDelta(StoryDelta.createFont(FontField.PostscriptName, styles.fonts[blk.forceFontKey ?? 'displayBold']));
       sb.applyGlyphDelta(StoryDelta.createGlyphDouble(GlyphAttDoubleType.Height, pt * PT));
@@ -238,8 +287,9 @@ function buildStoryFromBlocks(doc, styles, blocks, theme) {
     }
 
     if (kind === 'h3') {
-      const pt = blk.fontPt ?? styles.text.h3.pt;
-      const leadPt = blk.leadingPt ?? (pt + 1.25);
+      const pt = Math.max(MIN_FONT_PT, blk.fontPt ?? 10.5);
+      const leadPt = blk.leadingPt ?? pt + 1.8;
+      if (pt < minFontPtUsed) minFontPtUsed = pt;
       sb.applyParagraphDelta(StoryDelta.createParagraphDouble(ParagraphAttDoubleType.AbsoluteLeading, leadPt * PT));
       sb.applyGlyphDelta(StoryDelta.createFont(FontField.PostscriptName, styles.fonts[blk.forceFontKey ?? 'displaySemi']));
       sb.applyGlyphDelta(StoryDelta.createGlyphDouble(GlyphAttDoubleType.Height, pt * PT));
@@ -251,28 +301,32 @@ function buildStoryFromBlocks(doc, styles, blocks, theme) {
       continue;
     }
 
-    const bodyPt = blk.fontPt ?? styles.text.body.fontPt;
-    const leadPt = blk.leadingPt ?? styles.text.body.leadingPt;
+    const bodyPt = Math.max(MIN_FONT_PT, blk.fontPt ?? 10.0);
+    const leadPt = blk.leadingPt ?? bodyPt + 2.2;
+    if (bodyPt < minFontPtUsed) minFontPtUsed = bodyPt;
     const baseColour = blk.colour ?? PALETTE.ink;
-    const trackingEm = blk.trackingEm ?? 0;
+    const boldColour = blk.boldColour ?? baseColour;
+    const leadColour = blk.leadColour ?? null;
     const pillFill = blk.pillBg ? FillDescriptor.createSolid(blk.pillBg) : defaultPillFill;
     const pillInk = blk.pillInk ?? defaultPillInk;
+    const trackingEm = blk.trackingEm ?? 0;
 
     sb.applyParagraphDelta(StoryDelta.createParagraphDouble(ParagraphAttDoubleType.AbsoluteLeading, leadPt * PT));
     sb.applyGlyphDelta(StoryDelta.createCapsType(blk.caps ?? CapsType.None));
     sb.applyGlyphDelta(StoryDelta.createGlyphDouble(GlyphAttDoubleType.CharacterSpacing, trackingEm));
 
     const runs = parseInlineRuns(blk.text);
-    let usedLeadColour = false;
+    let sawFirstBold = false;
     for (const run of runs) {
       if (run.code) {
+        const codePt = Math.max(MIN_FONT_PT, bodyPt);
+        if (codePt < minFontPtUsed) minFontPtUsed = codePt;
         sb.applyGlyphDelta(StoryDelta.createFont(FontField.PostscriptName, styles.fonts.monoBold));
-        sb.applyGlyphDelta(
-          StoryDelta.createGlyphDouble(GlyphAttDoubleType.Height, Math.max(6.25, bodyPt - 0.5) * PT)
-        );
+        sb.applyGlyphDelta(StoryDelta.createGlyphDouble(GlyphAttDoubleType.Height, codePt * PT));
         sb.applyGlyphDelta(StoryDelta.createGlyphDouble(GlyphAttDoubleType.CharacterSpacing, 0));
         sb.applyGlyphDelta(StoryDelta.createBrushFill(FillDescriptor.createSolid(pillInk)));
-        sb.applyGlyphDelta(StoryDelta.createHighlightFill(blk.noPill ? noFill : pillFill));
+        sb.applyGlyphDelta(StoryDelta.createHighlightFill(noFill));
+        sb.addText(run.text);
       } else {
         let fontObj = styles.fonts.body;
         if (blk.forceFontKey) {
@@ -284,41 +338,45 @@ function buildStoryFromBlocks(doc, styles, blocks, theme) {
         } else if (run.italic) {
           fontObj = styles.fonts.bodyItalic;
         }
+
         let runColour = baseColour;
-        if (run.bold && blk.leadColour && !usedLeadColour) {
-          runColour = blk.leadColour;
-          usedLeadColour = true;
-        } else if (run.bold && blk.boldColour) {
-          runColour = blk.boldColour;
+        if (run.bold) {
+          if (leadColour && !sawFirstBold) {
+            runColour = leadColour;
+            sawFirstBold = true;
+          } else {
+            runColour = boldColour;
+          }
         }
         sb.applyGlyphDelta(StoryDelta.createFont(FontField.PostscriptName, fontObj));
         sb.applyGlyphDelta(StoryDelta.createGlyphDouble(GlyphAttDoubleType.Height, bodyPt * PT));
         sb.applyGlyphDelta(StoryDelta.createGlyphDouble(GlyphAttDoubleType.CharacterSpacing, trackingEm));
         sb.applyGlyphDelta(StoryDelta.createBrushFill(FillDescriptor.createSolid(runColour)));
         sb.applyGlyphDelta(StoryDelta.createHighlightFill(noFill));
+        sb.addText(run.text);
       }
-      sb.addText(run.text);
     }
   }
   return sb;
 }
 
 // ---------------------------------------------------------------------------
-// 4. Vector, Diagram & Text Frame Helpers
+// 4. Vector Drawing & Layout Primitives
 // ---------------------------------------------------------------------------
 
 function makeRectPx(xIn, yIn, wIn, hIn, originX, originY) {
   return new Rectangle(originX + xIn * IN, originY + yIn * IN, wIn * IN, hIn * IN);
 }
 
-function addRectShape(doc, rect, fillColour, strokeColour, strokePt, name, cornerPt, cornerType) {
-  const shape = ShapeRectangle.create();
-  if (cornerPt && cornerPt > 0) {
-    shape.useSingleRadius = true;
-    shape.setAbsoluteSizes(true, rect.width, rect.height);
-    shape.topLeft.cornerType = cornerType ?? ShapeCornerType.Round;
-    shape.topLeft.setRadius(cornerPt * PT, rect.width, rect.height);
-  }
+function addNode(doc, def) {
+  const builder = AddChildNodesCommandBuilder.create();
+  builder.addNode(def);
+  const cmd = builder.createCommand(true, NodeChildType.Main);
+  doc.executeCommand(cmd);
+  return cmd.newNodes[0];
+}
+
+function addShapeNode(doc, shape, rect, fillColour, strokeColour, strokePt, name) {
   const def = ShapeNodeDefinition.createDefault();
   def.setShape(shape);
   def.setBoundingRectangle(rect);
@@ -332,31 +390,47 @@ function addRectShape(doc, rect, fillColour, strokeColour, strokePt, name, corne
     );
   }
   if (name) def.userDescription = name;
-  const builder = AddChildNodesCommandBuilder.create();
-  builder.addNode(def);
-  const cmd = builder.createCommand(true, NodeChildType.Main);
-  doc.executeCommand(cmd);
-  return cmd.newNodes[0];
+  return addNode(doc, def);
 }
 
-function addShadowCard(doc, rect, fillColour, strokeColour, strokePt, shadowColour, offsetPt, cornerPt, cornerType, name) {
-  if (shadowColour && offsetPt > 0) {
-    const shRect = new Rectangle(
-      rect.x + offsetPt * PT,
-      rect.y + offsetPt * PT,
-      rect.width,
-      rect.height
-    );
-    addRectShape(doc, shRect, shadowColour, null, 0, `${name}_shadow`, cornerPt, cornerType);
+function addRectShape(doc, rect, fillColour, strokeColour, strokePt, name, cornerPt = 0, cornerType = ShapeCornerType.Round) {
+  const shape = ShapeRectangle.create();
+  if (cornerPt && cornerPt > 0) {
+    shape.useSingleRadius = true;
+    shape.setAbsoluteSizes(true, rect.width, rect.height);
+    shape.topLeft.cornerType = cornerType ?? ShapeCornerType.Round;
+    shape.topLeft.setRadius(cornerPt * PT, rect.width, rect.height);
+  }
+  return addShapeNode(doc, shape, rect, fillColour, strokeColour, strokePt, name);
+}
+
+function addShadowCard(doc, rect, fillColour, strokeColour, strokePt, shadowColour, shadowOffsetPt, cornerPt, cornerType, name) {
+  if (shadowColour && shadowOffsetPt > 0) {
+    const offPx = shadowOffsetPt * PT;
+    const shadowRect = new Rectangle(rect.x + offPx, rect.y + offPx, rect.width, rect.height);
+    addRectShape(doc, shadowRect, shadowColour, null, 0, `${name}_shadow`, cornerPt, cornerType);
   }
   return addRectShape(doc, rect, fillColour, strokeColour, strokePt, name, cornerPt, cornerType);
 }
 
-function addPolygon(doc, pts, fillColour, strokeColour, strokePt, name) {
+function addDiamondShape(doc, rect, fillColour, strokeColour, strokePt, name) {
+  return addShapeNode(doc, ShapeDiamond.create(), rect, fillColour, strokeColour, strokePt, name);
+}
+
+function addTriangleShape(doc, rect, fillColour, strokeColour, strokePt, name) {
+  return addShapeNode(doc, ShapeTriangle.create(), rect, fillColour, strokeColour, strokePt, name);
+}
+
+function addCircleShape(doc, rect, fillColour, strokeColour, strokePt, name) {
+  const radiusPt = (rect.width / PT) / 2;
+  return addRectShape(doc, rect, fillColour, strokeColour, strokePt, name, radiusPt, ShapeCornerType.Round);
+}
+
+function addPolygon(doc, pointsPx, fillColour, strokeColour, strokePt, name) {
   const cb = CurveBuilder.create();
-  cb.beginXY(pts[0][0], pts[0][1]);
-  for (let i = 1; i < pts.length; i++) {
-    cb.lineToXY(pts[i][0], pts[i][1]);
+  cb.beginXY(pointsPx[0][0], pointsPx[0][1]);
+  for (let i = 1; i < pointsPx.length; i++) {
+    cb.lineToXY(pointsPx[i][0], pointsPx[i][1]);
   }
   cb.close();
   const poly = PolyCurve.create();
@@ -369,16 +443,12 @@ function addPolygon(doc, pts, fillColour, strokeColour, strokePt, name) {
     FillDescriptor.createNone()
   );
   if (name) def.userDescription = name;
-  const builder = AddChildNodesCommandBuilder.create();
-  builder.addNode(def);
-  const cmd = builder.createCommand(true, NodeChildType.Main);
-  doc.executeCommand(cmd);
-  return cmd.newNodes[0];
+  return addNode(doc, def);
 }
 
-function addLineSegment(doc, x1, y1, x2, y2, strokeColour, strokePt, name) {
+function addLineSegment(doc, x1Px, y1Px, x2Px, y2Px, strokeColour, strokePt, name) {
   const poly = PolyCurve.create();
-  poly.addCurve(Curve.createLineXY(x1, y1, x2, y2));
+  poly.addCurve(Curve.createLineXY(x1Px, y1Px, x2Px, y2Px));
   const def = PolyCurveNodeDefinition.create(
     poly,
     FillDescriptor.createNone(),
@@ -387,86 +457,69 @@ function addLineSegment(doc, x1, y1, x2, y2, strokeColour, strokePt, name) {
     FillDescriptor.createNone()
   );
   if (name) def.userDescription = name;
-  const builder = AddChildNodesCommandBuilder.create();
-  builder.addNode(def);
-  const cmd = builder.createCommand(true, NodeChildType.Main);
-  doc.executeCommand(cmd);
-  return cmd.newNodes[0];
+  return addNode(doc, def);
 }
 
-/**
- * Draws a sharp chamfered interior banner bar with offset drop shadow and angled right accent wedge.
- */
+function centerTextInkInRect(doc, node, boxXIn, boxYIn, boxWIn, boxHIn, ox, oy, centerX = false) {
+  if (!node) return;
+  try {
+    const ink = node.getExactSpreadVisibleBox(false, false);
+    if (!ink || ink.width <= 0 || ink.height <= 0) return;
+    const targetMidX = ox + (boxXIn + boxWIn / 2) * IN;
+    const targetMidY = oy + (boxYIn + boxHIn / 2) * IN;
+    const inkMidX = ink.x + ink.width / 2;
+    const inkMidY = ink.y + ink.height / 2;
+    const dx = centerX ? targetMidX - inkMidX : 0;
+    const dy = targetMidY - inkMidY;
+    if (Math.abs(dx) > 0.25 || Math.abs(dy) > 0.25) {
+      doc.executeCommand(
+        DocumentCommand.createTransform(Selection.create(doc, node), Transform.createTranslate(dx, dy), { mergeable: false })
+      );
+    }
+  } catch {
+    // ignore if empty
+  }
+}
+
 function addChamferedBanner(doc, styles, pageNum, ox, oy, theme, titleText, badgeText) {
   const isCortex = theme === 'cortex';
-  const bgCol = isCortex ? PALETTE.cortexDark : PALETTE.neutralDark;
-  const accentCol = isCortex ? PALETTE.cortexCyan : PALETTE.neutralAccent;
-  const secondCol = isCortex ? PALETTE.cortexMagenta : PALETTE.neutralGold;
-  const badgeTextCol = isCortex ? PALETTE.cortexDark : PALETTE.neutralDark;
+  const mainBg = isCortex ? PALETTE.cortexDark : PALETTE.neutralDark;
+  const badgeBg = isCortex ? PALETTE.cortexCyan : PALETTE.neutralAccent;
+  const badgeTextCol = isCortex ? PALETTE.cortexDark : PALETTE.white;
+  const shadowCol = isCortex ? PALETTE.cortexMagenta : PALETTE.neutralGold;
 
-  const x0 = ox + MARGIN_IN * IN;
-  const y0 = oy + 0.34 * IN;
-  const w = CONTENT_W_IN * IN;
-  const h = 0.33 * IN;
-  const cut = 0.08 * IN;
-  const sh = 2.2 * PT;
-
-  // Offset shadow polygon
-  addPolygon(
+  const yIn = 0.26;
+  const hIn = 0.38;
+  addShadowCard(
     doc,
-    [
-      [x0 + sh, y0 + sh],
-      [x0 + w - cut + sh, y0 + sh],
-      [x0 + w + sh, y0 + cut + sh],
-      [x0 + w + sh, y0 + h + sh],
-      [x0 + cut + sh, y0 + h + sh],
-      [x0 + sh, y0 + h - cut + sh],
-    ],
-    secondCol,
+    makeRectPx(MARGIN_IN, yIn, CONTENT_W_IN, hIn, ox, oy),
+    mainBg,
     null,
     0,
-    `p${pageNum}_banner_shadow`
-  );
-
-  // Main dark chamfered polygon
-  addPolygon(
-    doc,
-    [
-      [x0, y0],
-      [x0 + w - cut, y0],
-      [x0 + w, y0 + cut],
-      [x0 + w, y0 + h],
-      [x0 + cut, y0 + h],
-      [x0, y0 + h - cut],
-    ],
-    bgCol,
-    null,
+    shadowCol,
+    2.2,
     0,
+    ShapeCornerType.None,
     `p${pageNum}_banner_bg`
   );
 
-  // Angled bright accent tag on right end
-  const tagW = 1.08 * IN;
-  const slant = 0.10 * IN;
+  const bx1 = ox + (MARGIN_IN + CONTENT_W_IN - 1.38) * IN;
+  const bx2 = ox + (MARGIN_IN + CONTENT_W_IN) * IN;
+  const by1 = oy + yIn * IN;
+  const by2 = oy + (yIn + hIn) * IN;
   addPolygon(
     doc,
-    [
-      [x0 + w - tagW, y0],
-      [x0 + w - cut, y0],
-      [x0 + w, y0 + cut],
-      [x0 + w, y0 + h],
-      [x0 + w - tagW - slant, y0 + h],
-    ],
-    accentCol,
+    [[bx1 + 0.14 * IN, by1], [bx2, by1], [bx2, by2], [bx1, by2]],
+    badgeBg,
     null,
     0,
-    `p${pageNum}_banner_tag_bg`
+    `p${pageNum}_banner_badge_bg`
   );
 
   const r1 = createTextFrameWithAutoFit(doc, styles, {
     id: `p${pageNum}_banner_title`,
     pageNum,
-    rect: makeRectPx(MARGIN_IN + 0.12, 0.415, CONTENT_W_IN - 1.28, 0.21, ox, oy),
+    rect: makeRectPx(MARGIN_IN + 0.11, yIn + 0.08, CONTENT_W_IN - 1.54, 0.24, ox, oy),
     theme,
     ignoreBaselineGrid: true,
     allowAutoTighten: false,
@@ -474,10 +527,10 @@ function addChamferedBanner(doc, styles, pageNum, ox, oy, theme, titleText, badg
       {
         kind: 'body',
         text: titleText,
-        forceFontKey: 'displayBold',
-        fontPt: 9.75,
-        leadingPt: 11.2,
-        trackingEm: 0.03,
+        forceFontKey: 'displayHeavy',
+        fontPt: 10.5,
+        leadingPt: 11.8,
+        trackingEm: 0.02,
         caps: CapsType.AllCaps,
         colour: PALETTE.white,
         spaceAfterPt: 0,
@@ -488,7 +541,7 @@ function addChamferedBanner(doc, styles, pageNum, ox, oy, theme, titleText, badg
   const r2 = createTextFrameWithAutoFit(doc, styles, {
     id: `p${pageNum}_banner_badge`,
     pageNum,
-    rect: makeRectPx(MARGIN_IN + CONTENT_W_IN - 1.08, 0.425, 0.98, 0.18, ox, oy),
+    rect: makeRectPx(MARGIN_IN + CONTENT_W_IN - 1.24, yIn + 0.09, 1.14, 0.22, ox, oy),
     theme,
     ignoreBaselineGrid: true,
     allowAutoTighten: false,
@@ -497,9 +550,9 @@ function addChamferedBanner(doc, styles, pageNum, ox, oy, theme, titleText, badg
         kind: 'body',
         text: badgeText,
         forceFontKey: 'displayHeavy',
-        fontPt: 7.25,
-        leadingPt: 8.5,
-        trackingEm: 0.04,
+        fontPt: 10.0,
+        leadingPt: 11.2,
+        trackingEm: 0.02,
         caps: CapsType.AllCaps,
         colour: badgeTextCol,
         align: ParagraphAlignXType.Right,
@@ -508,66 +561,35 @@ function addChamferedBanner(doc, styles, pageNum, ox, oy, theme, titleText, badg
     ],
   });
 
+  centerTextInkInRect(doc, r1.node, MARGIN_IN + 0.11, yIn, CONTENT_W_IN - 1.54, hIn, ox, oy, false);
+  centerTextInkInRect(doc, r2.node, MARGIN_IN + CONTENT_W_IN - 1.24, yIn, 1.14, hIn, ox, oy, false);
+
   return [r1, r2];
-}
-
-/**
- * Draws a crisp vector faceted d8 (octahedron silhouette + inner triangular facets).
- */
-function addFacetedD8(doc, cxIn, cyIn, rxIn, ryIn, ox, oy, mainCol, facetLightCol, facetDarkCol, strokeCol, name) {
-  const cx = ox + cxIn * IN;
-  const cy = oy + cyIn * IN;
-  const rx = rxIn * IN;
-  const ry = ryIn * IN;
-
-  const top = [cx, cy - ry];
-  const right = [cx + rx, cy - ry * 0.10];
-  const botRight = [cx + rx * 0.72, cy + ry * 0.56];
-  const bot = [cx, cy + ry];
-  const botLeft = [cx - rx * 0.72, cy + ry * 0.56];
-  const left = [cx - rx, cy - ry * 0.10];
-
-  const innerLeft = [cx - rx * 0.52, cy + ry * 0.24];
-  const innerRight = [cx + rx * 0.52, cy + ry * 0.24];
-
-  // Base polygon
-  addPolygon(doc, [top, right, botRight, bot, botLeft, left], mainCol, strokeCol, 1.1, `${name}_body`);
-  // Upper-left bright facet
-  addPolygon(doc, [top, left, innerLeft], facetLightCol, null, 0, `${name}_fl`);
-  // Lower-right shadow facet
-  addPolygon(doc, [right, botRight, bot, innerRight], facetDarkCol, null, 0, `${name}_fr`);
-  // Inner crisp center triangle line work
-  addPolygon(doc, [top, innerRight, innerLeft], null, strokeCol, 0.75, `${name}_tri`);
-  addLineSegment(doc, left[0], left[1], innerLeft[0], innerLeft[1], strokeCol, 0.65, `${name}_e1`);
-  addLineSegment(doc, right[0], right[1], innerRight[0], innerRight[1], strokeCol, 0.65, `${name}_e2`);
-  addLineSegment(doc, bot[0], bot[1], innerLeft[0], innerLeft[1], strokeCol, 0.65, `${name}_e3`);
-  addLineSegment(doc, bot[0], bot[1], innerRight[0], innerRight[1], strokeCol, 0.65, `${name}_e4`);
 }
 
 function addSectionHeaderBar(doc, styles, pageNum, xIn, yIn, wIn, ox, oy, titleText, accentCol, theme, id) {
   addRectShape(
     doc,
-    makeRectPx(xIn, yIn, wIn, 0.21, ox, oy),
+    makeRectPx(xIn, yIn, wIn, 0.28, ox, oy),
     theme === 'cortex' ? PALETTE.cortexDark : PALETTE.neutralDark,
     null,
     0,
     `${id}_bg`,
-    2,
-    ShapeCornerType.Straight
+    0
   );
   addRectShape(
     doc,
-    makeRectPx(xIn, yIn, 0.06, 0.21, ox, oy),
+    makeRectPx(xIn, yIn, 0.07, 0.28, ox, oy),
     accentCol,
     null,
     0,
     `${id}_pip`,
     0
   );
-  return createTextFrameWithAutoFit(doc, styles, {
+  const res = createTextFrameWithAutoFit(doc, styles, {
     id,
     pageNum,
-    rect: makeRectPx(xIn + 0.10, yIn + 0.032, wIn - 0.14, 0.16, ox, oy),
+    rect: makeRectPx(xIn + 0.12, yIn + 0.04, wIn - 0.16, 0.22, ox, oy),
     theme,
     ignoreBaselineGrid: true,
     allowAutoTighten: false,
@@ -576,30 +598,32 @@ function addSectionHeaderBar(doc, styles, pageNum, xIn, yIn, wIn, ox, oy, titleT
         kind: 'body',
         text: titleText,
         forceFontKey: 'displayBold',
-        fontPt: 8.0,
-        leadingPt: 9.5,
-        trackingEm: 0.04,
+        fontPt: 10.0,
+        leadingPt: 11.2,
+        trackingEm: 0.03,
         caps: CapsType.AllCaps,
         colour: PALETTE.white,
         spaceAfterPt: 0,
       },
     ],
   });
+  centerTextInkInRect(doc, res.node, xIn + 0.12, yIn, wIn - 0.16, 0.28, ox, oy, false);
+  return res;
 }
 
 function cloneBlocksWithScale(blocks, fontDeltaPt, leadDeltaPt, spaceAfterDeltaPt) {
   return blocks.map((b) => {
     const out = Object.assign({}, b);
     if (b.kind === 'h2' || b.kind === 'h3') {
-      if (out.fontPt != null) out.fontPt = Math.max(7.25, out.fontPt - fontDeltaPt * 0.5);
-      if (out.leadingPt != null) out.leadingPt = Math.max(8.25, out.leadingPt - leadDeltaPt * 0.5);
+      if (out.fontPt != null) out.fontPt = Math.max(MIN_FONT_PT, out.fontPt - fontDeltaPt * 0.5);
+      if (out.leadingPt != null) out.leadingPt = Math.max(out.fontPt + 1.2, out.leadingPt - leadDeltaPt * 0.5);
       if (out.spaceBeforePt != null) out.spaceBeforePt = Math.max(1.0, out.spaceBeforePt - spaceAfterDeltaPt);
       if (out.spaceAfterPt != null) out.spaceAfterPt = Math.max(0.75, out.spaceAfterPt - spaceAfterDeltaPt);
     } else {
-      const baseFont = out.fontPt ?? 8.0;
-      const baseLead = out.leadingPt ?? 9.8;
-      out.fontPt = Math.max(6.5, baseFont - fontDeltaPt);
-      out.leadingPt = Math.max(out.fontPt + 1.0, baseLead - leadDeltaPt);
+      const baseFont = out.fontPt ?? 10.0;
+      const baseLead = out.leadingPt ?? 12.2;
+      out.fontPt = Math.max(MIN_FONT_PT, baseFont - fontDeltaPt);
+      out.leadingPt = Math.max(out.fontPt + 1.2, baseLead - leadDeltaPt);
       if (out.spaceAfterPt != null) {
         out.spaceAfterPt = Math.max(0.5, out.spaceAfterPt - spaceAfterDeltaPt);
       }
@@ -618,7 +642,7 @@ function createTextFrameWithAutoFit(doc, styles, opts) {
     rect,
     blocks,
     theme,
-    ignoreBaselineGrid = false,
+    ignoreBaselineGrid = true,
     allowAutoTighten = true,
   } = opts;
 
@@ -634,12 +658,7 @@ function createTextFrameWithAutoFit(doc, styles, opts) {
     const sb = buildStoryFromBlocks(doc, styles, scaledBlocks, theme);
     const def = FrameTextNodeDefinition.createFromStoryBuilder(rect, sb);
     def.userDescription = id;
-
-    const builder = AddChildNodesCommandBuilder.create();
-    builder.addNode(def);
-    const cmd = builder.createCommand(true, NodeChildType.Main);
-    doc.executeCommand(cmd);
-    node = cmd.newNodes[0];
+    node = addNode(doc, def);
 
     if (ignoreBaselineGrid) {
       doc.executeCommand(
@@ -655,8 +674,8 @@ function createTextFrameWithAutoFit(doc, styles, opts) {
     doc.deleteSelection(Selection.create(doc, node));
     steps++;
     const sampleBody = scaledBlocks.find((b) => !b.kind || b.kind === 'body');
-    const curFont = sampleBody ? sampleBody.fontPt : 8.0;
-    const curLead = sampleBody ? sampleBody.leadingPt : 9.8;
+    const curFont = sampleBody ? sampleBody.fontPt : 8.25;
+    const curLead = sampleBody ? sampleBody.leadingPt : 10.2;
     if (curLead - curFont > 1.25) {
       leadDelta += 0.25;
       spaceDelta += 0.25;
@@ -679,8 +698,7 @@ function createTextFrameWithAutoFit(doc, styles, opts) {
 }
 
 /**
- * Precision grid table with chromatic d8 pill badges in Column 0, subtle row striping,
- * and individual overflow-checked text frames.
+ * Precision grid table with chromatic d8 DIAMOND diecons in Column 0.
  */
 function buildPrecisionTable(doc, styles, cfg) {
   const {
@@ -696,10 +714,10 @@ function buildPrecisionTable(doc, styles, cfg) {
     headers,
     rows,
     theme,
-    padHIn = 0.05,
-    padVIn = 0.04,
-    cellFontPt = 7.5,
-    cellLeadPt = 8.9,
+    padHIn = 0.055,
+    padVIn = 0.045,
+    cellFontPt = 8.0,
+    cellLeadPt = 9.8,
   } = cfg;
 
   const totalWIn = colWidthsIn.reduce((a, b) => a + b, 0);
@@ -711,9 +729,7 @@ function buildPrecisionTable(doc, styles, cfg) {
   const auditItems = [];
   let curYIn = yIn;
 
-  // Header background
-  const hdrRect = makeRectPx(xIn, curYIn, totalWIn, headerHeightIn, originX, originY);
-  addRectShape(doc, hdrRect, headerBg, null, 0, `${idPrefix}_hdr_bg`, 0);
+  addRectShape(doc, makeRectPx(xIn, curYIn, totalWIn, headerHeightIn, originX, originY), headerBg, null, 0, `${idPrefix}_hdr_bg`, 0);
 
   let curXIn = xIn;
   for (let c = 0; c < headers.length; c++) {
@@ -726,20 +742,20 @@ function buildPrecisionTable(doc, styles, cfg) {
       originX,
       originY
     );
-    const res = createTextFrameWithAutoFit(doc, styles, {
+    const hdrRes = createTextFrameWithAutoFit(doc, styles, {
       id: `${idPrefix}_hdr_c${c}`,
       pageNum,
       rect: cellRect,
       theme,
-      ignoreBaselineGrid: true,
+      allowAutoTighten: false,
       blocks: [
         {
           kind: 'body',
           text: headers[c],
           forceFontKey: 'displayBold',
-          fontPt: cfg.headerFontPt ?? 6.75,
-          leadingPt: 8.0,
-          trackingEm: 0.03,
+          fontPt: cfg.headerFontPt ?? 10.0,
+          leadingPt: 11.2,
+          trackingEm: 0.02,
           caps: CapsType.AllCaps,
           colour: PALETTE.white,
           align: c === 0 ? ParagraphAlignXType.Centre : ParagraphAlignXType.Left,
@@ -747,7 +763,8 @@ function buildPrecisionTable(doc, styles, cfg) {
         },
       ],
     });
-    auditItems.push(res);
+    centerTextInkInRect(doc, hdrRes.node, curXIn + (c === 0 ? 0.015 : padHIn), curYIn, cw - 2 * (c === 0 ? 0.015 : padHIn), headerHeightIn, originX, originY, c === 0);
+    auditItems.push(hdrRes);
     curXIn += cw;
   }
 
@@ -767,23 +784,10 @@ function buildPrecisionTable(doc, styles, cfg) {
   for (let r = 0; r < rows.length; r++) {
     const rh = rowHeightsIn[r];
     const swatch = DIAL_SWATCHES[r % DIAL_SWATCHES.length];
-    const isAlt = r % 2 === 1;
-    const rowBg = isAlt ? altBg : PALETTE.white;
+    const rowBg = r % 2 === 1 ? altBg : PALETTE.white;
 
-    const rowRect = makeRectPx(xIn, curYIn, totalWIn, rh, originX, originY);
-    addRectShape(doc, rowRect, rowBg, null, 0, `${idPrefix}_r${r + 1}_bg`, 0);
-
-    // Chromatic left edge bar for instant row keying
-    addRectShape(
-      doc,
-      makeRectPx(xIn, curYIn, 0.035, rh, originX, originY),
-      swatch.bg,
-      null,
-      0,
-      `${idPrefix}_r${r + 1}_swatchbar`,
-      0
-    );
-
+    addRectShape(doc, makeRectPx(xIn, curYIn, totalWIn, rh, originX, originY), rowBg, null, 0, `${idPrefix}_r${r + 1}_bg`, 0);
+    addRectShape(doc, makeRectPx(xIn, curYIn, 0.038, rh, originX, originY), swatch.bg, null, 0, `${idPrefix}_r${r + 1}_bar`, 0);
     addLineSegment(
       doc,
       originX + xIn * IN,
@@ -812,77 +816,53 @@ function buildPrecisionTable(doc, styles, cfg) {
       }
 
       if (c === 0) {
-        // Chromatic pill badge centered in Col 0
-        const pillW = Math.min(0.18, cw - 0.08);
-        const pillH = Math.min(0.19, rh - 0.045);
-        const pillX = curXIn + (cw - pillW) / 2 + 0.015;
-        const pillY = curYIn + (rh - pillH) / 2;
-        addRectShape(
-          doc,
-          makeRectPx(pillX, pillY, pillW, pillH, originX, originY),
-          swatch.bg,
-          null,
-          0,
-          `${idPrefix}_r${r + 1}_badge`,
-          2.2,
-          ShapeCornerType.Round
-        );
-        const numRect = makeRectPx(
-          pillX,
-          pillY + (pillH - 0.13) / 2 + 0.01,
-          pillW,
-          0.13,
-          originX,
-          originY
-        );
-        const res = createTextFrameWithAutoFit(doc, styles, {
+        // Chromatic d8 diamond diecon centered in Col 0 (10 pt numeral)
+        const dSize = Math.min(0.32, cw - 0.06, rh - 0.06);
+        const dx = curXIn + (cw - dSize) / 2 + 0.015;
+        const dy = curYIn + (rh - dSize) / 2;
+        addDiamondShape(doc, makeRectPx(dx, dy, dSize, dSize, originX, originY), swatch.bg, null, 0, `${idPrefix}_r${r + 1}_d8`);
+        const numRect = makeRectPx(dx, dy + (dSize - 0.18) / 2, dSize, 0.18, originX, originY);
+        const numRes = createTextFrameWithAutoFit(doc, styles, {
           id: `${idPrefix}_r${r + 1}_c0`,
           pageNum,
           rect: numRect,
           theme,
-          ignoreBaselineGrid: true,
           allowAutoTighten: false,
           blocks: [
             {
               kind: 'body',
               text: rows[r][0],
               forceFontKey: 'displayHeavy',
-              fontPt: 7.75,
-              leadingPt: 8.5,
+              fontPt: 10.0,
+              leadingPt: 11.0,
               colour: swatch.fg,
               align: ParagraphAlignXType.Centre,
               spaceAfterPt: 0,
             },
           ],
         });
-        auditItems.push(res);
+        centerTextInkInRect(doc, numRes.node, dx, dy, dSize, dSize, originX, originY, true);
+        auditItems.push(numRes);
       } else {
-        const cellRect = makeRectPx(
-          curXIn + padHIn,
-          curYIn + padVIn,
-          cw - 2 * padHIn,
-          rh - 2 * padVIn,
-          originX,
-          originY
+        const cellRect = makeRectPx(curXIn + padHIn, curYIn + padVIn, cw - 2 * padHIn, rh - 2 * padVIn, originX, originY);
+        auditItems.push(
+          createTextFrameWithAutoFit(doc, styles, {
+            id: `${idPrefix}_r${r + 1}_c${c}`,
+            pageNum,
+            rect: cellRect,
+            theme,
+            blocks: [
+              {
+                kind: 'body',
+                text: rows[r][c],
+                fontPt: cellFontPt,
+                leadingPt: cellLeadPt,
+                leadColour: swatch.text,
+                spaceAfterPt: 0,
+              },
+            ],
+          })
         );
-        const res = createTextFrameWithAutoFit(doc, styles, {
-          id: `${idPrefix}_r${r + 1}_c${c}`,
-          pageNum,
-          rect: cellRect,
-          theme,
-          ignoreBaselineGrid: true,
-          blocks: [
-            {
-              kind: 'body',
-              text: rows[r][c],
-              fontPt: cellFontPt,
-              leadingPt: cellLeadPt,
-              leadColour: swatch.text,
-              spaceAfterPt: 0,
-            },
-          ],
-        });
-        auditItems.push(res);
       }
       curXIn += cw;
     }
@@ -890,21 +870,302 @@ function buildPrecisionTable(doc, styles, cfg) {
   }
 
   const fullHIn = headerHeightIn + rowHeightsIn.reduce((a, b) => a + b, 0);
-  addRectShape(
-    doc,
-    makeRectPx(xIn, yIn, totalWIn, fullHIn, originX, originY),
-    null,
-    headerBg,
-    0.85,
-    `${idPrefix}_outer_border`,
-    0
-  );
-
+  addRectShape(doc, makeRectPx(xIn, yIn, totalWIn, fullHIn, originX, originY), null, headerBg, 0.85, `${idPrefix}_outer`, 0);
   return auditItems;
 }
 
+/**
+ * Draws a crisp vector QR code (run-length horizontal rectangles batched in a single command)
+ * inside a white quiet-zone tile.
+ */
+function addQrCode(doc, xIn, yIn, sizeIn, ox, oy, name) {
+  const padIn = sizeIn * 0.08;
+  const innerIn = sizeIn - 2 * padIn;
+  const modIn = innerIn / QR_SIZE;
+
+  addRectShape(doc, makeRectPx(xIn, yIn, sizeIn, sizeIn, ox, oy), PALETTE.white, PALETTE.neutralGold, 1.0, `${name}_bg`, 3, ShapeCornerType.Round);
+
+  const builder = AddChildNodesCommandBuilder.create();
+  const darkFill = FillDescriptor.createSolid(PALETTE.neutralDark);
+  const rowCmds = QR_PATH.split('M').filter(Boolean);
+  for (let r = 0; r < rowCmds.length; r++) {
+    const cmd = rowCmds[r];
+    const mHead = /^(\d+)\s+(\d+)\.5(.*)$/.exec(cmd);
+    if (!mHead) continue;
+    let cx = Number(mHead[1]);
+    const cy = Number(mHead[2]);
+    const rest = mHead[3];
+    const tokenRe = /([hm])(\d+)(?:\s+0)?/g;
+    let tm;
+    let runIdx = 0;
+    while ((tm = tokenRe.exec(rest)) !== null) {
+      const op = tm[1];
+      const val = Number(tm[2]);
+      if (op === 'h') {
+        const def = ShapeNodeDefinition.createDefault();
+        def.setShape(ShapeRectangle.create());
+        def.setBoundingRectangle(
+          makeRectPx(xIn + padIn + cx * modIn, yIn + padIn + cy * modIn, val * modIn, modIn * 1.02, ox, oy)
+        );
+        def.addBrushFillDescriptor(darkFill);
+        def.userDescription = `${name}_r${cy}_${runIdx++}`;
+        builder.addNode(def);
+        cx += val;
+      } else {
+        cx += val;
+      }
+    }
+  }
+  doc.executeCommand(builder.createCommand(true, NodeChildType.Main));
+}
+
+/**
+ * Draws a dark Pitch Poster card mirroring palette.lynnjones.rocks (full-bento or compact).
+ */
+function addPitchPosterCard(doc, styles, cfg) {
+  const {
+    id,
+    pageNum,
+    xIn,
+    yIn,
+    wIn,
+    hIn,
+    ox,
+    oy,
+    pIdx,
+    sIdx,
+    tIdx,
+    uIdx,
+    uDial, // 'p' | 's' | 't'
+    pWord,
+    sWord,
+    tWord,
+    uWord,
+    fullBento = true,
+    prompts = null, // [tex, foot, hook]
+    mods = null,    // [engine, ps2, ps3]
+  } = cfg;
+
+  const pSw = DIAL_SWATCHES[pIdx - 1];
+  const sSw = DIAL_SWATCHES[sIdx - 1];
+  const tSw = DIAL_SWATCHES[tIdx - 1];
+  const uSw = DIAL_SWATCHES[uIdx - 1];
+  const out = [];
+
+  addShadowCard(
+    doc,
+    makeRectPx(xIn, yIn, wIn, hIn, ox, oy),
+    PALETTE.neutralCard,
+    pSw.bg,
+    1.4,
+    pSw.bg,
+    3.0,
+    5,
+    ShapeCornerType.Round,
+    `${id}_card`
+  );
+
+  const pad = fullBento ? 0.16 : 0.12;
+  const innerW = wIn - 2 * pad;
+  const wordPt = fullBento ? 18.0 : 13.5;
+  const wordLead = fullBento ? 19.2 : 14.5;
+  const subPt = 10.0;
+  const subLead = 11.4;
+
+  let cy = yIn + (fullBento ? 0.14 : 0.10);
+
+  const lines = [
+    { key: 'p', word: pWord, align: ParagraphAlignXType.Left, col: pSw.light },
+    { key: 's', word: sWord, align: ParagraphAlignXType.Centre, col: sSw.light },
+    { key: 't', word: tWord, align: ParagraphAlignXType.Right, col: tSw.light },
+  ];
+
+  for (const ln of lines) {
+    out.push(
+      createTextFrameWithAutoFit(doc, styles, {
+        id: `${id}_w_${ln.key}`,
+        pageNum,
+        rect: makeRectPx(xIn + pad, cy, innerW, fullBento ? 0.29 : 0.22, ox, oy),
+        theme: 'neutral',
+        allowAutoTighten: false,
+        blocks: [
+          {
+            kind: 'body',
+            text: ln.word,
+            forceFontKey: 'displayHeavy',
+            fontPt: wordPt,
+            leadingPt: wordLead,
+            caps: CapsType.AllCaps,
+            colour: ln.col,
+            align: ln.align,
+            spaceAfterPt: 0,
+          },
+        ],
+      })
+    );
+    cy += fullBento ? 0.29 : 0.22;
+
+    if (uDial === ln.key && uWord) {
+      // Hairline divider centered under parent Dial placement
+      const ruleW = Math.min(innerW * 0.48, Math.max(0.85, ln.word.length * (fullBento ? 0.155 : 0.115)));
+      let rx1 = xIn + pad;
+      if (ln.align === ParagraphAlignXType.Centre) rx1 = xIn + pad + (innerW - ruleW) / 2;
+      if (ln.align === ParagraphAlignXType.Right) rx1 = xIn + pad + innerW - ruleW;
+      addLineSegment(
+        doc,
+        ox + rx1 * IN,
+        oy + (cy + 0.02) * IN,
+        ox + (rx1 + ruleW) * IN,
+        oy + (cy + 0.02) * IN,
+        uSw.light,
+        0.75,
+        `${id}_u_rule`
+      );
+      out.push(
+        createTextFrameWithAutoFit(doc, styles, {
+          id: `${id}_u_txt`,
+          pageNum,
+          rect: makeRectPx(rx1 - 0.12, cy + 0.04, ruleW + 0.24, 0.20, ox, oy),
+          theme: 'neutral',
+          allowAutoTighten: false,
+          blocks: [
+            {
+              kind: 'body',
+              text: uWord,
+              forceFontKey: 'monoBold',
+              fontPt: subPt,
+              leadingPt: subLead,
+              colour: uSw.light,
+              align: ParagraphAlignXType.Centre,
+              spaceAfterPt: 0,
+            },
+          ],
+        })
+      );
+      cy += 0.24;
+    } else {
+      cy += fullBento ? 0.04 : 0.02;
+    }
+  }
+
+  if (fullBento && prompts && mods) {
+    // Identity Prompts Bento Box (10 pt floor throughout)
+    const idY = yIn + 1.46;
+    const idH = 0.86;
+    addRectShape(doc, makeRectPx(xIn + pad, idY, innerW, idH, ox, oy), PALETTE.neutralPanel, PALETTE.neutralGold, 0.75, `${id}_id_box`, 0);
+    out.push(
+      createTextFrameWithAutoFit(doc, styles, {
+        id: `${id}_id_hdr`,
+        pageNum,
+        rect: makeRectPx(xIn + pad + 0.10, idY + 0.07, innerW - 0.20, 0.20, ox, oy),
+        theme: 'neutral',
+        allowAutoTighten: false,
+        blocks: [
+          {
+            kind: 'body',
+            text: 'IDENTITY PROMPTS',
+            forceFontKey: 'displayBold',
+            fontPt: 10.0,
+            leadingPt: 11.2,
+            colour: PALETTE.neutralGold,
+            spaceAfterPt: 0,
+          },
+        ],
+      })
+    );
+
+    const pLabels = ['Texture', 'Foothold', 'Hook'];
+    const pColW = (innerW - 0.20) / 3;
+    for (let i = 0; i < 3; i++) {
+      const px = xIn + pad + 0.10 + i * pColW;
+      if (i > 0) {
+        addLineSegment(doc, ox + (px - 0.04) * IN, oy + (idY + 0.30) * IN, ox + (px - 0.04) * IN, oy + (idY + idH - 0.08) * IN, PALETTE.neutralDarkBorder, 0.5, `${id}_id_div${i}`);
+      }
+      out.push(
+        createTextFrameWithAutoFit(doc, styles, {
+          id: `${id}_id_c${i}`,
+          pageNum,
+          rect: makeRectPx(px, idY + 0.30, pColW - 0.06, 0.50, ox, oy),
+          theme: 'neutral',
+          blocks: [
+            {
+              kind: 'body',
+              text: pLabels[i],
+              forceFontKey: 'displaySemi',
+              fontPt: 10.0,
+              leadingPt: 11.4,
+              colour: PALETTE.neutralSubtleText,
+              spaceAfterPt: 1.5,
+            },
+            {
+              kind: 'body',
+              text: prompts[i],
+              forceFontKey: 'displayBold',
+              fontPt: 10.5,
+              leadingPt: 12.0,
+              colour: PALETTE.white,
+              spaceAfterPt: 0,
+            },
+          ],
+        })
+      );
+    }
+
+    // 3 Bottom Cortex Bento Tiles (10 pt floor)
+    const modY = idY + idH + 0.10;
+    const modH = hIn - (modY - yIn) - 0.14;
+    const gap = 0.08;
+    const tileW = (innerW - 2 * gap) / 3;
+    const mLabels = ['Engine Mod', 'Prime Set 2', 'Prime Set 3'];
+    const mCols = [pSw.bg, sSw.bg, tSw.bg];
+    for (let i = 0; i < 3; i++) {
+      const tx = xIn + pad + i * (tileW + gap);
+      addRectShape(doc, makeRectPx(tx, modY, tileW, modH, ox, oy), PALETTE.neutralPanel, mCols[i], 0.85, `${id}_mod_${i}`, 0);
+      out.push(
+        createTextFrameWithAutoFit(doc, styles, {
+          id: `${id}_mod_hdr_${i}`,
+          pageNum,
+          rect: makeRectPx(tx + 0.08, modY + 0.07, tileW - 0.16, 0.20, ox, oy),
+          theme: 'neutral',
+          allowAutoTighten: false,
+          blocks: [
+            {
+              kind: 'body',
+              text: mLabels[i],
+              forceFontKey: 'displayBold',
+              fontPt: 10.0,
+              leadingPt: 11.2,
+              colour: PALETTE.neutralGold,
+              spaceAfterPt: 0,
+            },
+          ],
+        }),
+        createTextFrameWithAutoFit(doc, styles, {
+          id: `${id}_mod_txt_${i}`,
+          pageNum,
+          rect: makeRectPx(tx + 0.08, modY + 0.30, tileW - 0.16, modH - 0.36, ox, oy),
+          theme: 'neutral',
+          blocks: [
+            {
+              kind: 'body',
+              text: mods[i],
+              forceFontKey: 'displayBold',
+              fontPt: 10.0,
+              leadingPt: 11.6,
+              colour: PALETTE.white,
+              spaceAfterPt: 0,
+            },
+          ],
+        })
+      );
+    }
+  }
+
+  return out;
+}
+
 // ---------------------------------------------------------------------------
-// 5. Master Spread Builders (Bleed Edge Strip & Running Footer Only)
+// 5. Master Spread Builders (P1–P4 Neutral, P5–P8 Cortex)
 // ---------------------------------------------------------------------------
 
 function setSpreadIfNeeded(doc, spread) {
@@ -913,7 +1174,7 @@ function setSpreadIfNeeded(doc, spread) {
   }
 }
 
-function populateMasterSpread(doc, styles, masterSpread, theme) {
+function populateMasterSpread(doc, styles, masterSpread, leftTheme, rightTheme = leftTheme) {
   setSpreadIfNeeded(doc, masterSpread);
   const ext = masterSpread.getSpreadExtents({
     includeSpread: true,
@@ -922,115 +1183,69 @@ function populateMasterSpread(doc, styles, masterSpread, theme) {
   });
   const halfW = ext.width / 2;
   const pageOrigins = [
-    { x: ext.x, y: ext.y, side: 'L' },
-    { x: ext.x + halfW, y: ext.y, side: 'R' },
+    { x: ext.x, y: ext.y, side: 'L', theme: leftTheme },
+    { x: ext.x + halfW, y: ext.y, side: 'R', theme: rightTheme },
   ];
 
-  const isCortex = theme === 'cortex';
-  const footerLeft = isCortex
-    ? 'THE 4D8 SETTING COMPILER  ·  CORTEX HARNESS'
-    : 'THE 4D8 SETTING COMPILER  ·  BY LYNN JONES';
-  const footerRight = isCortex ? 'CORTEX PRIME COMPATIBLE' : 'SYSTEM-NEUTRAL ENGINE';
-
   for (const pg of pageOrigins) {
-    // Top bleed edge strip
+    const isCortex = pg.theme === 'cortex';
+    const footerLeft = '4D WORLDBUILDING';
+    const footerRight = isCortex ? 'CORTEX PRIME' : 'SYSTEM-NEUTRAL';
+
     if (isCortex) {
       const splitW = (PAGE_W_IN + BLEED_IN) * 0.65;
       addRectShape(
         doc,
-        new Rectangle(
-          pg.x - (pg.side === 'L' ? BLEED_IN * IN : 0),
-          pg.y - BLEED_IN * IN,
-          splitW * IN,
-          0.17 * IN
-        ),
+        new Rectangle(pg.x - (pg.side === 'L' ? BLEED_IN * IN : 0), pg.y - BLEED_IN * IN, splitW * IN, 0.16 * IN),
         PALETTE.cortexCyan,
         null,
         0,
-        `master_cortex_${pg.side}_bleed_cyan`,
+        `master_cortex_${pg.side}_bleed_c`,
         0
       );
       addRectShape(
         doc,
-        new Rectangle(
-          pg.x - (pg.side === 'L' ? BLEED_IN * IN : 0) + splitW * IN,
-          pg.y - BLEED_IN * IN,
-          (PAGE_W_IN + BLEED_IN - splitW) * IN,
-          0.17 * IN
-        ),
+        new Rectangle(pg.x - (pg.side === 'L' ? BLEED_IN * IN : 0) + splitW * IN, pg.y - BLEED_IN * IN, (PAGE_W_IN + BLEED_IN - splitW) * IN, 0.16 * IN),
         PALETTE.cortexMagenta,
         null,
         0,
-        `master_cortex_${pg.side}_bleed_magenta`,
+        `master_cortex_${pg.side}_bleed_m`,
         0
       );
     } else {
       addRectShape(
         doc,
-        new Rectangle(
-          pg.x - (pg.side === 'L' ? BLEED_IN * IN : 0),
-          pg.y - BLEED_IN * IN,
-          (PAGE_W_IN + BLEED_IN) * IN,
-          0.17 * IN
-        ),
+        new Rectangle(pg.x - (pg.side === 'L' ? BLEED_IN * IN : 0), pg.y - BLEED_IN * IN, (PAGE_W_IN + BLEED_IN) * IN, 0.16 * IN),
         PALETTE.neutralAccent,
         null,
         0,
-        `master_neutral_${pg.side}_bleed_strip`,
+        `master_neutral_${pg.side}_bleed`,
         0
       );
     }
 
-    // Running footer rule (y: 8.08 in) & labels (y: 8.13 in)
+    const footRuleY = 7.76;
     if (isCortex) {
-      addLineSegment(
-        doc,
-        pg.x + MARGIN_IN * IN,
-        pg.y + 8.08 * IN,
-        pg.x + (MARGIN_IN + CONTENT_W_IN * 0.65) * IN,
-        pg.y + 8.08 * IN,
-        PALETTE.cortexCyan,
-        0.85,
-        `master_cortex_${pg.side}_foot_cyan`
-      );
-      addLineSegment(
-        doc,
-        pg.x + (MARGIN_IN + CONTENT_W_IN * 0.65) * IN,
-        pg.y + 8.08 * IN,
-        pg.x + (MARGIN_IN + CONTENT_W_IN) * IN,
-        pg.y + 8.08 * IN,
-        PALETTE.cortexMagenta,
-        0.85,
-        `master_cortex_${pg.side}_foot_magenta`
-      );
+      addLineSegment(doc, pg.x + MARGIN_IN * IN, pg.y + footRuleY * IN, pg.x + (MARGIN_IN + CONTENT_W_IN * 0.65) * IN, pg.y + footRuleY * IN, PALETTE.cortexCyan, 0.85, `master_c_${pg.side}_fc`);
+      addLineSegment(doc, pg.x + (MARGIN_IN + CONTENT_W_IN * 0.65) * IN, pg.y + footRuleY * IN, pg.x + (MARGIN_IN + CONTENT_W_IN) * IN, pg.y + footRuleY * IN, PALETTE.cortexMagenta, 0.85, `master_c_${pg.side}_fm`);
     } else {
-      addLineSegment(
-        doc,
-        pg.x + MARGIN_IN * IN,
-        pg.y + 8.08 * IN,
-        pg.x + (MARGIN_IN + CONTENT_W_IN) * IN,
-        pg.y + 8.08 * IN,
-        PALETTE.neutralBorder,
-        0.75,
-        `master_neutral_${pg.side}_foot_rule`
-      );
+      addLineSegment(doc, pg.x + MARGIN_IN * IN, pg.y + footRuleY * IN, pg.x + (MARGIN_IN + CONTENT_W_IN) * IN, pg.y + footRuleY * IN, PALETTE.neutralBorder, 0.75, `master_n_${pg.side}_fr`);
     }
 
     createTextFrameWithAutoFit(doc, styles, {
-      id: `master_${theme}_${pg.side}_foot_l`,
+      id: `master_${pg.theme}_${pg.side}_fl`,
       pageNum: 0,
-      rect: makeRectPx(MARGIN_IN, 8.13, 3.1, 0.16, pg.x, pg.y),
-      theme,
-      ignoreBaselineGrid: true,
+      rect: makeRectPx(MARGIN_IN, 7.82, 2.55, 0.24, pg.x, pg.y),
+      theme: pg.theme,
       allowAutoTighten: false,
       blocks: [
         {
           kind: 'body',
           text: footerLeft,
           forceFontKey: 'displaySemi',
-          fontPt: 6.5,
-          leadingPt: 7.5,
-          trackingEm: 0.05,
+          fontPt: 10.0,
+          leadingPt: 11.2,
+          trackingEm: 0.02,
           caps: CapsType.AllCaps,
           colour: PALETTE.mutedInk,
           spaceAfterPt: 0,
@@ -1038,20 +1253,19 @@ function populateMasterSpread(doc, styles, masterSpread, theme) {
       ],
     });
     createTextFrameWithAutoFit(doc, styles, {
-      id: `master_${theme}_${pg.side}_foot_r`,
+      id: `master_${pg.theme}_${pg.side}_fr`,
       pageNum: 0,
-      rect: makeRectPx(MARGIN_IN + 3.05, 8.13, CONTENT_W_IN - 3.05, 0.16, pg.x, pg.y),
-      theme,
-      ignoreBaselineGrid: true,
+      rect: makeRectPx(MARGIN_IN + 2.55, 7.82, CONTENT_W_IN - 2.55, 0.24, pg.x, pg.y),
+      theme: pg.theme,
       allowAutoTighten: false,
       blocks: [
         {
           kind: 'body',
           text: footerRight,
           forceFontKey: 'displayBold',
-          fontPt: 6.5,
-          leadingPt: 7.5,
-          trackingEm: 0.05,
+          fontPt: 10.0,
+          leadingPt: 11.2,
+          trackingEm: 0.02,
           caps: CapsType.AllCaps,
           colour: isCortex ? PALETTE.cortexCyanDark : PALETTE.neutralAccent,
           align: ParagraphAlignXType.Right,
@@ -1063,558 +1277,292 @@ function populateMasterSpread(doc, styles, masterSpread, theme) {
 }
 
 // ---------------------------------------------------------------------------
-// 6. Page Content Builders (Pages 1–4)
+// 6. Page Content Builders (Pages 1–16, strict >= 10.0 pt floor)
 // ---------------------------------------------------------------------------
 
 function buildPage1(doc, styles, ox, oy) {
   const results = [];
-  const col1X = MARGIN_IN;
-  const col2X = MARGIN_IN + COL_W_IN + GUTTER_IN;
 
-  // --- HERO COVER BLOCK (y: 0.30 .. 1.48 in) ---
-  const hx = ox + MARGIN_IN * IN;
-  const hy = oy + 0.30 * IN;
-  const hw = CONTENT_W_IN * IN;
-  const hh = 1.18 * IN;
-  const cut = 0.11 * IN;
-  const sh = 3.0 * PT;
-
-  // Vermilion hard-offset shadow behind hero block
-  addPolygon(
+  // Full-bleed dark obsidian cover canvas
+  addRectShape(
     doc,
-    [
-      [hx + sh, hy + sh],
-      [hx + hw - cut + sh, hy + sh],
-      [hx + hw + sh, hy + cut + sh],
-      [hx + hw + sh, hy + hh + sh],
-      [hx + cut + sh, hy + hh + sh],
-      [hx + sh, hy + hh - cut + sh],
-    ],
-    PALETTE.neutralAccent,
-    null,
-    0,
-    'p1_hero_shadow'
-  );
-
-  // Obsidian hero body
-  addPolygon(
-    doc,
-    [
-      [hx, hy],
-      [hx + hw - cut, hy],
-      [hx + hw, hy + cut],
-      [hx + hw, hy + hh],
-      [hx + cut, hy + hh],
-      [hx, hy + hh - cut],
-    ],
+    new Rectangle(ox - BLEED_IN * IN, oy - BLEED_IN * IN, (PAGE_W_IN + BLEED_IN) * IN, (PAGE_H_IN + 2 * BLEED_IN) * IN),
     PALETTE.neutralDark,
     null,
     0,
-    'p1_hero_bg'
-  );
-
-  // Gold bottom accent bar inside hero
-  addRectShape(
-    doc,
-    makeRectPx(MARGIN_IN + 0.11, 1.445, CONTENT_W_IN - 0.11, 0.035, ox, oy),
-    PALETTE.neutralGold,
-    null,
-    0,
-    'p1_hero_gold_bar',
+    'p1_bg',
     0
   );
+  // Top vermilion + bottom solar gold accent bands
+  addRectShape(doc, new Rectangle(ox - BLEED_IN * IN, oy - BLEED_IN * IN, (PAGE_W_IN + BLEED_IN) * IN, 0.22 * IN), PALETTE.neutralAccent, null, 0, 'p1_top_bar', 0);
+  addRectShape(doc, new Rectangle(ox - BLEED_IN * IN, oy + (PAGE_H_IN - 0.14) * IN, (PAGE_W_IN + BLEED_IN) * IN, (0.14 + BLEED_IN) * IN), PALETTE.neutralGold, null, 0, 'p1_bot_bar', 0);
 
-  // Hero Cover Typography (Left)
+  // Kicker (10 pt floor)
   results.push(
     createTextFrameWithAutoFit(doc, styles, {
-      id: 'p1_hero_title',
+      id: 'p1_kicker',
       pageNum: 1,
-      rect: makeRectPx(MARGIN_IN + 0.14, 0.38, 3.22, 1.03, ox, oy),
+      rect: makeRectPx(MARGIN_IN, 0.40, CONTENT_W_IN, 0.24, ox, oy),
       theme: 'neutral',
-      ignoreBaselineGrid: true,
       allowAutoTighten: false,
       blocks: [
         {
           kind: 'body',
-          text: 'COMBINATORIC WORLDBUILDING  ·  BY LYNN JONES',
+          text: 'P2–7: SYSTEM-NEUTRAL  ·  P8–16: CORTEX PRIME',
           forceFontKey: 'displaySemi',
-          fontPt: 6.5,
-          leadingPt: 8.0,
-          trackingEm: 0.07,
+          fontPt: 10.0,
+          leadingPt: 11.4,
+          trackingEm: 0.02,
           caps: CapsType.AllCaps,
           colour: PALETTE.neutralGold,
-          spaceAfterPt: 3.0,
+          spaceAfterPt: 0,
         },
+      ],
+    })
+  );
+
+  // Display Cover Title
+  results.push(
+    createTextFrameWithAutoFit(doc, styles, {
+      id: 'p1_title',
+      pageNum: 1,
+      rect: makeRectPx(MARGIN_IN, 0.72, CONTENT_W_IN, 1.96, ox, oy),
+      theme: 'neutral',
+      allowAutoTighten: false,
+      blocks: [
         {
           kind: 'body',
-          text: 'THE 4D8',
+          text: '4D',
           forceFontKey: 'displayHeavy',
-          fontPt: 19.5,
-          leadingPt: 19.5,
+          fontPt: 34.0,
+          leadingPt: 33.0,
           trackingEm: 0.02,
           caps: CapsType.AllCaps,
           colour: PALETTE.white,
-          spaceAfterPt: 1.0,
-        },
-        {
-          kind: 'body',
-          text: 'SETTING COMPILER',
-          forceFontKey: 'displayBold',
-          fontPt: 13.5,
-          leadingPt: 14.5,
-          trackingEm: 0.04,
-          caps: CapsType.AllCaps,
-          colour: PALETTE.neutralGold,
-          spaceAfterPt: 4.0,
-        },
-        {
-          kind: 'body',
-          text: '*Three words sell a world. Four d8s ignite a campaign.*',
-          fontPt: 8.0,
-          leadingPt: 9.5,
-          colour: PALETTE.neutralSubtleText,
-          spaceAfterPt: 3.5,
-        },
-        {
-          kind: 'body',
-          text: 'P1–2: SYSTEM-NEUTRAL ENGINE   |   P3–4: CORTEX PRIME HARNESS',
-          forceFontKey: 'displaySemi',
-          fontPt: 5.75,
-          leadingPt: 7.0,
-          trackingEm: 0.03,
-          caps: CapsType.AllCaps,
-          colour: PALETTE.neutralAccent,
           spaceAfterPt: 0,
         },
-      ],
-    })
-  );
-
-  // Graphic 4d8 Dial Cluster on Right of Hero Card
-  addFacetedD8(
-    doc,
-    3.94,
-    0.69,
-    0.215,
-    0.265,
-    ox,
-    oy,
-    DIAL_SWATCHES[0].bg,
-    RGB8(176, 98, 245),
-    RGB8(98, 22, 168),
-    PALETTE.white,
-    'p1_d8_palette'
-  );
-  addFacetedD8(
-    doc,
-    4.32,
-    0.63,
-    0.215,
-    0.265,
-    ox,
-    oy,
-    DIAL_SWATCHES[2].bg,
-    RGB8(58, 164, 236),
-    RGB8(8, 88, 152),
-    PALETTE.white,
-    'p1_d8_setting'
-  );
-  addFacetedD8(
-    doc,
-    4.70,
-    0.70,
-    0.215,
-    0.265,
-    ox,
-    oy,
-    DIAL_SWATCHES[1].bg,
-    RGB8(245, 86, 154),
-    RGB8(170, 12, 82),
-    PALETTE.white,
-    'p1_d8_tone'
-  );
-  // 4th Die: Undertow in bright Solar Gold centered lower
-  addFacetedD8(
-    doc,
-    4.32,
-    1.05,
-    0.225,
-    0.275,
-    ox,
-    oy,
-    PALETTE.neutralGold,
-    RGB8(255, 218, 120),
-    RGB8(212, 134, 16),
-    PALETTE.neutralDark,
-    'p1_d8_undertow'
-  );
-
-  // --- MIDDLE 2-COLUMN PROCEDURE & UNDERTOW ZONE (y: 1.66 .. 3.42 in) ---
-  // Left Column: Procedure + 2 Quick-Rule Pills
-  results.push(
-    createTextFrameWithAutoFit(doc, styles, {
-      id: 'p1_col1_h2',
-      pageNum: 1,
-      rect: makeRectPx(col1X, 1.66, COL_W_IN, 0.20, ox, oy),
-      theme: 'neutral',
-      ignoreBaselineGrid: true,
-      allowAutoTighten: false,
-      blocks: [
-        {
-          kind: 'h2',
-          text: 'The 4d8 Procedure',
-          fontPt: 9.5,
-          leadingPt: 11.0,
-          spaceAfterPt: 0,
-        },
-      ],
-    })
-  );
-  addLineSegment(
-    doc,
-    ox + col1X * IN,
-    oy + 1.85 * IN,
-    ox + (col1X + COL_W_IN) * IN,
-    oy + 1.85 * IN,
-    PALETTE.neutralAccent,
-    1.5,
-    'p1_col1_rule'
-  );
-
-  results.push(
-    createTextFrameWithAutoFit(doc, styles, {
-      id: 'p1_col1_body',
-      pageNum: 1,
-      rect: makeRectPx(col1X, 1.89, COL_W_IN, 0.48, ox, oy),
-      theme: 'neutral',
-      ignoreBaselineGrid: true,
-      blocks: [
         {
           kind: 'body',
-          text: 'Roll `4d8` once (no rerolls). Slot 3 into **Palette**, **Setting**, **Tone** (*512 pitches*); drop the 4th as **Undertow**.',
-          fontPt: 8.1,
-          leadingPt: 9.9,
-          spaceAfterPt: 0,
-        },
-      ],
-    })
-  );
-
-  // Mini Callout Pill 1: Matched Pair
-  addRectShape(
-    doc,
-    makeRectPx(col1X, 2.42, COL_W_IN, 0.46, ox, oy),
-    PALETTE.neutralCream,
-    PALETTE.neutralBorder,
-    0.75,
-    'p1_pill_pair_bg',
-    0
-  );
-  addRectShape(
-    doc,
-    makeRectPx(col1X, 2.42, 0.055, 0.46, ox, oy),
-    PALETTE.neutralGold,
-    null,
-    0,
-    'p1_pill_pair_bar',
-    0
-  );
-  results.push(
-    createTextFrameWithAutoFit(doc, styles, {
-      id: 'p1_pill_pair_txt',
-      pageNum: 1,
-      rect: makeRectPx(col1X + 0.10, 2.465, COL_W_IN - 0.14, 0.39, ox, oy),
-      theme: 'neutral',
-      ignoreBaselineGrid: true,
-      blocks: [
-        {
-          kind: 'body',
-          text: '**Matched Pair → Deep Note**',
-          fontPt: 7.6,
-          leadingPt: 8.8,
-          colour: PALETTE.neutralGoldText,
-          spaceAfterPt: 1.0,
-        },
-        {
-          kind: 'body',
-          text: 'Double down on that Dial\'s extreme; zero dilution.',
-          fontPt: 7.35,
-          leadingPt: 8.6,
-          spaceAfterPt: 0,
-        },
-      ],
-    })
-  );
-
-  // Mini Callout Pill 2: Four-of-a-Kind
-  addRectShape(
-    doc,
-    makeRectPx(col1X, 2.94, COL_W_IN, 0.46, ox, oy),
-    PALETTE.neutralCream,
-    PALETTE.neutralBorder,
-    0.75,
-    'p1_pill_quad_bg',
-    0
-  );
-  addRectShape(
-    doc,
-    makeRectPx(col1X, 2.94, 0.055, 0.46, ox, oy),
-    PALETTE.neutralAccent,
-    null,
-    0,
-    'p1_pill_quad_bar',
-    0
-  );
-  results.push(
-    createTextFrameWithAutoFit(doc, styles, {
-      id: 'p1_pill_quad_txt',
-      pageNum: 1,
-      rect: makeRectPx(col1X + 0.10, 2.985, COL_W_IN - 0.14, 0.39, ox, oy),
-      theme: 'neutral',
-      ignoreBaselineGrid: true,
-      blocks: [
-        {
-          kind: 'body',
-          text: '**4-of-a-Kind** (`N-N-N-N`) **→ Pure Archetype**',
-          fontPt: 7.35,
-          leadingPt: 8.8,
-          boldColour: PALETTE.neutralAccent,
-          spaceAfterPt: 1.0,
-        },
-        {
-          kind: 'body',
-          text: 'Skip Undertow; run row straight at max volume.',
-          fontPt: 7.35,
-          leadingPt: 8.6,
-          spaceAfterPt: 0,
-        },
-      ],
-    })
-  );
-
-  // Right Column: Hard-Shadow Card for THE UNDERTOW (4TH DIE)
-  addShadowCard(
-    doc,
-    makeRectPx(col2X, 1.66, COL_W_IN, 1.74, ox, oy),
-    PALETTE.neutralCream,
-    null,
-    0,
-    PALETTE.neutralShadow,
-    2.5,
-    0,
-    ShapeCornerType.None,
-    'p1_undertow_card'
-  );
-  addRectShape(
-    doc,
-    makeRectPx(col2X, 1.66, COL_W_IN, 0.24, ox, oy),
-    PALETTE.neutralAccent,
-    null,
-    0,
-    'p1_undertow_hdr_bg',
-    0
-  );
-  addRectShape(
-    doc,
-    makeRectPx(col2X, 1.66, COL_W_IN, 1.74, ox, oy),
-    null,
-    PALETTE.neutralDark,
-    0.85,
-    'p1_undertow_border',
-    0
-  );
-  results.push(
-    createTextFrameWithAutoFit(doc, styles, {
-      id: 'p1_undertow_hdr_txt',
-      pageNum: 1,
-      rect: makeRectPx(col2X + 0.10, 1.71, COL_W_IN - 0.20, 0.16, ox, oy),
-      theme: 'neutral',
-      ignoreBaselineGrid: true,
-      allowAutoTighten: false,
-      blocks: [
-        {
-          kind: 'body',
-          text: 'THE UNDERTOW · 4TH DIE',
+          text: 'COMBINATORIC',
           forceFontKey: 'displayHeavy',
-          fontPt: 7.75,
-          leadingPt: 9.0,
-          trackingEm: 0.04,
+          fontPt: 30.0,
+          leadingPt: 31.0,
+          trackingEm: 0.015,
           caps: CapsType.AllCaps,
           colour: PALETTE.white,
-          spaceAfterPt: 0,
-        },
-      ],
-    })
-  );
-  results.push(
-    createTextFrameWithAutoFit(doc, styles, {
-      id: 'p1_undertow_body',
-      pageNum: 1,
-      rect: makeRectPx(col2X + 0.10, 1.99, COL_W_IN - 0.18, 1.35, ox, oy),
-      theme: 'neutral',
-      ignoreBaselineGrid: true,
-      blocks: [
-        {
-          kind: 'body',
-          text: '• **Palette** *(Divide)*: Split class, zone, or day/night (*Chrome spires, Rust slums*).',
-          fontPt: 7.75,
-          leadingPt: 9.7,
-          leadColour: DIAL_SWATCHES[0].text,
-          leftIndentPt: 7,
-          firstIndentPt: -7,
-          spaceAfterPt: 5.5,
+          spaceAfterPt: 1.0,
         },
         {
           kind: 'body',
-          text: '• **Setting** *(Layer)*: Stack or collide play spaces (*Modern streets, Mythic spirits*).',
-          fontPt: 7.75,
-          leadingPt: 9.7,
-          leadColour: DIAL_SWATCHES[2].text,
-          leftIndentPt: 7,
-          firstIndentPt: -7,
-          spaceAfterPt: 5.5,
-        },
-        {
-          kind: 'body',
-          text: '• **Tone** *(Counter-Beat)*: Contrast front vs. stakes, or wilds vs. home (*Peril wilds, Cozy camp*).',
-          fontPt: 7.75,
-          leadingPt: 9.7,
-          leadColour: DIAL_SWATCHES[1].text,
-          leftIndentPt: 7,
-          firstIndentPt: -7,
-          spaceAfterPt: 0,
-        },
-      ],
-    })
-  );
-
-  // --- MASTER DIAL MATRIX (y: 3.55 .. 7.91 in) ---
-  results.push(
-    createTextFrameWithAutoFit(doc, styles, {
-      id: 'p1_matrix_heading',
-      pageNum: 1,
-      rect: makeRectPx(MARGIN_IN, 3.55, 2.8, 0.20, ox, oy),
-      theme: 'neutral',
-      ignoreBaselineGrid: true,
-      allowAutoTighten: false,
-      blocks: [
-        {
-          kind: 'h2',
-          text: 'The Master Dial Matrix',
-          fontPt: 9.5,
-          leadingPt: 11.0,
-          spaceAfterPt: 0,
-        },
-      ],
-    })
-  );
-  results.push(
-    createTextFrameWithAutoFit(doc, styles, {
-      id: 'p1_matrix_kicker',
-      pageNum: 1,
-      rect: makeRectPx(MARGIN_IN + 2.6, 3.575, CONTENT_W_IN - 2.6, 0.16, ox, oy),
-      theme: 'neutral',
-      ignoreBaselineGrid: true,
-      allowAutoTighten: false,
-      blocks: [
-        {
-          kind: 'body',
-          text: 'ROLL 4d8  ·  ASSIGN IN ANY ORDER',
-          forceFontKey: 'displayBold',
-          fontPt: 6.75,
-          leadingPt: 8.0,
-          trackingEm: 0.05,
+          text: 'WORLDBUILDING',
+          forceFontKey: 'displayHeavy',
+          fontPt: 27.5,
+          leadingPt: 29.0,
+          trackingEm: 0.025,
           caps: CapsType.AllCaps,
-          colour: PALETTE.neutralAccent,
-          align: ParagraphAlignXType.Right,
+          colour: PALETTE.neutralGold,
+          spaceAfterPt: 8.0,
+        },
+        {
+          kind: 'body',
+          text: '*Dial in your inspiration*',
+          fontPt: 11.5,
+          leadingPt: 14.0,
+          colour: PALETTE.neutralSubtleText,
           spaceAfterPt: 0,
         },
       ],
     })
   );
 
-  results.push(
-    ...buildPrecisionTable(doc, styles, {
-      idPrefix: 'p1_matrix',
+  // Pure Geometric 4D Color Grid (Stepped 8-Swatch Bauhaus Composition, 10 pt labels)
+  const gx = MARGIN_IN;
+  const gy = 2.74;
+  const gw = CONTENT_W_IN;
+  const gh = 2.04;
+  const gridGap = 0.06;
+
+  addRectShape(doc, makeRectPx(gx, gy, gw, gh, ox, oy), PALETTE.neutralCard, PALETTE.neutralDarkBorder, 0.85, 'p1_grid_frame', 0);
+
+  const gPad = 0.10;
+  const gInnerW = gw - 2 * gPad;
+  const gInnerH = gh - 2 * gPad;
+  const gRowH = (gInnerH - gridGap) / 2;
+  const row1W = [0.29, 0.23, 0.26, 0.22];
+  const row2W = [0.22, 0.26, 0.27, 0.25];
+  const swatchNums = ['01', '02', '03', '04', '05', '06', '07', '08'];
+  const swatchNames = ['PRISMATIC', 'NEON', 'CHROME', 'DARK', 'SEPIA', 'BRIGHT', 'PASTEL', 'RUST'];
+
+  const drawGridRow = (widths, yPos, startIdx) => {
+    let cx = gx + gPad;
+    const availW = gInnerW - 3 * gridGap;
+    for (let i = 0; i < 4; i++) {
+      const idx = startIdx + i;
+      const bw = availW * widths[i];
+      const sw = DIAL_SWATCHES[idx];
+      addRectShape(doc, makeRectPx(cx, yPos, bw, gRowH, ox, oy), sw.bg, null, 0, `p1_blk_${idx}`, 0);
+      results.push(
+        createTextFrameWithAutoFit(doc, styles, {
+          id: `p1_num_${idx}`,
+          pageNum: 1,
+          rect: makeRectPx(cx + 0.07, yPos + 0.06, bw - 0.12, 0.20, ox, oy),
+          theme: 'neutral',
+          allowAutoTighten: false,
+          blocks: [
+            {
+              kind: 'body',
+              text: swatchNums[idx],
+              forceFontKey: 'monoBold',
+              fontPt: 10.0,
+              leadingPt: 11.0,
+              colour: sw.fg,
+              align: idx === 6 ? ParagraphAlignXType.Right : ParagraphAlignXType.Left,
+              spaceAfterPt: 0,
+            },
+          ],
+        }),
+        createTextFrameWithAutoFit(doc, styles, {
+          id: `p1_lbl_${idx}`,
+          pageNum: 1,
+          rect: makeRectPx(cx + 0.07, yPos + gRowH - 0.24, bw - 0.10, 0.20, ox, oy),
+          theme: 'neutral',
+          allowAutoTighten: false,
+          blocks: [
+            {
+              kind: 'body',
+              text: swatchNames[idx],
+              forceFontKey: 'displayBold',
+              fontPt: 10.0,
+              leadingPt: 11.0,
+              caps: CapsType.AllCaps,
+              colour: sw.fg,
+              spaceAfterPt: 0,
+            },
+          ],
+        })
+      );
+      cx += bw + gridGap;
+    }
+  };
+  drawGridRow(row1W, gy + gPad, 0);
+  drawGridRow(row2W, gy + gPad + gRowH + gridGap, 4);
+
+  // Central Gold 4D Diamond Core (0.42 in, 10 pt numeral)
+  const coreSize = 0.42;
+  const coreX = gx + gw / 2 - coreSize / 2;
+  const coreY = gy + gh / 2 - coreSize / 2;
+  addDiamondShape(doc, makeRectPx(coreX, coreY, coreSize, coreSize, ox, oy), PALETTE.neutralDark, PALETTE.neutralGold, 1.5, 'p1_core_d');
+  const coreTxt = createTextFrameWithAutoFit(doc, styles, {
+    id: 'p1_core_txt',
+    pageNum: 1,
+    rect: makeRectPx(coreX, coreY + 0.11, coreSize, 0.20, ox, oy),
+    theme: 'neutral',
+    allowAutoTighten: false,
+    blocks: [{ kind: 'body', text: '4D', forceFontKey: 'displayHeavy', fontPt: 10.0, leadingPt: 11.0, colour: PALETTE.neutralGold, align: ParagraphAlignXType.Centre, spaceAfterPt: 0 }],
+  });
+  centerTextInkInRect(doc, coreTxt.node, coreX, coreY, coreSize, coreSize, ox, oy, true);
+  results.push(coreTxt);
+
+  // R · P · G Editorial Step List (y: 5.04 .. 6.96)
+  const rpgRows = [
+    { num: '01', verb: 'ROLL 4D8', verbCol: PALETTE.neutralGold, pips: [8, 3, 2, 5] },
+    { num: '02', verb: 'PLACE', verbCol: PALETTE.white, copy: 'three dice into **Palette**, **Setting**, and **Tone**.' },
+    { num: '03', verb: 'GRIND', verbCol: PALETTE.white, copy: 'the fourth into any Dial as the **Undertow**.' },
+  ];
+
+  let ry = 5.04;
+  const rowH = 0.60;
+  for (let i = 0; i < rpgRows.length; i++) {
+    const row = rpgRows[i];
+    addLineSegment(
+      doc,
+      ox + MARGIN_IN * IN,
+      oy + ry * IN,
+      ox + (MARGIN_IN + CONTENT_W_IN) * IN,
+      oy + ry * IN,
+      i === 0 ? PALETTE.neutralGold : PALETTE.neutralDarkBorder,
+      i === 0 ? 1.2 : 0.7,
+      `p1_rpg_rule_${i}`
+    );
+
+    const numTxt = createTextFrameWithAutoFit(doc, styles, {
+      id: `p1_rpg_num_${i}`,
       pageNum: 1,
-      originX: ox,
-      originY: oy,
-      xIn: MARGIN_IN,
-      yIn: 3.79,
-      colWidthsIn: [0.30, 1.04, 1.04, 1.03, 1.25],
-      headerHeightIn: 0.27,
-      headerFontPt: 6.5,
-      rowHeightsIn: [0.48, 0.48, 0.48, 0.48, 0.48, 0.48, 0.48, 0.48],
-      cellFontPt: 7.4,
-      cellLeadPt: 8.8,
-      padHIn: 0.05,
-      padVIn: 0.042,
-      headers: [
-        'd8',
-        '1: PALETTE (Texture)',
-        '2: SETTING (Space)',
-        '3: TONE (Drive)',
-        'Pure Archetype (N-N-N-N)',
-      ],
-      rows: [
-        [
-          '1',
-          '**Prismatic:** Reality-bleed, shifting hues.',
-          '**Threshold:** Liminal hubs, portals, crossroads.',
-          '**Weird:** Uncanny mystery, impossible rules.',
-          '**Liminal Surrealism** (*Control, Piranesi*)',
-        ],
-        [
-          '2',
-          '**Neon:** Rain-slick glow, overload.',
-          '**Future:** Wired sprawl, near-out tech.',
-          '**Punk:** Asymmetric revolt vs. system.',
-          '**Classic Cyberpunk** (*Edgerunners, Akira*)',
-        ],
-        [
-          '3',
-          '**Chrome:** Mirrored sheen, sterile polish.',
-          '**Space:** Jump-lanes, habitats, void transit.',
-          '**Adventure:** Bold crews, uncharted horizons.',
-          '**Golden-Age Sci-Fi** (*Star Trek, Mass Effect*)',
-        ],
-        [
-          '4',
-          '**Dark:** Deep shadows, sodium-lit corners.',
-          '**Modern:** Current streets & institutions.',
-          '**Noir:** Moral rot, compromised choices.',
-          '**Hardboiled Crime** (*Se7en, True Detective*)',
-        ],
-        [
-          '5',
-          '**Sepia:** Brass warmth, weathered maps.',
-          '**Industrial:** Coal smoke, ironworks, gears.',
-          '**Pulp:** Two-fisted stunts, cliffhangers.',
-          '**Gaslamp Serial** (*The Mummy, Arcane*)',
-        ],
-        [
-          '6',
-          '**Bright:** Sun-drenched, high-contrast skies.',
-          '**Mythic:** Active gods, spirits, sacred realms.',
-          '**Heroic:** Clear stakes, shielding the weak.',
-          '**High Mythic Fantasy** (*Hades, Mononoke*)',
-        ],
-        [
-          '7',
-          '**Pastel:** Soft light, hand-painted calm.',
-          '**Hearth:** Workshops, ovens, tended valleys.',
-          '**Cozy:** Mutual aid, mending rifts, routine.',
-          '**Pastoral Storycraft** (*Kiki\'s, Wanderhome*)',
-        ],
-        [
-          '8',
-          '**Rust:** Corroded iron, patched salvage.',
-          '**Primal:** Megafauna, untamed wilds, bone.',
-          '**Peril:** Scarce safety, unforgiving hazards.',
-          '**Grim Survival** (*Mad Max, Scavengers Reign*)',
-        ],
-      ],
+      rect: makeRectPx(MARGIN_IN, ry + 0.14, 0.34, 0.24, ox, oy),
       theme: 'neutral',
+      allowAutoTighten: false,
+      blocks: [{ kind: 'body', text: row.num, forceFontKey: 'monoBold', fontPt: 10.0, leadingPt: 11.2, colour: PALETTE.neutralGold, spaceAfterPt: 0 }],
+    });
+    const verbTxt = createTextFrameWithAutoFit(doc, styles, {
+      id: `p1_rpg_verb_${i}`,
+      pageNum: 1,
+      rect: makeRectPx(MARGIN_IN + 0.38, ry + 0.14, 1.12, 0.24, ox, oy),
+      theme: 'neutral',
+      allowAutoTighten: false,
+      blocks: [{ kind: 'body', text: row.verb, forceFontKey: 'displayHeavy', fontPt: 11.0, leadingPt: 12.2, caps: CapsType.AllCaps, colour: row.verbCol, spaceAfterPt: 0 }],
+    });
+    centerTextInkInRect(doc, numTxt.node, MARGIN_IN, ry, 0.34, rowH, ox, oy, false);
+    centerTextInkInRect(doc, verbTxt.node, MARGIN_IN + 0.38, ry, 1.12, rowH, ox, oy, false);
+    results.push(numTxt, verbTxt);
+
+    if (row.pips) {
+      const pipSize = 0.42;
+      const pipGap = 0.14;
+      const startX = MARGIN_IN + 1.56;
+      for (let k = 0; k < row.pips.length; k++) {
+        const val = row.pips[k];
+        const sw = DIAL_SWATCHES[val - 1];
+        const px = startX + k * (pipSize + pipGap);
+        const py = ry + (rowH - pipSize) / 2;
+        addDiamondShape(doc, makeRectPx(px, py, pipSize, pipSize, ox, oy), sw.bg, null, 0, `p1_pip_${k}`);
+        const pipTxt = createTextFrameWithAutoFit(doc, styles, {
+          id: `p1_pip_txt_${k}`,
+          pageNum: 1,
+          rect: makeRectPx(px, py + 0.11, pipSize, 0.20, ox, oy),
+          theme: 'neutral',
+          allowAutoTighten: false,
+          blocks: [{ kind: 'body', text: String(val), forceFontKey: 'displayHeavy', fontPt: 11.5, leadingPt: 12.2, colour: sw.fg, align: ParagraphAlignXType.Centre, spaceAfterPt: 0 }],
+        });
+        centerTextInkInRect(doc, pipTxt.node, px, py, pipSize, pipSize, ox, oy, true);
+        results.push(pipTxt);
+      }
+    } else {
+      const copyRes = createTextFrameWithAutoFit(doc, styles, {
+        id: `p1_rpg_copy_${i}`,
+        pageNum: 1,
+        rect: makeRectPx(MARGIN_IN + 1.56, ry + 0.08, CONTENT_W_IN - 1.56, 0.44, ox, oy),
+        theme: 'neutral',
+        blocks: [{ kind: 'body', text: row.copy, fontPt: 10.5, leadingPt: 13.0, colour: PALETTE.white, boldColour: PALETTE.neutralGold, spaceAfterPt: 0 }],
+      });
+      centerTextInkInRect(doc, copyRes.node, MARGIN_IN + 1.56, ry, CONTENT_W_IN - 1.56, rowH, ox, oy, false);
+      results.push(copyRes);
+    }
+    ry += rowH;
+  }
+
+  // Cover Footer (10 pt floor)
+  addLineSegment(doc, ox + MARGIN_IN * IN, oy + 7.30 * IN, ox + (MARGIN_IN + CONTENT_W_IN) * IN, oy + 7.30 * IN, PALETTE.neutralDarkBorder, 0.85, 'p1_foot_rule');
+  results.push(
+    createTextFrameWithAutoFit(doc, styles, {
+      id: 'p1_byline',
+      pageNum: 1,
+      rect: makeRectPx(MARGIN_IN, 7.42, CONTENT_W_IN, 0.36, ox, oy),
+      theme: 'neutral',
+      allowAutoTighten: false,
+      blocks: [
+        {
+          kind: 'body',
+          text: 'LYNN JONES  ·  PALETTE.LYNNJONES.ROCKS',
+          forceFontKey: 'displayBold',
+          fontPt: 10.0,
+          leadingPt: 11.5,
+          trackingEm: 0.03,
+          caps: CapsType.AllCaps,
+          colour: PALETTE.neutralSubtleText,
+          align: ParagraphAlignXType.Centre,
+          spaceAfterPt: 0,
+        },
+      ],
     })
   );
 
@@ -1626,277 +1574,216 @@ function buildPage2(doc, styles, ox, oy) {
   const col1X = MARGIN_IN;
   const col2X = MARGIN_IN + COL_W_IN + GUTTER_IN;
 
+  results.push(...addChamferedBanner(doc, styles, 2, ox, oy, 'neutral', '02 · PITCH POSTER ANATOMY', 'ANATOMY'));
+
+  // Full-Width Hero Dark Pitch Poster (y: 0.78 .. 4.18) — generous room for 10 pt bento labels
   results.push(
-    ...addChamferedBanner(
-      doc,
-      styles,
-      2,
+    ...addPitchPosterCard(doc, styles, {
+      id: 'p2_hero_poster',
+      pageNum: 2,
+      xIn: MARGIN_IN,
+      yIn: 0.78,
+      wIn: CONTENT_W_IN,
+      hIn: 3.40,
       ox,
       oy,
-      'neutral',
-      '02 · WORLD CHEMISTRY & ENTANGLEMENT',
-      'SESSION ZERO'
-    )
+      pIdx: 8,
+      sIdx: 8,
+      tIdx: 8,
+      uIdx: 3,
+      uDial: 's',
+      pWord: 'RUST',
+      sWord: 'PRIMAL',
+      tWord: 'PERIL',
+      uWord: 'Space',
+      fullBento: true,
+      prompts: ['Scar', 'Kin', 'Liability'],
+      mods: ['Scarcity', 'Affiliations: Arenas', 'Reserves + Usage Dice'],
+    })
   );
 
-  // Full-width intro deck (y: 0.77 .. 0.99 in)
+  // 2-Column Anatomy Key below Hero Poster (y: 4.34 .. 6.22, all >= 10 pt)
+  const leftKey = [
+    '**1 · Palette (Left)** — Visual texture & Engine Mod.',
+    '**2 · Setting (Center)** — Play space. The 4th die sits under its divider line.',
+    '**3 · Tone (Right)** — Campaign drive & Prime Set 3.',
+  ];
+  const rightKey = [
+    '**Identity Prompts** — Three Pathways hooks & `d8` Distinctions.',
+    '**Cortex Picks** — Instant 3-Prime-Set sheet on Pages 11–13.',
+  ];
+
   results.push(
     createTextFrameWithAutoFit(doc, styles, {
-      id: 'p2_intro_deck',
+      id: 'p2_key_l',
       pageNum: 2,
-      rect: makeRectPx(MARGIN_IN, 0.77, CONTENT_W_IN, 0.22, ox, oy),
+      rect: makeRectPx(col1X, 4.34, COL_W_IN, 1.88, ox, oy),
       theme: 'neutral',
-      ignoreBaselineGrid: true,
+      blocks: leftKey.map((text, i) => ({
+        kind: 'body',
+        text,
+        fontPt: 10.0,
+        leadingPt: 12.2,
+        leadColour: PALETTE.neutralDark,
+        spaceAfterPt: i === 2 ? 0 : 6.0,
+      })),
+    }),
+    createTextFrameWithAutoFit(doc, styles, {
+      id: 'p2_key_r',
+      pageNum: 2,
+      rect: makeRectPx(col2X, 4.34, COL_W_IN, 1.88, ox, oy),
+      theme: 'neutral',
+      blocks: rightKey.map((text, i) => ({
+        kind: 'body',
+        text,
+        fontPt: 10.0,
+        leadingPt: 12.2,
+        leadColour: i === 0 ? PALETTE.neutralGoldText : PALETTE.cortexCyanDark,
+        spaceAfterPt: i === 1 ? 0 : 8.0,
+      })),
+    })
+  );
+
+  // Matched Pair & 4-of-a-Kind Editorial Columns (y: 6.32 .. 7.56)
+  const boxY = 6.32;
+  const boxH = 1.24;
+  addLineSegment(doc, ox + col1X * IN, oy + boxY * IN, ox + (col1X + COL_W_IN) * IN, oy + boxY * IN, PALETTE.neutralGold, 1.8, 'p2_pair_top');
+  addLineSegment(doc, ox + col1X * IN, oy + (boxY + boxH) * IN, ox + (col1X + COL_W_IN) * IN, oy + (boxY + boxH) * IN, PALETTE.neutralBorder, 0.7, 'p2_pair_bot');
+  results.push(
+    createTextFrameWithAutoFit(doc, styles, {
+      id: 'p2_pair_txt',
+      pageNum: 2,
+      rect: makeRectPx(col1X, boxY + 0.09, COL_W_IN, boxH - 0.14, ox, oy),
+      theme: 'neutral',
+      blocks: [
+        { kind: 'body', text: '**Matched Pair → Double Down**', fontPt: 10.0, leadingPt: 12.0, colour: PALETTE.neutralGoldText, spaceAfterPt: 3.0 },
+        { kind: 'body', text: 'Undertow lands on its own number? Push that Dial to its extreme.', fontPt: 10.0, leadingPt: 12.2, spaceAfterPt: 0 },
+      ],
+    })
+  );
+
+  addLineSegment(doc, ox + col2X * IN, oy + boxY * IN, ox + (col2X + COL_W_IN) * IN, oy + boxY * IN, PALETTE.neutralAccent, 1.8, 'p2_quad_top');
+  addLineSegment(doc, ox + col2X * IN, oy + (boxY + boxH) * IN, ox + (col2X + COL_W_IN) * IN, oy + (boxY + boxH) * IN, PALETTE.neutralBorder, 0.7, 'p2_quad_bot');
+  results.push(
+    createTextFrameWithAutoFit(doc, styles, {
+      id: 'p2_quad_txt',
+      pageNum: 2,
+      rect: makeRectPx(col2X, boxY + 0.09, COL_W_IN, boxH - 0.14, ox, oy),
+      theme: 'neutral',
+      blocks: [
+        { kind: 'body', text: '**4-of-a-Kind → Pure Archetype**', fontPt: 10.0, leadingPt: 12.0, boldColour: PALETTE.neutralAccent, spaceAfterPt: 3.0 },
+        { kind: 'body', text: 'Skip the Undertow. Run that row straight at max volume.', fontPt: 10.0, leadingPt: 12.2, spaceAfterPt: 0 },
+      ],
+    })
+  );
+
+  return results;
+}
+
+function buildPage3(doc, styles, ox, oy) {
+  const results = [];
+
+  results.push(...addChamferedBanner(doc, styles, 3, ox, oy, 'neutral', '03 · THE UNDERTOW', '4TH DIE'));
+
+  results.push(
+    createTextFrameWithAutoFit(doc, styles, {
+      id: 'p3_lede',
+      pageNum: 3,
+      rect: makeRectPx(MARGIN_IN, 0.76, CONTENT_W_IN, 0.56, ox, oy),
+      theme: 'neutral',
       blocks: [
         {
           kind: 'body',
-          text: 'Pitch paints the cover; **chemistry** drives play. Regulate four **DOSE** needs—**Chemically** *(visceral)* or **Mystically** *(divine)*:',
-          fontPt: 8.1,
-          leadingPt: 9.8,
+          text: 'Your fourth `d8` grinds friction into whichever Dial it touches. Place it beneath that Dial\'s divider line to pick its mode.',
+          fontPt: 10.5,
+          leadingPt: 13.2,
           spaceAfterPt: 0,
         },
       ],
     })
   );
 
-  // --- TOP LEFT: 2x2 DOSE CHEMISTRY CARDS (y: 1.04 .. 3.04 in) ---
-  const doseCards = [
+  const modes = [
     {
-      letter: 'D',
-      title: 'DOPAMINE',
-      tag: 'Transactional',
-      desc: 'Reward, ambition, scrip, leverage.',
-      col: DIAL_SWATCHES[4].bg,
-      textCol: DIAL_SWATCHES[4].text,
+      tag: 'DIVIDE',
+      dial: 'On Palette',
+      col: DIAL_SWATCHES[0].text,
+      ruleCol: DIAL_SWATCHES[0].bg,
+      body: 'Split class, zone, or day and night: *Chrome spires, Rust slums*.',
+      poster: { pIdx: 3, sIdx: 2, tIdx: 2, uIdx: 8, uDial: 'p', pWord: 'CHROME', sWord: 'FUTURE', tWord: 'PUNK', uWord: 'Rust' },
     },
     {
-      letter: 'O',
-      title: 'OXYTOCIN',
-      tag: 'Relational',
-      desc: 'Trust, kinship, belonging, safe harbor.',
-      col: DIAL_SWATCHES[1].bg,
-      textCol: DIAL_SWATCHES[1].text,
+      tag: 'LAYER',
+      dial: 'On Setting',
+      col: DIAL_SWATCHES[2].text,
+      ruleCol: DIAL_SWATCHES[2].bg,
+      body: 'Stack or collide play spaces: *Modern streets, Mythic spirits*.',
+      poster: { pIdx: 4, sIdx: 4, tIdx: 4, uIdx: 6, uDial: 's', pWord: 'DARK', sWord: 'MODERN', tWord: 'NOIR', uWord: 'Mythic' },
     },
     {
-      letter: 'S',
-      title: 'SEROTONIN',
-      tag: 'Positional',
-      desc: 'Dignity, pride, *community credit*.',
-      col: DIAL_SWATCHES[2].bg,
-      textCol: DIAL_SWATCHES[2].text,
-    },
-    {
-      letter: 'E',
-      title: 'ENDORPHINS',
-      tag: 'Physical',
-      desc: 'Thrill, hunger, pleasure, relief.',
-      col: DIAL_SWATCHES[6].bg,
-      textCol: DIAL_SWATCHES[6].text,
+      tag: 'COUNTER',
+      dial: 'On Tone',
+      col: DIAL_SWATCHES[1].text,
+      ruleCol: DIAL_SWATCHES[1].bg,
+      body: 'Contrast front vs. stakes, or wilds vs. home: *wild Perils, Cozy camp*.',
+      poster: { pIdx: 8, sIdx: 8, tIdx: 8, uIdx: 7, uDial: 't', pWord: 'RUST', sWord: 'PRIMAL', tWord: 'PERIL', uWord: 'Cozy' },
     },
   ];
 
-  const cardGap = 0.09;
-  const cardW = (COL_W_IN - cardGap) / 2;
-  const cardH = 0.95;
-  for (let i = 0; i < doseCards.length; i++) {
-    const dc = doseCards[i];
-    const gx = col1X + (i % 2) * (cardW + cardGap);
-    const gy = 1.05 + Math.floor(i / 2) * (cardH + cardGap);
-
-    addShadowCard(
-      doc,
-      makeRectPx(gx, gy, cardW, cardH, ox, oy),
-      PALETTE.neutralCream,
-      null,
-      0,
-      PALETTE.neutralShadow,
-      1.6,
-      0,
-      ShapeCornerType.None,
-      `p2_dose_card_${dc.letter}`
-    );
-    addRectShape(
-      doc,
-      makeRectPx(gx, gy, cardW, 0.21, ox, oy),
-      dc.col,
-      null,
-      0,
-      `p2_dose_hdr_${dc.letter}`,
-      0
-    );
-    addRectShape(
-      doc,
-      makeRectPx(gx, gy, cardW, cardH, ox, oy),
-      null,
-      PALETTE.neutralBorder,
-      0.75,
-      `p2_dose_border_${dc.letter}`,
-      0
-    );
+  let uy = 1.46;
+  const rowH = 1.94;
+  for (let i = 0; i < modes.length; i++) {
+    const m = modes[i];
+    addLineSegment(doc, ox + MARGIN_IN * IN, oy + uy * IN, ox + (MARGIN_IN + CONTENT_W_IN) * IN, oy + uy * IN, m.ruleCol, 1.6, `p3_ut_rule_${i}`);
     results.push(
       createTextFrameWithAutoFit(doc, styles, {
-        id: `p2_dose_hdr_txt_${dc.letter}`,
-        pageNum: 2,
-        rect: makeRectPx(gx + 0.06, gy + 0.036, cardW - 0.12, 0.15, ox, oy),
+        id: `p3_ut_txt_${i}`,
+        pageNum: 3,
+        rect: makeRectPx(MARGIN_IN, uy + 0.14, 2.38, rowH - 0.24, ox, oy),
         theme: 'neutral',
-        ignoreBaselineGrid: true,
-        allowAutoTighten: false,
         blocks: [
-          {
-            kind: 'body',
-            text: `${dc.letter} · ${dc.title}`,
-            forceFontKey: 'displayHeavy',
-            fontPt: 7.5,
-            leadingPt: 8.8,
-            trackingEm: 0.04,
-            caps: CapsType.AllCaps,
-            colour: PALETTE.white,
-            spaceAfterPt: 0,
-          },
+          { kind: 'h2', text: m.tag, fontPt: 12.0, leadingPt: 13.5, colour: m.col, spaceAfterPt: 4.0 },
+          { kind: 'body', text: `**${m.dial}:** ${m.body}`, fontPt: 10.2, leadingPt: 13.0, leadColour: PALETTE.neutralDark, spaceAfterPt: 0 },
         ],
+      }),
+      ...addPitchPosterCard(doc, styles, {
+        id: `p3_ut_poster_${i}`,
+        pageNum: 3,
+        xIn: MARGIN_IN + 2.52,
+        yIn: uy + 0.16,
+        wIn: CONTENT_W_IN - 2.52,
+        hIn: 1.54,
+        ox,
+        oy,
+        ...m.poster,
+        fullBento: false,
       })
     );
-    results.push(
-      createTextFrameWithAutoFit(doc, styles, {
-        id: `p2_dose_body_${dc.letter}`,
-        pageNum: 2,
-        rect: makeRectPx(gx + 0.065, gy + 0.26, cardW - 0.13, cardH - 0.30, ox, oy),
-        theme: 'neutral',
-        ignoreBaselineGrid: true,
-        blocks: [
-          {
-            kind: 'body',
-            text: `**${dc.tag}**`,
-            fontPt: 7.5,
-            leadingPt: 9.0,
-            boldColour: dc.textCol,
-            spaceAfterPt: 1.5,
-          },
-          {
-            kind: 'body',
-            text: dc.desc,
-            fontPt: 7.5,
-            leadingPt: 9.2,
-            spaceAfterPt: 0,
-          },
-        ],
-      })
-    );
+    uy += rowH + 0.12;
   }
 
-  // --- TOP RIGHT: STEP 1 FLOOD & STARVE FEATURED CARD (y: 1.05 .. 3.04 in) ---
-  addShadowCard(
-    doc,
-    makeRectPx(col2X, 1.05, COL_W_IN, 1.99, ox, oy),
-    PALETTE.neutralCream,
-    PALETTE.neutralDark,
-    0.85,
-    PALETTE.neutralAccent,
-    2.5,
-    0,
-    ShapeCornerType.None,
-    'p2_flood_card'
-  );
-  addRectShape(
-    doc,
-    makeRectPx(col2X, 1.05, 0.06, 1.99, ox, oy),
-    PALETTE.neutralAccent,
-    null,
-    0,
-    'p2_flood_bar',
-    0
-  );
+  return results;
+}
+
+function buildPage4(doc, styles, ox, oy) {
+  const results = [];
+
+  results.push(...addChamferedBanner(doc, styles, 4, ox, oy, 'neutral', '04 · MASTER DIAL MATRIX', 'PART 1/2'));
 
   results.push(
     createTextFrameWithAutoFit(doc, styles, {
-      id: 'p2_col2_flood_starve',
-      pageNum: 2,
-      rect: makeRectPx(col2X + 0.11, 1.12, COL_W_IN - 0.18, 1.32, ox, oy),
+      id: 'p4_lede',
+      pageNum: 4,
+      rect: makeRectPx(MARGIN_IN, 0.72, CONTENT_W_IN, 0.44, ox, oy),
       theme: 'neutral',
-      ignoreBaselineGrid: true,
-      blocks: [
-        {
-          kind: 'h2',
-          text: 'Step 1: Flood & Starve',
-          fontPt: 9.0,
-          leadingPt: 10.5,
-          spaceAfterPt: 3.5,
-        },
-        {
-          kind: 'body',
-          text: '**1. Flood** *(Palette + Setting)*: 1–2 cheap, abundant DOSE needs *(Neon Future: Endorphins, Dopamine)*.',
-          fontPt: 7.75,
-          leadingPt: 9.4,
-          leftIndentPt: 8,
-          firstIndentPt: -8,
-          spaceAfterPt: 4.0,
-        },
-        {
-          kind: 'body',
-          text: '**2. Starve** *(Tone)*: Rationed or corrupted DOSE need *(Punk: Serotonin, Oxytocin)*.',
-          fontPt: 7.75,
-          leadingPt: 9.4,
-          leftIndentPt: 8,
-          firstIndentPt: -8,
-          spaceAfterPt: 0,
-        },
-      ],
-    })
-  );
-
-  // Dark reverse CORE LOOP bar inside Flood & Starve card
-  addRectShape(
-    doc,
-    makeRectPx(col2X + 0.11, 2.48, COL_W_IN - 0.18, 0.48, ox, oy),
-    PALETTE.neutralDark,
-    PALETTE.neutralGold,
-    0.85,
-    'p2_core_loop_bg',
-    2,
-    ShapeCornerType.Round
-  );
-  results.push(
-    createTextFrameWithAutoFit(doc, styles, {
-      id: 'p2_core_loop_text',
-      pageNum: 2,
-      rect: makeRectPx(col2X + 0.17, 2.535, COL_W_IN - 0.30, 0.40, ox, oy),
-      theme: 'neutral',
-      ignoreBaselineGrid: true,
       blocks: [
         {
           kind: 'body',
-          text: '**CORE LOOP:** Hustle the *Flood* to survive; risk everything for the *Starve*.',
-          fontPt: 7.75,
-          leadingPt: 9.3,
-          colour: PALETTE.white,
-          boldColour: PALETTE.neutralGold,
-          spaceAfterPt: 0,
-        },
-      ],
-    })
-  );
-
-  // --- MIDDLE: STEP 2 SPAGHETTI KNOT & PASS 1 IDENTITY TABLE (y: 3.20 .. 5.76 in) ---
-  results.push(
-    createTextFrameWithAutoFit(doc, styles, {
-      id: 'p2_spaghetti_intro',
-      pageNum: 2,
-      rect: makeRectPx(MARGIN_IN, 3.20, CONTENT_W_IN, 0.56, ox, oy),
-      theme: 'neutral',
-      ignoreBaselineGrid: true,
-      blocks: [
-        {
-          kind: 'h2',
-          text: 'Step 2: Session Zero "Spaghetti Knot"',
-          fontPt: 9.5,
-          leadingPt: 11.0,
-          spaceAfterPt: 2.0,
-        },
-        {
-          kind: 'body',
-          text: 'Center your Pitch + Undertow on a blank sheet; run 3 passes. **Pass 1:** Place a **Rectangle (PC Name)** on the edge; answer your 3 Dial prompts:',
-          fontPt: 8.0,
-          leadingPt: 9.8,
+          text: 'Place three dice into **Palette**, **Setting**, and **Tone** in any order. Read rows 1–8 across this facing spread.',
+          fontPt: 10.0,
+          leadingPt: 12.4,
+          colour: PALETTE.mutedInk,
+          boldColour: PALETTE.neutralDark,
           spaceAfterPt: 0,
         },
       ],
@@ -1905,524 +1792,430 @@ function buildPage2(doc, styles, ox, oy) {
 
   results.push(
     ...buildPrecisionTable(doc, styles, {
-      idPrefix: 'p2_id_table',
-      pageNum: 2,
+      idPrefix: 'p4_matrix_l',
+      pageNum: 4,
       originX: ox,
       originY: oy,
       xIn: MARGIN_IN,
-      yIn: 3.78,
-      colWidthsIn: [0.30, 1.45, 1.46, 1.45],
-      headerHeightIn: 0.24,
-      headerFontPt: 6.5,
-      rowHeightsIn: [0.22, 0.22, 0.22, 0.22, 0.22, 0.22, 0.22, 0.22],
-      cellFontPt: 7.4,
-      cellLeadPt: 8.5,
-      padHIn: 0.055,
-      padVIn: 0.032,
-      headers: [
-        'd8',
-        'Palette (Texture)',
-        'Setting (Place / Craft)',
-        'Tone (Hook)',
-      ],
+      yIn: 1.24,
+      colWidthsIn: [0.42, 2.3234, 2.3234],
+      headerHeightIn: 0.36,
+      headerFontPt: 10.0,
+      rowHeightsIn: [0.75, 0.75, 0.75, 0.75, 0.75, 0.75, 0.75, 0.75],
+      cellFontPt: 10.0,
+      cellLeadPt: 12.0,
+      padHIn: 0.08,
+      padVIn: 0.06,
+      headers: ['d8', '1 · Palette · Texture', '2 · Setting · Space'],
       rows: [
-        ['1', '**Warped** *(Prismatic)*', '**Crossed Over** *(Threshold)*', '**Obsession** *(Weird)*'],
-        ['2', '**Vice** *(Neon)*', '**Augment** *(Future)*', '**Grievance** *(Punk)*'],
-        ['3', '**Pedigree** *(Chrome)*', '**Hull / World** *(Space)*', '**Horizon** *(Adventure)*'],
-        ['4', '**Secret** *(Dark)*', '**Day Job** *(Modern)*', '**Code** *(Noir)*'],
-        ['5', '**Relic** *(Sepia)*', '**Trade** *(Industrial)*', '**Trademark** *(Pulp)*'],
-        ['6', '**Banner** *(Bright)*', '**Calling** *(Mythic)*', '**Oath** *(Heroic)*'],
-        ['7', '**Comfort** *(Pastel)*', '**Workshop** *(Hearth)*', '**Routine** *(Cozy)*'],
-        ['8', '**Scar** *(Rust)*', '**Pack / Kin** *(Primal)*', '**Liability** *(Peril)*'],
+        ['1', '**Prismatic:** Reality-bleed, shifting hues.', '**Liminal:** Thresholds, portals, crossroads.'],
+        ['2', '**Neon:** Rain-slick glow, overload.', '**Future:** Wired sprawl, near-out tech.'],
+        ['3', '**Chrome:** Mirrored sheen, sterile polish.', '**Space:** Jump-lanes, habitats, void transit.'],
+        ['4', '**Dark:** Deep shadows, sodium-lit corners.', '**Modern:** A reflection of today\'s society and tech.'],
+        ['5', '**Sepia:** Brass warmth, weathered maps.', '**Industrial:** Coal smoke, ironworks, gears.'],
+        ['6', '**Bright:** Sun-drenched, high-contrast skies.', '**Mythic:** Active gods, spirits, sacred realms.'],
+        ['7', '**Pastel:** Soft light, hand-painted calm.', '**Hearth:** Workshops, ovens, tended valleys.'],
+        ['8', '**Rust:** Corroded iron, patched salvage.', '**Primal:** Megafauna, untamed wilds, bone.'],
       ],
       theme: 'neutral',
     })
   );
 
-  // --- BOTTOM ZONE: PASS 2 & 3 (COL 1) + SPAGHETTI KNOT SCHEMATIC (COL 2) (y: 5.94 .. 7.90 in) ---
+  return results;
+}
+
+function buildPage5(doc, styles, ox, oy) {
+  const results = [];
+
+  results.push(...addChamferedBanner(doc, styles, 5, ox, oy, 'neutral', '05 · MASTER DIAL MATRIX', 'PART 2/2'));
+
   results.push(
     createTextFrameWithAutoFit(doc, styles, {
-      id: 'p2_pass2_3',
-      pageNum: 2,
-      rect: makeRectPx(col1X, 5.94, COL_W_IN, 1.96, ox, oy),
+      id: 'p5_lede',
+      pageNum: 5,
+      rect: makeRectPx(MARGIN_IN, 0.72, CONTENT_W_IN, 0.44, ox, oy),
       theme: 'neutral',
-      ignoreBaselineGrid: true,
       blocks: [
         {
-          kind: 'h3',
-          text: 'Pass 2: Cross the Wires',
-          fontPt: 8.75,
-          leadingPt: 10.2,
-          spaceAfterPt: 2.5,
+          kind: 'body',
+          text: 'Four matching dice unlock the **Pure Archetype** on the right. Skip the Undertow and run that row at max volume.',
+          fontPt: 10.0,
+          leadingPt: 12.4,
+          colour: PALETTE.mutedInk,
+          boldColour: PALETTE.neutralDark,
+          spaceAfterPt: 0,
         },
+      ],
+    })
+  );
+
+  results.push(
+    ...buildPrecisionTable(doc, styles, {
+      idPrefix: 'p5_matrix_r',
+      pageNum: 5,
+      originX: ox,
+      originY: oy,
+      xIn: MARGIN_IN,
+      yIn: 1.24,
+      colWidthsIn: [0.42, 2.2234, 2.4234],
+      headerHeightIn: 0.36,
+      headerFontPt: 10.0,
+      rowHeightsIn: [0.75, 0.75, 0.75, 0.75, 0.75, 0.75, 0.75, 0.75],
+      cellFontPt: 10.0,
+      cellLeadPt: 12.0,
+      padHIn: 0.08,
+      padVIn: 0.06,
+      headers: ['d8', '3 · Tone · Drive', 'Pure Archetype'],
+      rows: [
+        ['1', '**Weird:** Uncanny mystery, impossible rules.', '**Labyrinthine Surrealism** — *Control, Piranesi*'],
+        ['2', '**Punk:** Reject the system.', '**Classic Cyberpunk** — *Edgerunners, Akira*'],
+        ['3', '**Adventure:** Bold crews, uncharted horizons.', '**Golden-Age Sci-Fi** — *Star Trek, Mass Effect*'],
+        ['4', '**Noir:** A web of lies and hard choices.', '**Hardboiled Crime** — *Se7en, True Detective*'],
+        ['5', '**Pulp:** Two-fisted stunts, cliffhangers.', '**Gaslamp Serial** — *The Mummy, Arcane*'],
+        ['6', '**Heroic:** Clear stakes, shielding the weak.', '**High Mythic Fantasy** — *Hades, Mononoke*'],
+        ['7', '**Cozy:** Mutual aid, mending rifts, routine.', '**Pastoral Storycraft** — *Kiki\'s, Wanderhome*'],
+        ['8', '**Peril:** Scarce safety, lethal hazards.', '**Grim Survival** — *Mad Max, Scavengers Reign*'],
+      ],
+      theme: 'neutral',
+    })
+  );
+
+  return results;
+}
+
+function buildPage6(doc, styles, ox, oy) {
+  const results = [];
+
+  results.push(...addChamferedBanner(doc, styles, 6, ox, oy, 'neutral', '06 · PATHWAYS SPAGHETTI MAP', 'PASS 1'));
+
+  results.push(
+    createTextFrameWithAutoFit(doc, styles, {
+      id: 'p6_intro',
+      pageNum: 6,
+      rect: makeRectPx(MARGIN_IN, 0.74, CONTENT_W_IN, 0.66, ox, oy),
+      theme: 'neutral',
+      blocks: [
         {
           kind: 'body',
-          text: '• **Left** *(Credit)*: Declare your left neighbor\'s public credit—and the messy truth.',
-          fontPt: 8.0,
-          leadingPt: 9.9,
-          leftIndentPt: 7,
-          firstIndentPt: -7,
+          text: 'Center your Pitch + Undertow on a blank canvas. Run 4 passes. **Pass 1:** Draw a PC Rectangle on the edge and write your 3 Dial prompt answers inside it:',
+          fontPt: 10.2,
+          leadingPt: 12.6,
+          spaceAfterPt: 0,
+        },
+      ],
+    })
+  );
+
+  results.push(
+    ...buildPrecisionTable(doc, styles, {
+      idPrefix: 'p6_id_table',
+      pageNum: 6,
+      originX: ox,
+      originY: oy,
+      xIn: MARGIN_IN,
+      yIn: 1.48,
+      colWidthsIn: [0.42, 1.5489, 1.5489, 1.549],
+      headerHeightIn: 0.36,
+      headerFontPt: 10.0,
+      rowHeightsIn: [0.50, 0.50, 0.50, 0.50, 0.50, 0.50, 0.50, 0.50],
+      cellFontPt: 10.5,
+      cellLeadPt: 12.2,
+      padHIn: 0.08,
+      padVIn: 0.12,
+      headers: ['d8', 'Texture', 'Foothold', 'Hook'],
+      rows: [
+        ['1', '**Aura**', '**Tether**', '**Obsession**'],
+        ['2', '**Vice**', '**Augment**', '**Grievance**'],
+        ['3', '**Pedigree**', '**World**', '**Horizon**'],
+        ['4', '**Secret**', '**Day Job**', '**Code**'],
+        ['5', '**Relic**', '**Trade**', '**Trademark**'],
+        ['6', '**Banner**', '**Calling**', '**Oath**'],
+        ['7', '**Comfort**', '**Workshop**', '**Routine**'],
+        ['8', '**Scar**', '**Kin**', '**Liability**'],
+      ],
+      theme: 'neutral',
+    })
+  );
+
+  // Editorial Note below Identity Prompts (y: 6.06 .. 7.58)
+  addLineSegment(doc, ox + MARGIN_IN * IN, oy + 6.06 * IN, ox + (MARGIN_IN + CONTENT_W_IN) * IN, oy + 6.06 * IN, PALETTE.neutralGold, 1.8, 'p6_tip_top');
+  addLineSegment(doc, ox + MARGIN_IN * IN, oy + 7.56 * IN, ox + (MARGIN_IN + CONTENT_W_IN) * IN, oy + 7.56 * IN, PALETTE.neutralBorder, 0.7, 'p6_tip_bot');
+  results.push(
+    createTextFrameWithAutoFit(doc, styles, {
+      id: 'p6_tip_txt',
+      pageNum: 6,
+      rect: makeRectPx(MARGIN_IN, 6.16, CONTENT_W_IN, 1.34, ox, oy),
+      theme: 'neutral',
+      blocks: [
+        { kind: 'h3', text: 'USING THIS IN CORTEX', fontPt: 10.0, leadingPt: 11.4, colour: PALETTE.neutralGoldText, spaceAfterPt: 4.0 },
+        { kind: 'body', text: '**Pass 1** feeds your three `d8` Distinctions (Prime Set 1). **Pass 2** Anchors become `d8` Supports, and Rumors seed Statements. **Pass 3** Edge sets your top `d10` in Prime Set 2; Drive sets your top `d10` or Goal in Prime Set 3.', fontPt: 10.0, leadingPt: 12.4, colour: PALETTE.ink, pillInk: PALETTE.neutralAccent, spaceAfterPt: 0 },
+      ],
+    })
+  );
+
+  return results;
+}
+
+function buildPage7(doc, styles, ox, oy) {
+  const results = [];
+
+  results.push(...addChamferedBanner(doc, styles, 7, ox, oy, 'neutral', '07 · CROSS THE WIRES', 'PASS 2–4'));
+
+  // Pass 2, Pass 3 & Pass 4 (y: 0.72 .. 4.44)
+  results.push(
+    createTextFrameWithAutoFit(doc, styles, {
+      id: 'p7_pass2_4',
+      pageNum: 7,
+      rect: makeRectPx(MARGIN_IN, 0.72, CONTENT_W_IN, 3.74, ox, oy),
+      theme: 'neutral',
+      blocks: [
+        { kind: 'h2', text: 'Pass 2: Cross the Wires', fontPt: 10.8, leadingPt: 12.2, spaceAfterPt: 3.5 },
+        {
+          kind: 'body',
+          text: '• **Left · Rumor:** Draw a line to your left neighbor. State something you\'ve heard about them. They name the real truth.',
+          fontPt: 10.0,
+          leadingPt: 12.0,
+          leftIndentPt: 10,
+          firstIndentPt: -10,
           spaceAfterPt: 3.5,
         },
         {
           kind: 'body',
-          text: '• **Right** *(Anchor)*: Link right with a shared **Diamond** (*Ride, Hideout, Workshop, Beast, Patron*).',
-          fontPt: 8.0,
-          leadingPt: 9.9,
-          leftIndentPt: 7,
-          firstIndentPt: -7,
-          spaceAfterPt: 7.0,
+          text: '• **Right · Anchor:** Draw a shared Diamond with your right neighbor. Name what you both rely on: *Ride, Hideout, Workshop, Beast, Patron*.',
+          fontPt: 10.0,
+          leadingPt: 12.0,
+          leftIndentPt: 10,
+          firstIndentPt: -10,
+          spaceAfterPt: 8.0,
         },
+        { kind: 'h2', text: 'Pass 3: Stake Your Claim', fontPt: 10.8, leadingPt: 12.2, spaceAfterPt: 3.5 },
         {
-          kind: 'h3',
-          text: 'Pass 3: Ignition Triangle',
-          fontPt: 8.75,
-          leadingPt: 10.2,
-          spaceAfterPt: 2.5,
+          kind: 'body',
+          text: '• **Edge:** Tag your PC Rectangle with what you\'re best at in this Setting (your top role, skill, or turf).',
+          fontPt: 10.0,
+          leadingPt: 12.0,
+          leftIndentPt: 10,
+          firstIndentPt: -10,
+          spaceAfterPt: 3.5,
         },
         {
           kind: 'body',
-          text: 'GM drops a central **Triangle (Situation)** tied to the *Starve*, wired to 2+ nodes. Start *in medias res*.',
-          fontPt: 8.0,
-          leadingPt: 9.9,
+          text: '• **Drive:** Drop a Circle onto the canvas for a Faction, Neighbor, Belief, or Goal pulling at you. Wire your PC to it.',
+          fontPt: 10.0,
+          leadingPt: 12.0,
+          leftIndentPt: 10,
+          firstIndentPt: -10,
+          spaceAfterPt: 8.0,
+        },
+        { kind: 'h2', text: 'Pass 4: Ignition Triangle', fontPt: 10.8, leadingPt: 12.2, spaceAfterPt: 3.5 },
+        {
+          kind: 'body',
+          text: 'GM drops a central Ignition Triangle where the *Undertow* bites and wires it to 2+ nodes on the map. Start *in medias res*.',
+          fontPt: 10.0,
+          leadingPt: 12.0,
           spaceAfterPt: 0,
         },
       ],
     })
   );
 
-  // Col 2: Vector Spaghetti-Knot Map Schematic Card (y: 5.94 .. 7.90 in)
-  addShadowCard(
-    doc,
-    makeRectPx(col2X, 5.94, COL_W_IN, 1.96, ox, oy),
-    PALETTE.neutralCream,
-    PALETTE.neutralDark,
-    0.85,
-    PALETTE.neutralShadow,
-    2.5,
-    0,
-    ShapeCornerType.None,
-    'p2_diagram_card'
-  );
-  addRectShape(
-    doc,
-    makeRectPx(col2X, 5.94, COL_W_IN, 0.22, ox, oy),
-    PALETTE.neutralDark,
-    null,
-    0,
-    'p2_diagram_hdr_bg',
-    0
-  );
-  results.push(
-    createTextFrameWithAutoFit(doc, styles, {
-      id: 'p2_diagram_hdr_txt',
-      pageNum: 2,
-      rect: makeRectPx(col2X + 0.08, 5.98, COL_W_IN - 0.16, 0.15, ox, oy),
-      theme: 'neutral',
-      ignoreBaselineGrid: true,
-      allowAutoTighten: false,
-      blocks: [
-        {
-          kind: 'body',
-          text: 'SPAGHETTI-KNOT MAP SCHEMATIC',
-          forceFontKey: 'displayBold',
-          fontPt: 7.25,
-          leadingPt: 8.5,
-          trackingEm: 0.05,
-          caps: CapsType.AllCaps,
-          colour: PALETTE.neutralGold,
-          align: ParagraphAlignXType.Centre,
-          spaceAfterPt: 0,
-        },
-      ],
-    })
-  );
+  // Full-Width 4-Shape Spaghetti Map Schematic (y: 4.54 .. 7.62, all labels >= 10 pt)
+  const diagY = 4.54;
+  const diagH = 3.08;
+  addRectShape(doc, makeRectPx(MARGIN_IN, diagY, CONTENT_W_IN, diagH, ox, oy), PALETTE.neutralCream, PALETTE.neutralDark, 1.0, 'p7_diag_card', 0);
+  addRectShape(doc, makeRectPx(MARGIN_IN, diagY, CONTENT_W_IN, 0.30, ox, oy), PALETTE.neutralDark, null, 0, 'p7_diag_hdr_bg', 0);
+  const diagHdr = createTextFrameWithAutoFit(doc, styles, {
+    id: 'p7_diag_hdr',
+    pageNum: 7,
+    rect: makeRectPx(MARGIN_IN + 0.10, diagY + 0.05, CONTENT_W_IN - 0.20, 0.20, ox, oy),
+    theme: 'neutral',
+    allowAutoTighten: false,
+    blocks: [
+      {
+        kind: 'body',
+        text: 'SPAGHETTI MAP SCHEMATIC',
+        forceFontKey: 'displayBold',
+        fontPt: 10.0,
+        leadingPt: 11.2,
+        trackingEm: 0.04,
+        caps: CapsType.AllCaps,
+        colour: PALETTE.neutralGold,
+        align: ParagraphAlignXType.Centre,
+        spaceAfterPt: 0,
+      },
+    ],
+  });
+  centerTextInkInRect(doc, diagHdr.node, MARGIN_IN + 0.10, diagY, CONTENT_W_IN - 0.20, 0.30, ox, oy, true);
+  results.push(diagHdr);
 
-  // Diagram node coordinates inside col2X..col2X+2.23, y: 6.22..7.56
-  const pcAx = col2X + 0.38;
-  const pcAy = 6.42;
-  const pcBx = col2X + 1.79;
-  const pcBy = 6.42;
-  const pcCx = col2X + 1.115;
-  const pcCy = 7.38;
-  const ancX = col2X + 1.66;
-  const ancY = 6.96;
-  const triX = col2X + 1.16;
-  const triY = 6.86;
+  const pcAx = MARGIN_IN + 0.92;
+  const pcAy = diagY + 0.80;
+  const pcBx = MARGIN_IN + CONTENT_W_IN - 0.92;
+  const pcBy = diagY + 0.80;
+  const pcCx = MARGIN_IN + CONTENT_W_IN / 2;
+  const pcCy = diagY + 2.24;
+  const drvX = MARGIN_IN + 0.86;
+  const drvY = diagY + 1.66;
+  const ancX = MARGIN_IN + CONTENT_W_IN - 1.02;
+  const ancY = diagY + 1.56;
+  const triX = MARGIN_IN + CONTENT_W_IN / 2 - 0.06;
+  const triY = diagY + 1.44;
 
-  // Wire lines FIRST (behind shapes)
-  // Credit line PC A <-> PC B
-  addLineSegment(
-    doc,
-    ox + pcAx * IN,
-    oy + pcAy * IN,
-    ox + pcBx * IN,
-    oy + pcBy * IN,
-    DIAL_SWATCHES[2].bg,
-    1.1,
-    'p2_diag_wire_credit_top'
-  );
-  // Credit line PC A <-> PC C
-  addLineSegment(
-    doc,
-    ox + pcAx * IN,
-    oy + pcAy * IN,
-    ox + pcCx * IN,
-    oy + pcCy * IN,
-    DIAL_SWATCHES[2].bg,
-    1.1,
-    'p2_diag_wire_credit_left'
-  );
-  // Shared Anchor wire PC B -> Anchor -> PC C
-  addLineSegment(
-    doc,
-    ox + pcBx * IN,
-    oy + pcBy * IN,
-    ox + ancX * IN,
-    oy + ancY * IN,
-    PALETTE.neutralGoldText,
-    1.25,
-    'p2_diag_wire_anchor_1'
-  );
-  addLineSegment(
-    doc,
-    ox + ancX * IN,
-    oy + ancY * IN,
-    ox + pcCx * IN,
-    oy + pcCy * IN,
-    PALETTE.neutralGoldText,
-    1.25,
-    'p2_diag_wire_anchor_2'
-  );
-  // Ignition wires (vermilion) from center Triangle to PC A and Anchor
-  addLineSegment(
-    doc,
-    ox + triX * IN,
-    oy + triY * IN,
-    ox + pcAx * IN,
-    oy + pcAy * IN,
-    PALETTE.neutralAccent,
-    1.4,
-    'p2_diag_wire_ign_1'
-  );
-  addLineSegment(
-    doc,
-    ox + triX * IN,
-    oy + triY * IN,
-    ox + ancX * IN,
-    oy + ancY * IN,
-    PALETTE.neutralAccent,
-    1.4,
-    'p2_diag_wire_ign_2'
-  );
+  // Wires
+  addLineSegment(doc, ox + pcAx * IN, oy + pcAy * IN, ox + pcBx * IN, oy + pcBy * IN, DIAL_SWATCHES[2].bg, 1.8, 'p7_w_ab');
+  addLineSegment(doc, ox + pcAx * IN, oy + pcAy * IN, ox + pcCx * IN, oy + pcCy * IN, DIAL_SWATCHES[2].bg, 1.8, 'p7_w_ac');
+  addLineSegment(doc, ox + pcAx * IN, oy + pcAy * IN, ox + drvX * IN, oy + drvY * IN, DIAL_SWATCHES[0].bg, 1.8, 'p7_w_drv');
+  addLineSegment(doc, ox + pcBx * IN, oy + pcBy * IN, ox + ancX * IN, oy + ancY * IN, PALETTE.neutralGoldText, 1.8, 'p7_w_ba');
+  addLineSegment(doc, ox + ancX * IN, oy + ancY * IN, ox + pcCx * IN, oy + pcCy * IN, PALETTE.neutralGoldText, 1.8, 'p7_w_ac2');
+  addLineSegment(doc, ox + triX * IN, oy + triY * IN, ox + pcAx * IN, oy + pcAy * IN, PALETTE.neutralAccent, 1.8, 'p7_w_ta');
+  addLineSegment(doc, ox + triX * IN, oy + triY * IN, ox + ancX * IN, oy + ancY * IN, PALETTE.neutralAccent, 1.8, 'p7_w_tanc');
 
-  // PC Rectangles (A, B, C)
-  const pcNodes = [
+  // PC Rectangles
+  const pcs = [
     { x: pcAx, y: pcAy, label: 'PC A' },
     { x: pcBx, y: pcBy, label: 'PC B' },
     { x: pcCx, y: pcCy, label: 'PC C' },
   ];
-  for (let i = 0; i < pcNodes.length; i++) {
-    const pn = pcNodes[i];
-    const pw = 0.50;
-    const ph = 0.22;
-    addRectShape(
-      doc,
-      makeRectPx(pn.x - pw / 2, pn.y - ph / 2, pw, ph, ox, oy),
-      PALETTE.white,
-      PALETTE.neutralDark,
-      1.0,
-      `p2_diag_pc_${i}`,
-      1.5,
-      ShapeCornerType.Round
-    );
-    results.push(
-      createTextFrameWithAutoFit(doc, styles, {
-        id: `p2_diag_pc_txt_${i}`,
-        pageNum: 2,
-        rect: makeRectPx(pn.x - pw / 2, pn.y - 0.065, pw, 0.14, ox, oy),
-        theme: 'neutral',
-        ignoreBaselineGrid: true,
-        allowAutoTighten: false,
-        blocks: [
-          {
-            kind: 'body',
-            text: pn.label,
-            forceFontKey: 'displayBold',
-            fontPt: 6.75,
-            leadingPt: 8.0,
-            colour: PALETTE.neutralDark,
-            align: ParagraphAlignXType.Centre,
-            spaceAfterPt: 0,
-          },
-        ],
-      })
-    );
+  for (let i = 0; i < pcs.length; i++) {
+    const p = pcs[i];
+    addRectShape(doc, makeRectPx(p.x - 0.42, p.y - 0.17, 0.84, 0.34, ox, oy), PALETTE.white, PALETTE.neutralDark, 1.4, `p7_pc_${i}`, 2, ShapeCornerType.Round);
+    const pcTxt = createTextFrameWithAutoFit(doc, styles, {
+      id: `p7_pc_txt_${i}`,
+      pageNum: 7,
+      rect: makeRectPx(p.x - 0.40, p.y - 0.10, 0.80, 0.20, ox, oy),
+      theme: 'neutral',
+      allowAutoTighten: false,
+      blocks: [{ kind: 'body', text: p.label, forceFontKey: 'displayHeavy', fontPt: 10.0, leadingPt: 11.0, colour: PALETTE.neutralDark, align: ParagraphAlignXType.Centre, spaceAfterPt: 0 }],
+    });
+    centerTextInkInRect(doc, pcTxt.node, p.x - 0.42, p.y - 0.17, 0.84, 0.34, ox, oy, true);
+    results.push(pcTxt);
   }
 
-  // Shared Anchor Diamond
-  const dDef = ShapeNodeDefinition.createDefault();
-  dDef.setShape(ShapeDiamond.create());
-  dDef.setBoundingRectangle(makeRectPx(ancX - 0.13, ancY - 0.13, 0.26, 0.26, ox, oy));
-  dDef.addBrushFillDescriptor(FillDescriptor.createSolid(PALETTE.neutralGold, BlendMode.Normal));
-  dDef.addLineDescriptors(
-    FillDescriptor.createSolid(PALETTE.neutralDark, BlendMode.Normal),
-    LineStyleDescriptor.createDefault(1.0 * PT)
-  );
-  dDef.userDescription = 'p2_diag_anchor_diamond';
-  doc.addNode(dDef);
+  // Drive Circle, Anchor Diamond & Ignition Triangle + Knockout Halo Pills
+  addCircleShape(doc, makeRectPx(drvX - 0.18, drvY - 0.18, 0.36, 0.36, ox, oy), DIAL_SWATCHES[0].bg, PALETTE.neutralDark, 1.4, 'p7_drive_node');
+  addDiamondShape(doc, makeRectPx(ancX - 0.20, ancY - 0.20, 0.40, 0.40, ox, oy), PALETTE.neutralGold, PALETTE.neutralDark, 1.4, 'p7_anchor_node');
+  addTriangleShape(doc, makeRectPx(triX - 0.23, triY - 0.20, 0.46, 0.40, ox, oy), PALETTE.neutralAccent, PALETTE.neutralDark, 1.4, 'p7_ignite_node');
 
-  // Central Ignition Triangle
-  const tDef = ShapeNodeDefinition.createDefault();
-  tDef.setShape(ShapeTriangle.create());
-  tDef.setBoundingRectangle(makeRectPx(triX - 0.15, triY - 0.14, 0.30, 0.26, ox, oy));
-  tDef.addBrushFillDescriptor(FillDescriptor.createSolid(PALETTE.neutralAccent, BlendMode.Normal));
-  tDef.addLineDescriptors(
-    FillDescriptor.createSolid(PALETTE.neutralDark, BlendMode.Normal),
-    LineStyleDescriptor.createDefault(1.0 * PT)
-  );
-  tDef.userDescription = 'p2_diag_ignition_tri';
-  doc.addNode(tDef);
+  addRectShape(doc, makeRectPx(drvX - 0.34, drvY + 0.21, 0.68, 0.18, ox, oy), PALETTE.neutralCream, null, 0, 'p7_lbl_drv_halo', 0);
+  addRectShape(doc, makeRectPx(ancX - 0.40, ancY + 0.22, 0.80, 0.18, ox, oy), PALETTE.neutralCream, null, 0, 'p7_lbl_anc_halo', 0);
+  addRectShape(doc, makeRectPx(triX - 0.44, triY + 0.22, 0.88, 0.18, ox, oy), PALETTE.neutralCream, null, 0, 'p7_lbl_ign_halo', 0);
 
-  // Diagram inline micro-labels with clean halo pills so wires never cut through text
-  addRectShape(
-    doc,
-    makeRectPx(col2X + 0.84, 6.235, 0.54, 0.13, ox, oy),
-    PALETTE.neutralCream,
-    null,
-    0,
-    'p2_diag_lbl_credit_bg',
-    0
-  );
+  const lblDrv = createTextFrameWithAutoFit(doc, styles, {
+    id: 'p7_lbl_drive',
+    pageNum: 7,
+    rect: makeRectPx(drvX - 0.38, drvY + 0.21, 0.76, 0.20, ox, oy),
+    theme: 'neutral',
+    allowAutoTighten: false,
+    blocks: [{ kind: 'body', text: 'DRIVE', forceFontKey: 'displayBold', fontPt: 10.0, leadingPt: 11.0, colour: DIAL_SWATCHES[0].text, align: ParagraphAlignXType.Centre, spaceAfterPt: 0 }],
+  });
+  centerTextInkInRect(doc, lblDrv.node, drvX - 0.34, drvY + 0.21, 0.68, 0.18, ox, oy, true);
+
+  const lblAnc = createTextFrameWithAutoFit(doc, styles, {
+    id: 'p7_lbl_anchor',
+    pageNum: 7,
+    rect: makeRectPx(ancX - 0.44, ancY + 0.22, 0.88, 0.20, ox, oy),
+    theme: 'neutral',
+    allowAutoTighten: false,
+    blocks: [{ kind: 'body', text: 'ANCHOR', forceFontKey: 'displayBold', fontPt: 10.0, leadingPt: 11.0, colour: PALETTE.neutralGoldText, align: ParagraphAlignXType.Centre, spaceAfterPt: 0 }],
+  });
+  centerTextInkInRect(doc, lblAnc.node, ancX - 0.40, ancY + 0.22, 0.80, 0.18, ox, oy, true);
+
+  const lblIgn = createTextFrameWithAutoFit(doc, styles, {
+    id: 'p7_lbl_ignite',
+    pageNum: 7,
+    rect: makeRectPx(triX - 0.48, triY + 0.22, 0.96, 0.20, ox, oy),
+    theme: 'neutral',
+    allowAutoTighten: false,
+    blocks: [{ kind: 'body', text: 'IGNITION', forceFontKey: 'displayBold', fontPt: 10.0, leadingPt: 11.0, colour: PALETTE.neutralAccent, align: ParagraphAlignXType.Centre, spaceAfterPt: 0 }],
+  });
+  centerTextInkInRect(doc, lblIgn.node, triX - 0.44, triY + 0.22, 0.88, 0.18, ox, oy, true);
+
   results.push(
     createTextFrameWithAutoFit(doc, styles, {
-      id: 'p2_diag_lbl_credit',
-      pageNum: 2,
-      rect: makeRectPx(col2X + 0.84, 6.245, 0.54, 0.12, ox, oy),
+      id: 'p7_lbl_rumor',
+      pageNum: 7,
+      rect: makeRectPx(MARGIN_IN + CONTENT_W_IN / 2 - 0.55, diagY + 0.49, 1.10, 0.22, ox, oy),
       theme: 'neutral',
-      ignoreBaselineGrid: true,
       allowAutoTighten: false,
-      blocks: [
-        {
-          kind: 'body',
-          text: 'CREDIT',
-          forceFontKey: 'displayBold',
-          fontPt: 6.0,
-          leadingPt: 7.0,
-          trackingEm: 0.05,
-          colour: DIAL_SWATCHES[2].text,
-          align: ParagraphAlignXType.Centre,
-          spaceAfterPt: 0,
-        },
-      ],
-    })
-  );
-  addRectShape(
-    doc,
-    makeRectPx(triX - 0.19, triY + 0.135, 0.38, 0.13, ox, oy),
-    PALETTE.neutralCream,
-    null,
-    0,
-    'p2_diag_lbl_starve_bg',
-    0
-  );
-  results.push(
-    createTextFrameWithAutoFit(doc, styles, {
-      id: 'p2_diag_lbl_starve',
-      pageNum: 2,
-      rect: makeRectPx(triX - 0.19, triY + 0.145, 0.38, 0.12, ox, oy),
-      theme: 'neutral',
-      ignoreBaselineGrid: true,
-      allowAutoTighten: false,
-      blocks: [
-        {
-          kind: 'body',
-          text: 'STARVE',
-          forceFontKey: 'displayHeavy',
-          fontPt: 6.0,
-          leadingPt: 7.0,
-          trackingEm: 0.05,
-          colour: PALETTE.neutralAccent,
-          align: ParagraphAlignXType.Centre,
-          spaceAfterPt: 0,
-        },
-      ],
-    })
-  );
-  addRectShape(
-    doc,
-    makeRectPx(ancX - 0.10, ancY + 0.14, 0.56, 0.13, ox, oy),
-    PALETTE.neutralCream,
-    null,
-    0,
-    'p2_diag_lbl_anchor_bg',
-    0
-  );
-  results.push(
-    createTextFrameWithAutoFit(doc, styles, {
-      id: 'p2_diag_lbl_anchor',
-      pageNum: 2,
-      rect: makeRectPx(ancX - 0.10, ancY + 0.15, 0.56, 0.12, ox, oy),
-      theme: 'neutral',
-      ignoreBaselineGrid: true,
-      allowAutoTighten: false,
-      blocks: [
-        {
-          kind: 'body',
-          text: 'ANCHOR',
-          forceFontKey: 'displayBold',
-          fontPt: 6.0,
-          leadingPt: 7.0,
-          trackingEm: 0.05,
-          colour: PALETTE.neutralGoldText,
-          align: ParagraphAlignXType.Centre,
-          spaceAfterPt: 0,
-        },
-      ],
-    })
+      blocks: [{ kind: 'body', text: 'RUMOR', forceFontKey: 'displayBold', fontPt: 10.0, leadingPt: 11.0, colour: DIAL_SWATCHES[2].text, align: ParagraphAlignXType.Centre, spaceAfterPt: 0 }],
+    }),
+    lblDrv,
+    lblAnc,
+    lblIgn
   );
 
-  // Compact bottom Legend strip inside schematic card (y: 7.58 .. 7.86 in)
-  addLineSegment(
-    doc,
-    ox + (col2X + 0.10) * IN,
-    oy + 7.57 * IN,
-    ox + (col2X + COL_W_IN - 0.10) * IN,
-    oy + 7.57 * IN,
-    PALETTE.neutralBorder,
-    0.55,
-    'p2_diag_legend_rule'
-  );
-  const legW = COL_W_IN / 3;
-  // Legend icon 0: PC Rect
-  addRectShape(
-    doc,
-    makeRectPx(col2X + legW * 0.5 - 0.09, 7.62, 0.18, 0.10, ox, oy),
-    PALETTE.white,
-    PALETTE.neutralDark,
-    0.85,
-    'p2_leg_rect',
-    0
-  );
-  // Legend icon 1: Diamond
-  const ldDef = ShapeNodeDefinition.createDefault();
-  ldDef.setShape(ShapeDiamond.create());
-  ldDef.setBoundingRectangle(makeRectPx(col2X + legW * 1.5 - 0.065, 7.605, 0.13, 0.13, ox, oy));
-  ldDef.addBrushFillDescriptor(FillDescriptor.createSolid(PALETTE.neutralGold, BlendMode.Normal));
-  ldDef.addLineDescriptors(
-    FillDescriptor.createSolid(PALETTE.neutralDark, BlendMode.Normal),
-    LineStyleDescriptor.createDefault(0.8 * PT)
-  );
-  ldDef.userDescription = 'p2_leg_diamond';
-  doc.addNode(ldDef);
-  // Legend icon 2: Triangle
-  const ltDef = ShapeNodeDefinition.createDefault();
-  ltDef.setShape(ShapeTriangle.create());
-  ltDef.setBoundingRectangle(makeRectPx(col2X + legW * 2.5 - 0.07, 7.605, 0.14, 0.13, ox, oy));
-  ltDef.addBrushFillDescriptor(FillDescriptor.createSolid(PALETTE.neutralAccent, BlendMode.Normal));
-  ltDef.addLineDescriptors(
-    FillDescriptor.createSolid(PALETTE.neutralDark, BlendMode.Normal),
-    LineStyleDescriptor.createDefault(0.8 * PT)
-  );
-  ltDef.userDescription = 'p2_leg_tri';
-  doc.addNode(ltDef);
+  // 4-Item Legend Strip (10 pt floor)
+  const legY = diagY + 2.60;
+  addLineSegment(doc, ox + (MARGIN_IN + 0.14) * IN, oy + legY * IN, ox + (MARGIN_IN + CONTENT_W_IN - 0.14) * IN, oy + legY * IN, PALETTE.neutralBorder, 0.7, 'p7_leg_rule');
+  addRectShape(doc, makeRectPx(MARGIN_IN + 0.20, legY + 0.16, 0.22, 0.14, ox, oy), PALETTE.white, PALETTE.neutralDark, 1.0, 'p7_leg_pc', 1.5, ShapeCornerType.Round);
+  addDiamondShape(doc, makeRectPx(MARGIN_IN + 1.18, legY + 0.14, 0.18, 0.18, ox, oy), PALETTE.neutralGold, PALETTE.neutralDark, 1.0, 'p7_leg_anc');
+  addCircleShape(doc, makeRectPx(MARGIN_IN + 2.48, legY + 0.14, 0.18, 0.18, ox, oy), DIAL_SWATCHES[0].bg, PALETTE.neutralDark, 1.0, 'p7_leg_drv');
+  addTriangleShape(doc, makeRectPx(MARGIN_IN + 3.60, legY + 0.14, 0.18, 0.18, ox, oy), PALETTE.neutralAccent, PALETTE.neutralDark, 1.0, 'p7_leg_ign');
 
-  const legLabels = ['PC Name', 'Anchor', 'Ignition'];
-  for (let i = 0; i < 3; i++) {
-    results.push(
-      createTextFrameWithAutoFit(doc, styles, {
-        id: `p2_leg_txt_${i}`,
-        pageNum: 2,
-        rect: makeRectPx(col2X + i * legW, 7.75, legW, 0.12, ox, oy),
-        theme: 'neutral',
-        ignoreBaselineGrid: true,
-        allowAutoTighten: false,
-        blocks: [
-          {
-            kind: 'body',
-            text: `**${legLabels[i]}**`,
-            fontPt: 6.25,
-            leadingPt: 7.2,
-            colour: PALETTE.neutralDark,
-            align: ParagraphAlignXType.Centre,
-            spaceAfterPt: 0,
-          },
-        ],
-      })
-    );
+  const legItems = [
+    { id: 'p7_leg_txt1', x: MARGIN_IN + 0.48, w: 0.62, text: 'PC' },
+    { id: 'p7_leg_txt2', x: MARGIN_IN + 1.42, w: 0.96, text: 'Anchor' },
+    { id: 'p7_leg_txt3', x: MARGIN_IN + 2.72, w: 0.80, text: 'Drive' },
+    { id: 'p7_leg_txt4', x: MARGIN_IN + 3.84, w: 1.04, text: 'Ignition' },
+  ];
+  for (const li of legItems) {
+    const legNode = createTextFrameWithAutoFit(doc, styles, {
+      id: li.id,
+      pageNum: 7,
+      rect: makeRectPx(li.x, legY + 0.13, li.w, 0.22, ox, oy),
+      theme: 'neutral',
+      allowAutoTighten: false,
+      blocks: [{ kind: 'body', text: li.text, forceFontKey: 'displaySemi', fontPt: 10.0, leadingPt: 11.2, spaceAfterPt: 0 }],
+    });
+    centerTextInkInRect(doc, legNode.node, li.x, legY + 0.14, li.w, 0.18, ox, oy, false);
+    results.push(legNode);
   }
 
   return results;
 }
 
-function buildPage3(doc, styles, ox, oy) {
+function buildPage8(doc, styles, ox, oy) {
   const results = [];
-  const col1X = MARGIN_IN;
-  const col2X = MARGIN_IN + COL_W_IN + GUTTER_IN;
 
-  results.push(
-    ...addChamferedBanner(
-      doc,
-      styles,
-      3,
-      ox,
-      oy,
-      'cortex',
-      '03 · OPINIONATED CORTEX HARNESS',
-      'CORE ENGINE'
-    )
-  );
+  results.push(...addChamferedBanner(doc, styles, 8, ox, oy, 'cortex', '08 · HOUSE RULED CORTEX', 'ENGINE'));
 
-  // Full-width intro line (y: 0.76 .. 0.94 in)
   results.push(
     createTextFrameWithAutoFit(doc, styles, {
-      id: 'p3_intro',
-      pageNum: 3,
-      rect: makeRectPx(MARGIN_IN, 0.76, CONTENT_W_IN, 0.18, ox, oy),
+      id: 'p8_lede',
+      pageNum: 8,
+      rect: makeRectPx(MARGIN_IN, 0.76, CONTENT_W_IN, 0.44, ox, oy),
       theme: 'cortex',
-      ignoreBaselineGrid: true,
       blocks: [
         {
           kind: 'body',
-          text: 'Compile any `4d8` pitch into fast **Cortex Prime** on a clean 3-Prime-Set sheet.',
-          fontPt: 8.25,
-          leadingPt: 9.8,
+          text: 'A **Cortex Prime** baseplate to snap your `4d8` pitch to.',
+          fontPt: 11.0,
+          leadingPt: 13.8,
           spaceAfterPt: 0,
         },
       ],
     })
   );
 
-  // --- FULL-WIDTH 3-PRIME EQUATION HERO CARD (y: 0.98 .. 1.78 in, h: 0.80 in) ---
-  addShadowCard(
-    doc,
-    makeRectPx(MARGIN_IN, 0.98, CONTENT_W_IN, 0.80, ox, oy),
-    PALETTE.cortexDark,
-    PALETTE.cortexCyan,
-    0.85,
-    PALETTE.cortexCyan,
-    2.5,
-    3,
-    ShapeCornerType.Round,
-    'p3_eq_card'
-  );
+  // Baseline Pool Equation (2 architectural rows, all labels >= 10 pt, y: 1.30 .. 3.96)
+  addRectShape(doc, makeRectPx(MARGIN_IN, 1.30, CONTENT_W_IN, 2.66, ox, oy), PALETTE.cortexDark, null, 0, 'p8_eq_bg', 0);
+  addRectShape(doc, makeRectPx(MARGIN_IN, 1.30, CONTENT_W_IN, 0.04, ox, oy), PALETTE.cortexCyan, null, 0, 'p8_eq_top', 0);
 
   results.push(
     createTextFrameWithAutoFit(doc, styles, {
-      id: 'p3_eq_kicker',
-      pageNum: 3,
-      rect: makeRectPx(MARGIN_IN + 0.12, 1.03, CONTENT_W_IN - 0.24, 0.14, ox, oy),
+      id: 'p8_eq_hdr1',
+      pageNum: 8,
+      rect: makeRectPx(MARGIN_IN + 0.14, 1.42, CONTENT_W_IN - 0.28, 0.22, ox, oy),
       theme: 'cortex',
-      ignoreBaselineGrid: true,
       allowAutoTighten: false,
       blocks: [
         {
           kind: 'body',
-          text: 'BASELINE POOL EQUATION   ·   + ASSETS, RESOURCES, FOE FALLOUT',
+          text: 'BUILD YOUR POOL',
           forceFontKey: 'displayBold',
-          fontPt: 6.25,
-          leadingPt: 7.5,
-          trackingEm: 0.06,
+          fontPt: 10.0,
+          leadingPt: 11.4,
+          trackingEm: 0.04,
           caps: CapsType.AllCaps,
           colour: PALETTE.cortexCyan,
           spaceAfterPt: 0,
@@ -2431,505 +2224,146 @@ function buildPage3(doc, styles, ox, oy) {
     })
   );
 
-  // Three Prime Pills (left half) + Arrow + Three Output Pills (right half)
-  const primePills = [
-    { x: MARGIN_IN + 0.09, w: 0.76, label: '1 · DISTINCTION', sub: 'd8 / d4', border: PALETTE.cortexMagenta },
-    { x: MARGIN_IN + 0.95, w: 0.64, label: '2 · SETTING', sub: 'Prime 2', border: PALETTE.cortexCyan },
-    { x: MARGIN_IN + 1.69, w: 0.58, label: '3 · TONE', sub: 'Prime 3', border: PALETTE.cortexCyan },
+  const boxW = 1.44;
+  const plusW = 0.2334;
+  const row1Y = 1.70;
+  const boxH = 0.68;
+  const terms = [
+    { x: MARGIN_IN + 0.14, top: '1 · DISTINCTION', bot: 'd8 / d4', border: PALETTE.cortexMagenta, botCol: PALETTE.cortexMagentaLight },
+    { x: MARGIN_IN + 0.14 + boxW + plusW, top: '2 · SETTING', bot: 'Prime 2', border: PALETTE.cortexCyan, botCol: PALETTE.cortexCyan },
+    { x: MARGIN_IN + 0.14 + 2 * (boxW + plusW), top: '3 · TONE', bot: 'Prime 3', border: PALETTE.cortexCyan, botCol: PALETTE.cortexCyan },
   ];
-  for (let i = 0; i < primePills.length; i++) {
-    const pp = primePills[i];
-    addRectShape(
-      doc,
-      makeRectPx(pp.x, 1.21, pp.w, 0.45, ox, oy),
-      PALETTE.cortexDarkPillBg,
-      pp.border,
-      0.9,
-      `p3_eq_prime_${i}`,
-      2.5,
-      ShapeCornerType.Round
-    );
-    results.push(
-      createTextFrameWithAutoFit(doc, styles, {
-        id: `p3_eq_prime_txt_${i}`,
-        pageNum: 3,
-        rect: makeRectPx(pp.x + 0.02, 1.255, pp.w - 0.04, 0.37, ox, oy),
-        theme: 'cortex',
-        ignoreBaselineGrid: true,
-        allowAutoTighten: false,
-        blocks: [
-          {
-            kind: 'body',
-            text: pp.label,
-            forceFontKey: 'displayBold',
-            fontPt: 6.0,
-            leadingPt: 7.2,
-            caps: CapsType.AllCaps,
-            colour: PALETTE.white,
-            align: ParagraphAlignXType.Centre,
-            spaceAfterPt: 1.5,
-          },
-          {
-            kind: 'body',
-            text: pp.sub,
-            forceFontKey: 'monoBold',
-            fontPt: 6.75,
-            leadingPt: 8.0,
-            colour: pp.border,
-            align: ParagraphAlignXType.Centre,
-            spaceAfterPt: 0,
-          },
-        ],
-      })
-    );
-  }
-
-  // "+" separators and "→" separator
-  const sepMarks = [
-    { x: MARGIN_IN + 0.85, w: 0.10, txt: '+', col: PALETTE.white },
-    { x: MARGIN_IN + 1.59, w: 0.10, txt: '+', col: PALETTE.white },
-    { x: MARGIN_IN + 2.28, w: 0.20, txt: '→', col: PALETTE.cortexCyan },
-  ];
-  for (let i = 0; i < sepMarks.length; i++) {
-    const sm = sepMarks[i];
-    results.push(
-      createTextFrameWithAutoFit(doc, styles, {
-        id: `p3_eq_sep_${i}`,
-        pageNum: 3,
-        rect: makeRectPx(sm.x, 1.33, sm.w, 0.20, ox, oy),
-        theme: 'cortex',
-        ignoreBaselineGrid: true,
-        allowAutoTighten: false,
-        blocks: [
-          {
-            kind: 'body',
-            text: sm.txt,
-            forceFontKey: 'displayHeavy',
-            fontPt: 10.0,
-            leadingPt: 11.0,
-            colour: sm.col,
-            align: ParagraphAlignXType.Centre,
-            spaceAfterPt: 0,
-          },
-        ],
-      })
-    );
-  }
-
-  const outPills = [
-    { x: MARGIN_IN + 2.49, w: 0.62, top: '1s', bot: 'OPENINGS', fill: PALETTE.cortexMagenta },
-    { x: MARGIN_IN + 3.16, w: 0.54, top: 'SUM 2', bot: 'TOTAL', fill: PALETTE.cortexCyan },
-    { x: MARGIN_IN + 3.75, w: 0.82, top: '1 DIE SIZE', bot: 'IMPACT d6–d12', fill: PALETTE.cortexCyan },
-  ];
-  for (let i = 0; i < outPills.length; i++) {
-    const op = outPills[i];
-    addRectShape(
-      doc,
-      makeRectPx(op.x, 1.21, op.w, 0.45, ox, oy),
-      op.fill,
-      null,
-      0,
-      `p3_eq_out_${i}`,
-      2.5,
-      ShapeCornerType.Round
-    );
-    results.push(
-      createTextFrameWithAutoFit(doc, styles, {
-        id: `p3_eq_out_txt_${i}`,
-        pageNum: 3,
-        rect: makeRectPx(op.x + 0.02, 1.265, op.w - 0.04, 0.35, ox, oy),
-        theme: 'cortex',
-        ignoreBaselineGrid: true,
-        allowAutoTighten: false,
-        blocks: [
-          {
-            kind: 'body',
-            text: op.top,
-            forceFontKey: 'displayHeavy',
-            fontPt: 7.0,
-            leadingPt: 8.2,
-            caps: CapsType.None,
-            colour: i === 0 ? PALETTE.white : PALETTE.cortexDark,
-            align: ParagraphAlignXType.Centre,
-            spaceAfterPt: 2.0,
-          },
-          {
-            kind: 'body',
-            text: op.bot,
-            forceFontKey: 'displayBold',
-            fontPt: 5.5,
-            leadingPt: 6.8,
-            caps: CapsType.None,
-            colour: i === 0 ? PALETTE.white : PALETTE.cortexDark,
-            align: ParagraphAlignXType.Centre,
-            spaceAfterPt: 0,
-          },
-        ],
-      })
-    );
-  }
-
-  // --- LEFT COLUMN (y: 1.96 .. 6.92 in) ---
-  // Openings (Hitches) Box (y: 1.96 .. 2.86 in, h: 0.90 in)
-  addRectShape(
-    doc,
-    makeRectPx(col1X, 1.96, COL_W_IN, 0.90, ox, oy),
-    PALETTE.cortexPinkTint,
-    PALETTE.cortexMagenta,
-    0.75,
-    'p3_openings_bg',
-    0
-  );
-  addRectShape(
-    doc,
-    makeRectPx(col1X, 1.96, 0.055, 0.90, ox, oy),
-    PALETTE.cortexMagenta,
-    null,
-    0,
-    'p3_openings_bar',
-    0
-  );
-  results.push(
-    createTextFrameWithAutoFit(doc, styles, {
-      id: 'p3_openings_text',
-      pageNum: 3,
-      rect: makeRectPx(col1X + 0.11, 2.02, COL_W_IN - 0.17, 0.80, ox, oy),
+  for (let i = 0; i < terms.length; i++) {
+    const t = terms[i];
+    addRectShape(doc, makeRectPx(t.x, row1Y, boxW, boxH, ox, oy), PALETTE.cortexPanel, t.border, 1.0, `p8_t_${i}`, 0);
+    const tRes = createTextFrameWithAutoFit(doc, styles, {
+      id: `p8_t_txt_${i}`,
+      pageNum: 8,
+      rect: makeRectPx(t.x + 0.04, row1Y + 0.08, boxW - 0.08, boxH - 0.14, ox, oy),
       theme: 'cortex',
-      ignoreBaselineGrid: true,
+      allowAutoTighten: false,
       blocks: [
-        {
-          kind: 'h3',
-          text: 'Openings (Hitches)',
-          fontPt: 8.5,
-          leadingPt: 9.8,
-          colour: PALETTE.cortexMagentaDark,
-          spaceAfterPt: 2.5,
-        },
-        {
-          kind: 'body',
-          text: 'Set `1`s aside (not Total/Impact). Foes—or PCs with `1 Chip`—seize one for `d6` Fallout, a step-up, or an edge. GM pays `1 Chip` to seize yours.',
-          fontPt: 7.85,
-          leadingPt: 9.6,
-          spaceAfterPt: 0,
-        },
+        { kind: 'body', text: t.top, forceFontKey: 'displayBold', fontPt: 10.0, leadingPt: 11.2, colour: PALETTE.white, align: ParagraphAlignXType.Centre, spaceAfterPt: 2.5 },
+        { kind: 'body', text: t.bot, forceFontKey: 'monoBold', fontPt: 10.5, leadingPt: 11.8, colour: t.botCol, align: ParagraphAlignXType.Centre, spaceAfterPt: 0 },
       ],
-    })
-  );
+    });
+    centerTextInkInRect(doc, tRes.node, t.x, row1Y, boxW, boxH, ox, oy, true);
+    results.push(tRes);
+    if (i < 2) {
+      const px = t.x + boxW;
+      const op = createTextFrameWithAutoFit(doc, styles, {
+        id: `p8_plus_${i}`,
+        pageNum: 8,
+        rect: makeRectPx(px, row1Y + 0.20, plusW, 0.26, ox, oy),
+        theme: 'cortex',
+        allowAutoTighten: false,
+        blocks: [{ kind: 'body', text: '+', forceFontKey: 'displayHeavy', fontPt: 13.0, leadingPt: 14.0, colour: PALETTE.white, align: ParagraphAlignXType.Centre, spaceAfterPt: 0 }],
+      });
+      centerTextInkInRect(doc, op.node, px, row1Y, plusW, boxH, ox, oy, true);
+      results.push(op);
+    }
+  }
 
-  // Three Conflict Speeds Header (y: 3.14 .. 3.34 in)
   results.push(
     createTextFrameWithAutoFit(doc, styles, {
-      id: 'p3_speeds_h2',
-      pageNum: 3,
-      rect: makeRectPx(col1X, 3.14, COL_W_IN, 0.20, ox, oy),
+      id: 'p8_eq_adds',
+      pageNum: 8,
+      rect: makeRectPx(MARGIN_IN + 0.14, 2.46, CONTENT_W_IN - 0.28, 0.24, ox, oy),
       theme: 'cortex',
-      ignoreBaselineGrid: true,
       allowAutoTighten: false,
       blocks: [
         {
-          kind: 'h2',
-          text: 'Three Conflict Speeds',
-          fontPt: 9.25,
-          leadingPt: 10.5,
+          kind: 'body',
+          text: '+ Assets, Resources, and Foe Fallout',
+          fontPt: 10.0,
+          leadingPt: 11.6,
+          colour: PALETTE.neutralSubtleText,
+          align: ParagraphAlignXType.Centre,
           spaceAfterPt: 0,
         },
       ],
     })
   );
-  addLineSegment(
-    doc,
-    ox + col1X * IN,
-    oy + 3.33 * IN,
-    ox + (col1X + COL_W_IN) * IN,
-    oy + 3.33 * IN,
-    PALETTE.cortexCyan,
-    1.5,
-    'p3_speeds_rule'
-  );
 
-  // 3 Stacked Snug Speed Cards (y: 3.46 .. 6.92 in, 0.22 in open gaps)
-  const speedCards = [
-    {
-      num: '01',
-      title: 'ROLL · SINGLE TEST',
-      y: 3.46,
-      h: 0.88,
-      accent: PALETTE.cortexCyan,
-      body: 'One toss vs. GM (`2d6` + traits, or Doom Pool). High Total wins; **instigator wins ties**.',
-    },
-    {
-      num: '02',
-      title: 'ROW · ESCALATING CONTEST',
-      y: 4.56,
-      h: 1.02,
-      accent: PALETTE.cortexMagenta,
-      body: 'Beat the lead Total to take control, or **Concede** on your terms (`+1 Chip`). Failing inflicts winner\'s Impact as Fallout.',
-    },
-    {
-      num: '03',
-      title: 'ROMP · MULTI-DIE CHALLENGE',
-      y: 5.80,
-      h: 1.12,
-      accent: PALETTE.cortexCyan,
-      body: 'Roll vs. central **Romp Pool** (`4d8`). Win + Impact **>** Romp die drops it; **≤** steps down smallest (`d4` gone). Romp acts last.',
-    },
-  ];
-  for (let i = 0; i < speedCards.length; i++) {
-    const sc = speedCards[i];
-    addShadowCard(
-      doc,
-      makeRectPx(col1X, sc.y, COL_W_IN, sc.h, ox, oy),
-      PALETTE.cortexIce,
-      PALETTE.cortexBorder,
-      0.75,
-      sc.accent,
-      2.0,
-      2.5,
-      ShapeCornerType.Round,
-      `p3_speed_card_${i + 1}`
-    );
-    addRectShape(
-      doc,
-      makeRectPx(col1X + 0.08, sc.y + 0.09, 0.25, 0.18, ox, oy),
-      sc.accent,
-      null,
-      0,
-      `p3_speed_badge_${i + 1}`,
-      2,
-      ShapeCornerType.Round
-    );
-    results.push(
-      createTextFrameWithAutoFit(doc, styles, {
-        id: `p3_speed_num_${i + 1}`,
-        pageNum: 3,
-        rect: makeRectPx(col1X + 0.08, sc.y + 0.115, 0.25, 0.14, ox, oy),
-        theme: 'cortex',
-        ignoreBaselineGrid: true,
-        allowAutoTighten: false,
-        blocks: [
-          {
-            kind: 'body',
-            text: sc.num,
-            forceFontKey: 'displayHeavy',
-            fontPt: 7.25,
-            leadingPt: 8.5,
-            colour: sc.accent === PALETTE.cortexMagenta ? PALETTE.white : PALETTE.cortexDark,
-            align: ParagraphAlignXType.Centre,
-            spaceAfterPt: 0,
-          },
-        ],
-      })
-    );
-    results.push(
-      createTextFrameWithAutoFit(doc, styles, {
-        id: `p3_speed_title_${i + 1}`,
-        pageNum: 3,
-        rect: makeRectPx(col1X + 0.39, sc.y + 0.11, COL_W_IN - 0.47, 0.16, ox, oy),
-        theme: 'cortex',
-        ignoreBaselineGrid: true,
-        allowAutoTighten: false,
-        blocks: [
-          {
-            kind: 'body',
-            text: sc.title,
-            forceFontKey: 'displayBold',
-            fontPt: 8.0,
-            leadingPt: 9.5,
-            trackingEm: 0.03,
-            caps: CapsType.AllCaps,
-            colour: PALETTE.cortexDark,
-            spaceAfterPt: 0,
-          },
-        ],
-      })
-    );
-    results.push(
-      createTextFrameWithAutoFit(doc, styles, {
-        id: `p3_speed_body_${i + 1}`,
-        pageNum: 3,
-        rect: makeRectPx(col1X + 0.10, sc.y + 0.34, COL_W_IN - 0.20, sc.h - 0.40, ox, oy),
-        theme: 'cortex',
-        ignoreBaselineGrid: true,
-        blocks: [
-          {
-            kind: 'body',
-            text: sc.body,
-            fontPt: 8.25,
-            leadingPt: 10.3,
-            spaceAfterPt: 0,
-          },
-        ],
-      })
-    );
-  }
-
-  // --- RIGHT COLUMN: FOUR HOUSE CUTS + UNIVERSAL PRIME SET 1 (y: 1.94 .. 7.71 in) ---
+  // Row 2: Read the Roll
+  addLineSegment(doc, ox + (MARGIN_IN + 0.14) * IN, oy + 2.76 * IN, ox + (MARGIN_IN + CONTENT_W_IN - 0.14) * IN, oy + 2.76 * IN, PALETTE.neutralDarkBorder, 0.7, 'p8_eq_div');
   results.push(
     createTextFrameWithAutoFit(doc, styles, {
-      id: 'p3_cuts_h2',
-      pageNum: 3,
-      rect: makeRectPx(col2X, 1.94, COL_W_IN, 0.20, ox, oy),
+      id: 'p8_eq_hdr2',
+      pageNum: 8,
+      rect: makeRectPx(MARGIN_IN + 0.14, 2.84, CONTENT_W_IN - 0.28, 0.22, ox, oy),
       theme: 'cortex',
-      ignoreBaselineGrid: true,
       allowAutoTighten: false,
       blocks: [
         {
-          kind: 'h2',
-          text: 'Four House Cuts',
-          fontPt: 9.25,
-          leadingPt: 10.5,
-          spaceAfterPt: 0,
-        },
-      ],
-    })
-  );
-  addLineSegment(
-    doc,
-    ox + col2X * IN,
-    oy + 2.13 * IN,
-    ox + (col2X + COL_W_IN) * IN,
-    oy + 2.13 * IN,
-    PALETTE.cortexMagenta,
-    1.5,
-    'p3_cuts_rule'
-  );
-
-  results.push(
-    createTextFrameWithAutoFit(doc, styles, {
-      id: 'p3_col2_cuts',
-      pageNum: 3,
-      rect: makeRectPx(col2X, 2.24, COL_W_IN, 2.68, ox, oy),
-      theme: 'cortex',
-      ignoreBaselineGrid: true,
-      blocks: [
-        {
           kind: 'body',
-          text: '• **Full-Force Hits:** Never compare Impact vs. loser\'s Effect Die. Win Total, land full Impact.',
-          fontPt: 8.35,
-          leadingPt: 10.5,
-          leadColour: PALETTE.cortexCyanDark,
-          leftIndentPt: 8,
-          firstIndentPt: -8,
-          spaceAfterPt: 10.0,
-        },
-        {
-          kind: 'body',
-          text: '• **Real Fallout Only:** Starts at `d6` (no `d4` Chip-farming). Past `d12` drops out of frame.',
-          fontPt: 8.35,
-          leadingPt: 10.5,
-          leadColour: PALETTE.cortexMagentaDark,
-          leftIndentPt: 8,
-          firstIndentPt: -8,
-          spaceAfterPt: 10.0,
-        },
-        {
-          kind: 'body',
-          text: '• **In-Pool Resources:** Roll inside pool to **keep +1 Total die**, then expend until recovery.',
-          fontPt: 8.35,
-          leadingPt: 10.5,
-          leadColour: PALETTE.cortexCyanDark,
-          leftIndentPt: 8,
-          firstIndentPt: -8,
-          spaceAfterPt: 10.0,
-        },
-        {
-          kind: 'body',
-          text: '• **Side Chars** *(Session 0)*: Shared Diamonds hold 2–3 `d8` traits; swap up to 2 and absorb fitting Fallout.',
-          fontPt: 8.35,
-          leadingPt: 10.5,
-          leadColour: PALETTE.cortexMagentaDark,
-          leftIndentPt: 8,
-          firstIndentPt: -8,
+          text: 'READ THE ROLL',
+          forceFontKey: 'displayBold',
+          fontPt: 10.0,
+          leadingPt: 11.4,
+          trackingEm: 0.04,
+          caps: CapsType.AllCaps,
+          colour: PALETTE.neutralGold,
           spaceAfterPt: 0,
         },
       ],
     })
   );
 
-  // Prime Set 1: Categorical Distinctions Featured Card (y: 4.90 .. 6.92 in, h: 2.02 in)
-  addShadowCard(
-    doc,
-    makeRectPx(col2X, 4.90, COL_W_IN, 2.02, ox, oy),
-    PALETTE.cortexPinkTint,
-    PALETTE.cortexDark,
-    0.85,
-    PALETTE.cortexMagenta,
-    2.5,
-    0,
-    ShapeCornerType.None,
-    'p3_prime1_card'
-  );
-  addRectShape(
-    doc,
-    makeRectPx(col2X, 4.90, 0.06, 2.02, ox, oy),
-    PALETTE.cortexMagenta,
-    null,
-    0,
-    'p3_prime1_bar',
-    0
-  );
-
-  results.push(
-    createTextFrameWithAutoFit(doc, styles, {
-      id: 'p3_col2_prime1',
-      pageNum: 3,
-      rect: makeRectPx(col2X + 0.12, 5.02, COL_W_IN - 0.20, 0.90, ox, oy),
+  const row2Y = 3.12;
+  const resBoxes = [
+    { x: MARGIN_IN + 0.14, top: '1s', bot: 'OPENINGS', bg: PALETTE.cortexMagentaFill, fg: PALETTE.white },
+    { x: MARGIN_IN + 0.14 + boxW + plusW, top: 'SUM 2', bot: 'TOTAL', bg: PALETTE.cortexCyan, fg: PALETTE.cortexDark },
+    { x: MARGIN_IN + 0.14 + 2 * (boxW + plusW), top: '1 DIE', bot: 'IMPACT d6–d12', bg: PALETTE.cortexCyan, fg: PALETTE.cortexDark },
+  ];
+  for (let i = 0; i < resBoxes.length; i++) {
+    const rb = resBoxes[i];
+    addRectShape(doc, makeRectPx(rb.x, row2Y, boxW, boxH, ox, oy), rb.bg, null, 0, `p8_rb_${i}`, 0);
+    const rbRes = createTextFrameWithAutoFit(doc, styles, {
+      id: `p8_rb_txt_${i}`,
+      pageNum: 8,
+      rect: makeRectPx(rb.x + 0.04, row2Y + 0.08, boxW - 0.08, boxH - 0.14, ox, oy),
       theme: 'cortex',
-      ignoreBaselineGrid: true,
+      allowAutoTighten: false,
       blocks: [
-        {
-          kind: 'h2',
-          text: 'Prime Set 1: Distinctions',
-          fontPt: 9.25,
-          leadingPt: 10.8,
-          spaceAfterPt: 5.5,
-        },
-        {
-          kind: 'body',
-          text: 'Write **three** `d8` **Distinctions** titled after your world\'s **Page 2 Identity Prompts** (*Texture · Place · Hook*).',
-          fontPt: 8.35,
-          leadingPt: 10.6,
-          spaceAfterPt: 0,
-        },
+        { kind: 'body', text: rb.top, forceFontKey: 'displayHeavy', fontPt: 11.0, leadingPt: 12.2, colour: rb.fg, align: ParagraphAlignXType.Centre, spaceAfterPt: 2.0 },
+        { kind: 'body', text: rb.bot, forceFontKey: 'displayBold', fontPt: 10.0, leadingPt: 11.2, colour: rb.fg, align: ParagraphAlignXType.Centre, spaceAfterPt: 0 },
       ],
-    })
-  );
+    });
+    centerTextInkInRect(doc, rbRes.node, rb.x, row2Y, boxW, boxH, ox, oy, true);
+    results.push(rbRes);
+  }
 
-  // Dark Hinder bar at bottom of Prime Set 1 card (y: 6.04 .. 6.78 in)
-  addRectShape(
-    doc,
-    makeRectPx(col2X + 0.12, 6.04, COL_W_IN - 0.20, 0.74, ox, oy),
-    PALETTE.cortexDark,
-    PALETTE.cortexMagenta,
-    0.85,
-    'p3_hinder_bg',
-    2,
-    ShapeCornerType.Round
-  );
+  // Openings Section (y: 4.24 .. 7.40) — spacious, crisp print typography
+  addRectShape(doc, makeRectPx(MARGIN_IN, 4.24, CONTENT_W_IN, 2.38, ox, oy), PALETTE.cortexPinkTint, null, 0, 'p8_open_bg', 0);
+  addLineSegment(doc, ox + MARGIN_IN * IN, oy + 4.24 * IN, ox + (MARGIN_IN + CONTENT_W_IN) * IN, oy + 4.24 * IN, PALETTE.cortexMagentaFill, 2.0, 'p8_open_top');
   results.push(
     createTextFrameWithAutoFit(doc, styles, {
-      id: 'p3_hinder_text',
-      pageNum: 3,
-      rect: makeRectPx(col2X + 0.18, 6.12, COL_W_IN - 0.32, 0.60, ox, oy),
+      id: 'p8_open_txt',
+      pageNum: 8,
+      rect: makeRectPx(MARGIN_IN + 0.16, 4.38, CONTENT_W_IN - 0.32, 2.12, ox, oy),
       theme: 'cortex',
-      ignoreBaselineGrid: true,
       blocks: [
+        { kind: 'h2', text: 'Openings', fontPt: 12.0, leadingPt: 13.8, colour: PALETTE.cortexMagentaDark, spaceAfterPt: 6.0 },
         {
-          kind: 'h3',
-          text: 'UNIVERSAL HINDER RULE',
-          fontPt: 7.25,
-          leadingPt: 8.5,
-          colour: PALETTE.cortexMagenta,
-          spaceAfterPt: 3.0,
+          kind: 'body',
+          text: 'Set rolled `1`s aside. They never count toward Total or Impact.',
+          fontPt: 10.5,
+          leadingPt: 13.4,
+          spaceAfterPt: 6.0,
         },
         {
           kind: 'body',
-          text: 'Roll any Distinction as `d4` instead of `d8` to gain `1 Chip`.',
-          fontPt: 8.1,
-          leadingPt: 10.0,
-          colour: PALETTE.white,
-          pillBg: PALETTE.cortexDarkPillBg,
-          pillInk: PALETTE.cortexCyan,
+          text: 'Foes seize your Openings, handing you `1 PP`, to inflict `d6` Fallout, step up Fallout, or claim an edge. Spend `1 PP` to seize GM Openings.',
+          fontPt: 10.5,
+          leadingPt: 13.4,
+          spaceAfterPt: 6.0,
+        },
+        {
+          kind: 'body',
+          text: 'Extra `1`s step up the die by +1 each.',
+          fontPt: 10.5,
+          leadingPt: 13.4,
           spaceAfterPt: 0,
         },
       ],
@@ -2939,499 +2373,482 @@ function buildPage3(doc, styles, ox, oy) {
   return results;
 }
 
-function buildPage4(doc, styles, ox, oy) {
+function buildPage9(doc, styles, ox, oy) {
+  const results = [];
+
+  results.push(...addChamferedBanner(doc, styles, 9, ox, oy, 'cortex', '09 · THREE CONFLICT SPEEDS', 'SPEEDS'));
+
+  results.push(
+    createTextFrameWithAutoFit(doc, styles, {
+      id: 'p9_lede',
+      pageNum: 9,
+      rect: makeRectPx(MARGIN_IN, 0.78, CONTENT_W_IN, 0.54, ox, oy),
+      theme: 'cortex',
+      blocks: [
+        {
+          kind: 'body',
+          text: 'Pick the speed that matches the scene\'s weight. Every speed uses the same baseline pool and Impact die.',
+          fontPt: 10.5,
+          leadingPt: 13.4,
+          spaceAfterPt: 0,
+        },
+      ],
+    })
+  );
+
+  const speeds = [
+    {
+      num: '01',
+      name: 'ROLL · SINGLE TEST',
+      accent: PALETTE.cortexCyanDark,
+      ruleCol: PALETTE.cortexCyan,
+      body: 'One toss vs. GM difficulty: `2dX` + scene traits, or the Doom Pool. High Total wins. Instigator wins ties.',
+    },
+    {
+      num: '02',
+      name: 'ROW · ESCALATING CONTEST',
+      accent: PALETTE.cortexMagentaDark,
+      ruleCol: PALETTE.cortexMagenta,
+      body: 'Beat the lead Total to take control, or **Concede** on your terms for `+1 PP` when you could roll again. Failing inflicts the winner\'s Impact as Fallout.',
+    },
+    {
+      num: '03',
+      name: 'ROMP · MULTI-DIE CHALLENGE',
+      accent: PALETTE.cortexCyanDark,
+      ruleCol: PALETTE.cortexCyan,
+      body: 'Roll vs. a central `YdX` Romp Pool. Win with Impact `>` a Romp die to drop it, or `≤` to step down the smallest. `d4` drops out. Romps act last.',
+    },
+  ];
+
+  let sy = 1.56;
+  const rowH = 1.90;
+  for (let i = 0; i < speeds.length; i++) {
+    const sp = speeds[i];
+    addLineSegment(doc, ox + MARGIN_IN * IN, oy + sy * IN, ox + (MARGIN_IN + CONTENT_W_IN) * IN, oy + sy * IN, sp.ruleCol, 1.8, `p9_sp_rule_${i}`);
+    results.push(
+      createTextFrameWithAutoFit(doc, styles, {
+        id: `p9_sp_hdr_${i}`,
+        pageNum: 9,
+        rect: makeRectPx(MARGIN_IN, sy + 0.14, CONTENT_W_IN, 0.28, ox, oy),
+        theme: 'cortex',
+        allowAutoTighten: false,
+        blocks: [
+          {
+            kind: 'body',
+            text: `**${sp.num}**   ${sp.name}`,
+            forceFontKey: 'displayHeavy',
+            fontPt: 11.5,
+            leadingPt: 13.0,
+            colour: PALETTE.cortexDark,
+            leadColour: sp.accent,
+            spaceAfterPt: 0,
+          },
+        ],
+      }),
+      createTextFrameWithAutoFit(doc, styles, {
+        id: `p9_sp_body_${i}`,
+        pageNum: 9,
+        rect: makeRectPx(MARGIN_IN, sy + 0.48, CONTENT_W_IN, rowH - 0.56, ox, oy),
+        theme: 'cortex',
+        blocks: [
+          {
+            kind: 'body',
+            text: sp.body,
+            fontPt: 10.8,
+            leadingPt: 14.0,
+            spaceAfterPt: 0,
+          },
+        ],
+      })
+    );
+    sy += rowH + 0.08;
+  }
+
+  return results;
+}
+
+function buildPage10(doc, styles, ox, oy) {
+  const results = [];
+
+  results.push(...addChamferedBanner(doc, styles, 10, ox, oy, 'cortex', '10 · HOUSE CUTS & DISTINCTIONS', 'CUTS'));
+
+  results.push(
+    createTextFrameWithAutoFit(doc, styles, {
+      id: 'p10_cuts_h2',
+      pageNum: 10,
+      rect: makeRectPx(MARGIN_IN, 0.76, CONTENT_W_IN, 0.26, ox, oy),
+      theme: 'cortex',
+      allowAutoTighten: false,
+      blocks: [{ kind: 'h2', text: 'Four House Cuts', fontPt: 11.5, leadingPt: 13.0, spaceAfterPt: 0 }],
+    }),
+    createTextFrameWithAutoFit(doc, styles, {
+      id: 'p10_cuts_body',
+      pageNum: 10,
+      rect: makeRectPx(MARGIN_IN, 1.08, CONTENT_W_IN, 3.30, ox, oy),
+      theme: 'cortex',
+      blocks: [
+        { kind: 'body', text: '• **Full-Force Hits:** Never step down your Impact against a loser\'s bigger die. Win the Total, land full Impact.', fontPt: 10.2, leadingPt: 13.0, leadColour: PALETTE.cortexCyanDark, leftIndentPt: 10, firstIndentPt: -10, spaceAfterPt: 8.0 },
+        { kind: 'body', text: '• **Real Fallout Only:** Starts at `d6` minimum. No `d4` PP-farming. Steps down by one in quiet recovery scenes. Stepping past `d12` drops you out of the scene.', fontPt: 10.2, leadingPt: 13.0, leadColour: PALETTE.cortexMagentaDark, leftIndentPt: 10, firstIndentPt: -10, spaceAfterPt: 8.0 },
+        { kind: 'body', text: '• **In-Pool Resources:** Roll a Resource die inside your pool to keep `+1` Total die, then expend until recovery.', fontPt: 10.2, leadingPt: 13.0, leadColour: PALETTE.cortexCyanDark, leftIndentPt: 10, firstIndentPt: -10, spaceAfterPt: 8.0 },
+        { kind: 'body', text: '• **Supports:** Shared use Allies, Vehicles, Locations, etc. Starting with 1–3 traits; mix and swap their traits with yours in pools; let them absorb fitting Fallout.', fontPt: 10.2, leadingPt: 13.0, leadColour: PALETTE.cortexMagentaDark, leftIndentPt: 10, firstIndentPt: -10, spaceAfterPt: 0 },
+      ],
+    })
+  );
+
+  // Prime Set 1: Distinctions + Hinder (y: 4.52 .. 6.42)
+  addLineSegment(doc, ox + MARGIN_IN * IN, oy + 4.52 * IN, ox + (MARGIN_IN + CONTENT_W_IN) * IN, oy + 4.52 * IN, PALETTE.cortexMagentaFill, 1.8, 'p10_dist_rule');
+  results.push(
+    createTextFrameWithAutoFit(doc, styles, {
+      id: 'p10_dist_txt',
+      pageNum: 10,
+      rect: makeRectPx(MARGIN_IN, 4.64, CONTENT_W_IN, 0.80, ox, oy),
+      theme: 'cortex',
+      blocks: [
+        { kind: 'h2', text: 'Prime Set 1: Distinctions', fontPt: 11.5, leadingPt: 13.0, spaceAfterPt: 4.0 },
+        { kind: 'body', text: 'Write three `d8` Distinctions titled after your world\'s Page 6 Identity Prompts.', fontPt: 10.4, leadingPt: 13.0, spaceAfterPt: 0 },
+      ],
+    })
+  );
+  addRectShape(doc, makeRectPx(MARGIN_IN, 5.52, CONTENT_W_IN, 0.86, ox, oy), PALETTE.cortexDark, null, 0, 'p10_hinder_bg', 0);
+  results.push(
+    createTextFrameWithAutoFit(doc, styles, {
+      id: 'p10_hinder_txt',
+      pageNum: 10,
+      rect: makeRectPx(MARGIN_IN + 0.16, 5.64, CONTENT_W_IN - 0.32, 0.64, ox, oy),
+      theme: 'cortex',
+      blocks: [
+        { kind: 'body', text: '**HINDER**', forceFontKey: 'displayBold', fontPt: 10.0, leadingPt: 11.4, colour: PALETTE.cortexMagentaLight, spaceAfterPt: 3.0 },
+        { kind: 'body', text: 'Roll any Distinction as `d4` instead of `d8` to gain `1 PP`.', fontPt: 10.4, leadingPt: 12.8, colour: PALETTE.white, pillInk: PALETTE.cortexCyan, spaceAfterPt: 0 },
+      ],
+    })
+  );
+
+  // Undertow in Cortex Editorial Band (y: 6.60 .. 7.52)
+  addRectShape(doc, makeRectPx(MARGIN_IN, 6.60, CONTENT_W_IN, 0.90, ox, oy), PALETTE.cortexIce, null, 0, 'p10_ut_bg', 0);
+  addLineSegment(doc, ox + MARGIN_IN * IN, oy + 6.60 * IN, ox + (MARGIN_IN + CONTENT_W_IN) * IN, oy + 6.60 * IN, PALETTE.cortexCyanDark, 1.5, 'p10_ut_top');
+  addLineSegment(doc, ox + MARGIN_IN * IN, oy + 7.50 * IN, ox + (MARGIN_IN + CONTENT_W_IN) * IN, oy + 7.50 * IN, PALETTE.cortexRule, 0.7, 'p10_ut_bot');
+  const utTxt = createTextFrameWithAutoFit(doc, styles, {
+    id: 'p10_ut_txt',
+    pageNum: 10,
+    rect: makeRectPx(MARGIN_IN + 0.12, 6.72, CONTENT_W_IN - 0.24, 0.68, ox, oy),
+    theme: 'cortex',
+    blocks: [
+      { kind: 'body', text: '**Undertow in Cortex:** Players gain 1 related `d8` Support or Special. GMs run its Engine Mod in contrast scenes.', fontPt: 10.2, leadingPt: 13.0, spaceAfterPt: 0 },
+    ],
+  });
+  centerTextInkInRect(doc, utTxt.node, MARGIN_IN + 0.12, 6.60, CONTENT_W_IN - 0.24, 0.90, ox, oy, false);
+  results.push(utTxt);
+
+  return results;
+}
+
+function buildPage11(doc, styles, ox, oy) {
+  const results = [];
+
+  results.push(...addChamferedBanner(doc, styles, 11, ox, oy, 'cortex', '11 · PALETTE → ENGINE MOD', 'MODS'));
+
+  const engineMods = [
+    '**1. Prismatic · Bleed** — When the uncanny bleeds into a scene, `1`s & `2`s both count as Openings. Spend `1 PP` to rename any Asset or Fallout in play.',
+    '**2. Neon · Burnout** — Created Assets last 1 roll. Spend `1 PP` to sustain for the scene. **Lean In:** roll your own Fallout, then step it up.',
+    '**3. Chrome · Spec Sheet** — Gain two `d8` Signature Assets with *Gear Limit*: shut one down for the scene to gain `1 PP`.',
+    '**4. Dark · Doom Pool** — An escalating `d8, d6, d4` GM pool replaces difficulty dice pairs. It grows on player Openings and spends dice for twists or Romps.',
+    '**5. Sepia · Living Serial** — Log Session Titles as Session Records. Once per session, invoke one for a free `1 PP` effect or Flashback. Cross it off between sessions to step up a trait or add a `d8` Signature Asset.',
+    '**6. Bright · Open Table** — **No GM Bank:** GM `PP` spends go straight to targeted PCs. Allies share created Assets for free.',
+    '**7. Pastel · Gentle Stakes** — PC Fallout lands at `d6`, or steps up existing Fallout by one. It steps down automatically in quiet scenes.',
+    '**8. Rust · Scarcity** — Gain `2d6` Salvage Resources. **Stricken:** Any `d10+` Fallout restricts you to keeping 1 Total die.',
+  ];
+
+  results.push(
+    createTextFrameWithAutoFit(doc, styles, {
+      id: 'p11_engine_mods',
+      pageNum: 11,
+      rect: makeRectPx(MARGIN_IN, 0.78, CONTENT_W_IN, 6.82, ox, oy),
+      theme: 'cortex',
+      blocks: engineMods.map((text, i) => ({
+        kind: 'body',
+        text,
+        fontPt: 10.2,
+        leadingPt: 12.8,
+        leadColour: DIAL_SWATCHES[i].text,
+        leftIndentPt: 10,
+        firstIndentPt: -10,
+        spaceAfterPt: i === 7 ? 0 : 9.0,
+      })),
+    })
+  );
+
+  return results;
+}
+
+function buildPage12(doc, styles, ox, oy) {
+  const results = [];
+
+  results.push(...addChamferedBanner(doc, styles, 12, ox, oy, 'cortex', '12 · SETTING → PRIME SET 2', 'PRIME 2'));
+
+  const primeSet2 = [
+    '**1. Liminal** — Attributes `d10, d8, d6`: *Pulse, Pattern, Poise* + one `d8` Ability with 1 Special & Limit: shut down for the scene for `+1 PP`.',
+    '**2. Future** — Roles `d10, 2×d8, d6, d4`: *Hacker, Fixer, Operator, Tech, Face*.',
+    '**3. Space** — Affiliations: Arenas `d10, d8, d6`: *Void, Station, Surface* + shared `d8` Vehicle rated in *Engines, Frame, Systems*.',
+    '**4. Modern** — Roles `d10, d8, d6`: *Mouth, Mind, Muscle* + one unrated narrative Talent.',
+    '**5. Industrial** — Skills `d10, 2×d8, 3×d6`, rest `d4`: *Brawl, Craft, Delve, Doctor, Prowl, Rig, Survey, Sway*.',
+    '**6. Mythic** — Attributes `d10, d8, d6`: *Might, Grace, Lore* + Power Set of two `d8` mythic Powers & a Limit.',
+    '**7. Hearth** — Skills `d10, 2×d8, 3×d6`, rest `d4`: *Cook, Grow, Mend, Notice, Parley, Tinker, Travel, Ward* + two `d6` Specialties.',
+    '**8. Primal** — Affiliations: Arenas `d10, d8, d6`: *Camp, Wilds, Lair* + `d8` Beast Support or Signature Asset.',
+  ];
+
+  results.push(
+    createTextFrameWithAutoFit(doc, styles, {
+      id: 'p12_prime_set_2',
+      pageNum: 12,
+      rect: makeRectPx(MARGIN_IN, 0.78, CONTENT_W_IN, 6.82, ox, oy),
+      theme: 'cortex',
+      blocks: primeSet2.map((text, i) => ({
+        kind: 'body',
+        text,
+        fontPt: 10.3,
+        leadingPt: 13.0,
+        leadColour: DIAL_SWATCHES[i].text,
+        leftIndentPt: 10,
+        firstIndentPt: -10,
+        spaceAfterPt: i === 7 ? 0 : 10.5,
+      })),
+    })
+  );
+
+  return results;
+}
+
+function buildPage13(doc, styles, ox, oy) {
+  const results = [];
+
+  results.push(...addChamferedBanner(doc, styles, 13, ox, oy, 'cortex', '13 · TONE → PRIME SET 3', 'PRIME 3'));
+
+  const primeSet3 = [
+    '**1. Weird** — Values `d10, d8, 2×d6`: *Order, Truth, Wonder, Self* with Statements. **Question** a belief to triple its die for one roll, then step down & rewrite.',
+    '**2. Punk** — Relationships: Factions `d10, d8, d6` across 3 dominant Blocs with Statements. **Question** your stance to triple its die & burn standing.',
+    '**3. Adventure** — Values `d10, d8, 2×d6, d4`: *Discovery, Duty, Fortune, Glory, Loyalty* + three Goals at `d6, d8, d10`: roll & cross off in opposition, or check off when achieved to step up a trait.',
+    '**4. Noir** — Relationships `d10, 2×d8`, rest `d6` toward PCs, informants & suspects with Statements + **GMC Vices:** GMCs oppose using *Greed, Control, Wrath*.',
+    '**5. Pulp** — Affiliations `d10, d8, d6`: *Solo, Duo, Team* + **Hero Dice:** win by 5+ to bank a foe\'s top-rolling die. Spend `1 PP` later to roll & add to Total.',
+    '**6. Heroic** — Values `d10, d8, 2×d6`: *Courage, Justice, Mercy, Truth* + **Moral Support:** step down your Value for the session to step up an ally\'s.',
+    '**7. Cozy** — Relationships `d10, 2×d8`, rest `d6` toward PCs & neighbors + **Team Up:** lend your Relationship die into an ally\'s pool risk-free.',
+    '**8. Peril** — Reserves `d10, d8, 2×d6`: *Stamina, Resolve, Supply, Luck* + **Usage Dice:** rolling `1–2` on a Reserve steps it down after the roll. `d4` drops out. Rest resets them.',
+  ];
+
+  results.push(
+    createTextFrameWithAutoFit(doc, styles, {
+      id: 'p13_prime_set_3',
+      pageNum: 13,
+      rect: makeRectPx(MARGIN_IN, 0.78, CONTENT_W_IN, 6.82, ox, oy),
+      theme: 'cortex',
+      blocks: primeSet3.map((text, i) => ({
+        kind: 'body',
+        text,
+        fontPt: 10.1,
+        leadingPt: 12.6,
+        leadColour: DIAL_SWATCHES[i].text,
+        leftIndentPt: 10,
+        firstIndentPt: -10,
+        spaceAfterPt: i === 7 ? 0 : 8.5,
+      })),
+    })
+  );
+
+  return results;
+}
+
+function buildSamplePitchPage(doc, styles, ox, oy, cfg) {
+  const results = [];
+  results.push(...addChamferedBanner(doc, styles, cfg.pageNum, ox, oy, 'cortex', cfg.bannerTitle, cfg.badge));
+
+  results.push(
+    ...addPitchPosterCard(doc, styles, {
+      id: `p${cfg.pageNum}_poster`,
+      pageNum: cfg.pageNum,
+      xIn: MARGIN_IN,
+      yIn: 0.80,
+      wIn: CONTENT_W_IN,
+      hIn: 3.44,
+      ox,
+      oy,
+      pIdx: cfg.pIdx,
+      sIdx: cfg.sIdx,
+      tIdx: cfg.tIdx,
+      uIdx: cfg.uIdx,
+      uDial: cfg.uDial,
+      pWord: cfg.pWord,
+      sWord: cfg.sWord,
+      tWord: cfg.tWord,
+      uWord: cfg.uWord,
+      fullBento: true,
+      prompts: cfg.prompts,
+      mods: cfg.mods,
+    })
+  );
+
+  addLineSegment(doc, ox + MARGIN_IN * IN, oy + 4.44 * IN, ox + (MARGIN_IN + CONTENT_W_IN) * IN, oy + 4.44 * IN, cfg.accentCol, 1.8, `p${cfg.pageNum}_div`);
+
+  results.push(
+    createTextFrameWithAutoFit(doc, styles, {
+      id: `p${cfg.pageNum}_breakdown`,
+      pageNum: cfg.pageNum,
+      rect: makeRectPx(MARGIN_IN, 4.58, CONTENT_W_IN, 3.00, ox, oy),
+      theme: 'cortex',
+      blocks: [
+        { kind: 'h2', text: cfg.rollLine, fontPt: 11.5, leadingPt: 13.5, colour: PALETTE.cortexDark, spaceAfterPt: 8.0 },
+        { kind: 'body', text: cfg.sheet, fontPt: 10.5, leadingPt: 13.6, spaceAfterPt: 9.0 },
+        { kind: 'body', text: cfg.engine, fontPt: 10.5, leadingPt: 13.6, spaceAfterPt: 9.0 },
+        { kind: 'body', text: cfg.undertow, fontPt: 10.5, leadingPt: 13.6, spaceAfterPt: 0 },
+      ],
+    })
+  );
+
+  return results;
+}
+
+function buildPage14(doc, styles, ox, oy) {
+  return buildSamplePitchPage(doc, styles, ox, oy, {
+    pageNum: 14,
+    bannerTitle: '14 · SAMPLE PITCH 01',
+    badge: 'SAMPLE 1',
+    pIdx: 8, sIdx: 3, tIdx: 2, uIdx: 5, uDial: 'p',
+    pWord: 'RUST', sWord: 'SPACE', tWord: 'PUNK', uWord: 'Sepia',
+    prompts: ['Scar', 'World', 'Grievance'],
+    mods: ['Scarcity', 'Affiliations: Arenas', 'Relationships: Factions'],
+    accentCol: DIAL_SWATCHES[7].bg,
+    rollLine: 'ROLL 8 · 3 · 2  +  5 SEPIA UNDERTOW',
+    sheet: '**Sheet:** Three `d8` Distinctions (*Scar · World · Grievance*), Affiliations: Arenas (*Void, Station, Surface*) + shared `d8` Vehicle, and Relationships: Factions across 3 Blocs.',
+    engine: '**Engine Mod:** Rust Scarcity gives `2d6` Salvage Resources. Any `d10+` Fallout makes you Stricken, restricting you to keeping 1 Total die.',
+    undertow: '**Undertow (Divide on Palette):** Sepia splits old brass hulls from rusted salvage decks. Players gain a related `d8` Support or pre-war Flashback.',
+  });
+}
+
+function buildPage15(doc, styles, ox, oy) {
+  return buildSamplePitchPage(doc, styles, ox, oy, {
+    pageNum: 15,
+    bannerTitle: '15 · SAMPLE PITCH 02',
+    badge: 'SAMPLE 2',
+    pIdx: 6, sIdx: 8, tIdx: 3, uIdx: 7, uDial: 't',
+    pWord: 'BRIGHT', sWord: 'PRIMAL', tWord: 'ADVENTURE', uWord: 'Cozy',
+    prompts: ['Banner', 'Kin', 'Horizon'],
+    mods: ['Open Table', 'Affiliations: Arenas', 'Values + Goals'],
+    accentCol: DIAL_SWATCHES[5].bg,
+    rollLine: 'ROLL 6 · 8 · 3  +  7 COZY UNDERTOW',
+    sheet: '**Sheet:** Three `d8` Distinctions (*Banner · Kin · Horizon*), Affiliations: Arenas (*Camp, Wilds, Lair*) + `d8` Beast Support, and Values + 3 Goals (`d6, d8, d10`).',
+    engine: '**Engine Mod:** Bright Open Table removes the GM Bank. GM `PP` spends flow straight to targeted PCs, and allies share created Assets for free.',
+    undertow: '**Undertow (Counter on Tone):** Cozy contrasts fierce wilds with warm campfire recovery scenes. Players gain a related `d8` Support or Special.',
+  });
+}
+
+function buildPage16(doc, styles, ox, oy) {
   const results = [];
   const col1X = MARGIN_IN;
   const col2X = MARGIN_IN + COL_W_IN + GUTTER_IN;
 
-  results.push(
-    ...addChamferedBanner(
-      doc,
-      styles,
-      4,
-      ox,
-      oy,
-      'cortex',
-      '04 · CORTEX DIAL COMPILER',
-      'SHEET & MODS'
-    )
-  );
-
-  // Full-width Undertow + Intro strip (y: 0.75 .. 1.13 in, h: 0.38 in)
+  // Full-bleed dark back cover canvas
   addRectShape(
     doc,
-    makeRectPx(MARGIN_IN, 0.75, CONTENT_W_IN, 0.38, ox, oy),
-    PALETTE.cortexIce,
-    PALETTE.cortexRule,
-    0.75,
-    'p4_intro_bg',
-    0
-  );
-  addRectShape(
-    doc,
-    makeRectPx(MARGIN_IN, 0.75, 0.055, 0.19, ox, oy),
-    PALETTE.cortexCyan,
-    null,
-    0,
-    'p4_intro_bar_top',
-    0
-  );
-  addRectShape(
-    doc,
-    makeRectPx(MARGIN_IN, 0.94, 0.055, 0.19, ox, oy),
-    PALETTE.cortexMagenta,
-    null,
-    0,
-    'p4_intro_bar_bot',
-    0
-  );
-  results.push(
-    createTextFrameWithAutoFit(doc, styles, {
-      id: 'p4_intro',
-      pageNum: 4,
-      rect: makeRectPx(MARGIN_IN + 0.11, 0.79, CONTENT_W_IN - 0.17, 0.31, ox, oy),
-      theme: 'cortex',
-      ignoreBaselineGrid: true,
-      blocks: [
-        {
-          kind: 'body',
-          text: 'Match 3 Dials for **Engine Mod**, **Prime Set 2**, **Prime Set 3**. **Undertow (4th Die):** Gain 1 shared `d8` Side Char / Special, OR apply its Engine Mod in contrast scenes.',
-          fontPt: 7.75,
-          leadingPt: 9.2,
-          spaceAfterPt: 0,
-        },
-      ],
-    })
-  );
-
-  // --- COLUMN 1: 1. PALETTE + 2. SETTING (uniform 7.75/9.2 across BOTH columns!) ---
-  results.push(
-    addSectionHeaderBar(
-      doc,
-      styles,
-      4,
-      col1X,
-      1.21,
-      COL_W_IN,
-      ox,
-      oy,
-      '1 · PALETTE → ENGINE MOD',
-      PALETTE.cortexCyan,
-      'cortex',
-      'p4_s1_hdr'
-    )
-  );
-
-  results.push(
-    createTextFrameWithAutoFit(doc, styles, {
-      id: 'p4_col1_palette',
-      pageNum: 4,
-      rect: makeRectPx(col1X, 1.46, COL_W_IN, 3.24, ox, oy),
-      theme: 'cortex',
-      ignoreBaselineGrid: true,
-      blocks: [
-        {
-          kind: 'body',
-          text: '**1. Prismatic** *(Bleed)*: Uncanny frames: `1`s & `2`s = Openings; `1 Chip` renames Highlight or Fallout.',
-          fontPt: 7.75,
-          leadingPt: 9.2,
-          leadColour: DIAL_SWATCHES[0].text,
-          leftIndentPt: 6,
-          firstIndentPt: -6,
-          spaceAfterPt: 2.5,
-        },
-        {
-          kind: 'body',
-          text: '**2. Neon** *(Burnout)*: Highlights expire in 1 roll (`1 Chip` sustains). **Lean In:** roll own Fallout, then step up.',
-          fontPt: 7.75,
-          leadingPt: 9.2,
-          leadColour: DIAL_SWATCHES[1].text,
-          leftIndentPt: 6,
-          firstIndentPt: -6,
-          spaceAfterPt: 2.5,
-        },
-        {
-          kind: 'body',
-          text: '**3. Chrome** *(Spec Sheet)*: Two `d8` **Signature Assets** (*Gear Limit:* shut down for frame → `+1 Chip`).',
-          fontPt: 7.75,
-          leadingPt: 9.2,
-          leadColour: DIAL_SWATCHES[2].text,
-          leftIndentPt: 6,
-          firstIndentPt: -6,
-          spaceAfterPt: 2.5,
-        },
-        {
-          kind: 'body',
-          text: '**4. Dark** *(Doom Pool)*: Escalating `d8, d6, d4` GM pool replaces static difficulty; grows on Openings, buys twists/Romps.',
-          fontPt: 7.75,
-          leadingPt: 9.2,
-          leadColour: DIAL_SWATCHES[3].text,
-          leftIndentPt: 6,
-          firstIndentPt: -6,
-          spaceAfterPt: 2.5,
-        },
-        {
-          kind: 'body',
-          text: '**5. Sepia** *(Living Serial)*: Log **Session Titles**; 1/session invoke for free Chip or **Flashback**; cross off to advance.',
-          fontPt: 7.75,
-          leadingPt: 9.2,
-          leadColour: DIAL_SWATCHES[4].text,
-          leftIndentPt: 6,
-          firstIndentPt: -6,
-          spaceAfterPt: 2.5,
-        },
-        {
-          kind: 'body',
-          text: '**6. Bright** *(Open Table)*: **Zero GM Bank** (GM spends go to PCs) + allies share Highlights.',
-          fontPt: 7.75,
-          leadingPt: 9.2,
-          leadColour: DIAL_SWATCHES[5].text,
-          leftIndentPt: 6,
-          firstIndentPt: -6,
-          spaceAfterPt: 2.5,
-        },
-        {
-          kind: 'body',
-          text: '**7. Pastel** *(Gentle Stakes)*: Fallout steps down in quiet scenes; double GM `1`s = auto-success or step-down.',
-          fontPt: 7.75,
-          leadingPt: 9.2,
-          leadColour: DIAL_SWATCHES[6].text,
-          leftIndentPt: 6,
-          firstIndentPt: -6,
-          spaceAfterPt: 2.5,
-        },
-        {
-          kind: 'body',
-          text: '**8. Rust** *(Scarcity)*: Two `2d6` **Salvage** dice (+1 Total die, expend). **Stricken:** Fallout > trait keeps 1 Total die.',
-          fontPt: 7.75,
-          leadingPt: 9.2,
-          leadColour: DIAL_SWATCHES[7].text,
-          leftIndentPt: 6,
-          firstIndentPt: -6,
-          spaceAfterPt: 0,
-        },
-      ],
-    })
-  );
-
-  results.push(
-    addSectionHeaderBar(
-      doc,
-      styles,
-      4,
-      col1X,
-      4.75,
-      COL_W_IN,
-      ox,
-      oy,
-      '2 · SETTING → PRIME SET 2',
-      PALETTE.cortexCyan,
-      'cortex',
-      'p4_s2_hdr'
-    )
-  );
-
-  results.push(
-    createTextFrameWithAutoFit(doc, styles, {
-      id: 'p4_col1_setting',
-      pageNum: 4,
-      rect: makeRectPx(col1X, 5.00, COL_W_IN, 2.86, ox, oy),
-      theme: 'cortex',
-      ignoreBaselineGrid: true,
-      blocks: [
-        {
-          kind: 'body',
-          text: '**1. Threshold** — Arenas (`d10, d8, d6`): *Anchor, Transit, Beyond.*',
-          fontPt: 7.75,
-          leadingPt: 9.2,
-          leadColour: DIAL_SWATCHES[0].text,
-          leftIndentPt: 6,
-          firstIndentPt: -6,
-          spaceAfterPt: 2.0,
-        },
-        {
-          kind: 'body',
-          text: '**2. Future** — Roles (`d10, 2×d8, d6, d4`): *Hacker, Fixer, Operator, Tech, Face.*',
-          fontPt: 7.75,
-          leadingPt: 9.2,
-          leadColour: DIAL_SWATCHES[1].text,
-          leftIndentPt: 6,
-          firstIndentPt: -6,
-          spaceAfterPt: 2.0,
-        },
-        {
-          kind: 'body',
-          text: '**3. Space** — Arenas (`d10, d8, d6`): *Void, Station, Worlds* + `d8` **Ship** (*Engines, Frame, Systems*).',
-          fontPt: 7.75,
-          leadingPt: 9.2,
-          leadColour: DIAL_SWATCHES[2].text,
-          leftIndentPt: 6,
-          firstIndentPt: -6,
-          spaceAfterPt: 2.0,
-        },
-        {
-          kind: 'body',
-          text: '**4. Modern** — Roles (`d10, d8, d6`): *Mouth, Mind, Muscle.*',
-          fontPt: 7.75,
-          leadingPt: 9.2,
-          leadColour: DIAL_SWATCHES[3].text,
-          leftIndentPt: 6,
-          firstIndentPt: -6,
-          spaceAfterPt: 2.0,
-        },
-        {
-          kind: 'body',
-          text: '**5. Industrial** — Guilds (`d10, 2×d8, 3×d6, 2×d4`): *Machinist, Saboteur, Alchemist, Bruiser, Broker, Medic, Scout, Orator.*',
-          fontPt: 7.75,
-          leadingPt: 9.2,
-          leadColour: DIAL_SWATCHES[4].text,
-          leftIndentPt: 6,
-          firstIndentPt: -6,
-          spaceAfterPt: 2.0,
-        },
-        {
-          kind: 'body',
-          text: '**6. Mythic** — Attributes (`d10, d8, d6`: *Might, Grace, Lore*) + **Calling Special** (`d6` Pressure die).',
-          fontPt: 7.75,
-          leadingPt: 9.2,
-          leadColour: DIAL_SWATCHES[5].text,
-          leftIndentPt: 6,
-          firstIndentPt: -6,
-          spaceAfterPt: 2.0,
-        },
-        {
-          kind: 'body',
-          text: '**7. Hearth** — Crafts (`d10, 2×d8, 3×d6, 2×d4`: *Mend, Cook, Grow, Travel, Parley, Notice, Tinker, Ward*) + two `d6` Specialties.',
-          fontPt: 7.75,
-          leadingPt: 9.2,
-          leadColour: DIAL_SWATCHES[6].text,
-          leftIndentPt: 6,
-          firstIndentPt: -6,
-          spaceAfterPt: 2.0,
-        },
-        {
-          kind: 'body',
-          text: '**8. Primal** — Arenas (`d10, d8, d6`: *Camp, Wilds, Lair*) + `d8` **Beast/Pack** or **Trophy**.',
-          fontPt: 7.75,
-          leadingPt: 9.2,
-          leadColour: DIAL_SWATCHES[7].text,
-          leftIndentPt: 6,
-          firstIndentPt: -6,
-          spaceAfterPt: 0,
-        },
-      ],
-    })
-  );
-
-  // --- COLUMN 2: 3. TONE + SAMPLE QUICK-COMPILES ---
-  results.push(
-    addSectionHeaderBar(
-      doc,
-      styles,
-      4,
-      col2X,
-      1.21,
-      COL_W_IN,
-      ox,
-      oy,
-      '3 · TONE → PRIME SET 3',
-      PALETTE.cortexMagenta,
-      'cortex',
-      'p4_s3_hdr'
-    )
-  );
-
-  results.push(
-    createTextFrameWithAutoFit(doc, styles, {
-      id: 'p4_col2_tone',
-      pageNum: 4,
-      rect: makeRectPx(col2X, 1.46, COL_W_IN, 4.18, ox, oy),
-      theme: 'cortex',
-      ignoreBaselineGrid: true,
-      blocks: [
-        {
-          kind: 'body',
-          text: '**1. Weird** — Tether Drives (`d10, d8, 2×d6`: *Reward, Bond, Pride, Thrill*): Anchor statements; **Question** to **triple** die, step down & rewrite.',
-          fontPt: 7.75,
-          leadingPt: 9.3,
-          leadColour: DIAL_SWATCHES[0].text,
-          leftIndentPt: 6,
-          firstIndentPt: -6,
-          spaceAfterPt: 6.0,
-        },
-        {
-          kind: 'body',
-          text: '**2. Punk** — Bloc Stances (`d10, d8, d6` across 3 Factions): Faction stances; **Question** to **triple** die & fracture allegiance.',
-          fontPt: 7.75,
-          leadingPt: 9.3,
-          leadColour: DIAL_SWATCHES[1].text,
-          leftIndentPt: 6,
-          firstIndentPt: -6,
-          spaceAfterPt: 6.0,
-        },
-        {
-          kind: 'body',
-          text: '**3. Adventure** — Horizon Values (`d10, 2×d8, 2×d6, d4`: *Daring, Cleverness, Crew, Wonder, Fortune, Duty*) + 3 **Goals** (`d6, d8, d10`).',
-          fontPt: 7.75,
-          leadingPt: 9.3,
-          leadColour: DIAL_SWATCHES[2].text,
-          leftIndentPt: 6,
-          firstIndentPt: -6,
-          spaceAfterPt: 6.0,
-        },
-        {
-          kind: 'body',
-          text: '**4. Noir** — Compromised Drives (`d10, d8, d6, d4`: *Ambition, Trust, Dignity, Vice*): Statements fracture as the case corrupts.',
-          fontPt: 7.75,
-          leadingPt: 9.3,
-          leadColour: DIAL_SWATCHES[3].text,
-          leftIndentPt: 6,
-          firstIndentPt: -6,
-          spaceAfterPt: 6.0,
-        },
-        {
-          kind: 'body',
-          text: '**5. Pulp** — Action Modes (`d10, d8, d6`: *Solo, Duo, Team*) + **Hero Dice** (win by 5+ to bank foe\'s top die).',
-          fontPt: 7.75,
-          leadingPt: 9.3,
-          leadColour: DIAL_SWATCHES[4].text,
-          leftIndentPt: 6,
-          firstIndentPt: -6,
-          spaceAfterPt: 6.0,
-        },
-        {
-          kind: 'body',
-          text: '**6. Heroic** — Oath Values (`d10, d8, 2×d6`: *Justice, Mercy, Courage, Truth*) + **Moral Support** (step down yours to step up an ally\'s).',
-          fontPt: 7.75,
-          leadingPt: 9.3,
-          leadColour: DIAL_SWATCHES[5].text,
-          leftIndentPt: 6,
-          firstIndentPt: -6,
-          spaceAfterPt: 6.0,
-        },
-        {
-          kind: 'body',
-          text: '**7. Cozy** — Bonds (`d10, 2×d8, rest d6` to PCs/neighbors) + **Team Up** (lend Bond die risk-free).',
-          fontPt: 7.75,
-          leadingPt: 9.3,
-          leadColour: DIAL_SWATCHES[6].text,
-          leftIndentPt: 6,
-          firstIndentPt: -6,
-          spaceAfterPt: 6.0,
-        },
-        {
-          kind: 'body',
-          text: '**8. Peril** — Nerve (`d10, d8, d6`: *Grit, Focus, Trust*) + **Trauma** (Fallout past `d12` leaves `d6` Trauma, needs recovery).',
-          fontPt: 7.75,
-          leadingPt: 9.3,
-          leadColour: DIAL_SWATCHES[7].text,
-          leftIndentPt: 6,
-          firstIndentPt: -6,
-          spaceAfterPt: 0,
-        },
-      ],
-    })
-  );
-
-  // Sample Quick-Compiles Featured Hard-Shadow Card (y: 5.72 .. 7.78 in, h: 2.06 in)
-  addShadowCard(
-    doc,
-    makeRectPx(col2X, 5.72, COL_W_IN, 2.06, ox, oy),
-    PALETTE.cortexIce,
+    new Rectangle(ox, oy - BLEED_IN * IN, (PAGE_W_IN + BLEED_IN) * IN, (PAGE_H_IN + 2 * BLEED_IN) * IN),
     PALETTE.cortexDark,
-    0.85,
-    PALETTE.cortexMagenta,
-    2.5,
-    0,
-    ShapeCornerType.None,
-    'p4_quick_compiles_card'
-  );
-  addRectShape(
-    doc,
-    makeRectPx(col2X, 5.72, 0.06, 1.03, ox, oy),
-    PALETTE.cortexCyan,
     null,
     0,
-    'p4_quick_bar_top',
+    'p16_bg',
     0
   );
-  addRectShape(
-    doc,
-    makeRectPx(col2X, 6.75, 0.06, 1.03, ox, oy),
-    PALETTE.cortexMagenta,
-    null,
-    0,
-    'p4_quick_bar_bot',
-    0
+  const splitW = (PAGE_W_IN + BLEED_IN) * 0.65;
+  addRectShape(doc, new Rectangle(ox, oy - BLEED_IN * IN, splitW * IN, 0.20 * IN), PALETTE.cortexCyan, null, 0, 'p16_top_c', 0);
+  addRectShape(doc, new Rectangle(ox + splitW * IN, oy - BLEED_IN * IN, (PAGE_W_IN + BLEED_IN - splitW) * IN, 0.20 * IN), PALETTE.cortexMagenta, null, 0, 'p16_top_m', 0);
+  addRectShape(doc, new Rectangle(ox, oy + (PAGE_H_IN - 0.12) * IN, (PAGE_W_IN + BLEED_IN) * IN, (0.12 + BLEED_IN) * IN), PALETTE.neutralGold, null, 0, 'p16_bot_bar', 0);
+
+  // Header (y: 0.30 .. 0.86, all >= 10 pt)
+  results.push(
+    createTextFrameWithAutoFit(doc, styles, {
+      id: 'p16_hdr',
+      pageNum: 16,
+      rect: makeRectPx(MARGIN_IN, 0.30, CONTENT_W_IN, 0.56, ox, oy),
+      theme: 'cortex',
+      allowAutoTighten: false,
+      blocks: [
+        { kind: 'body', text: 'TABLE CHEAT-SHEET', forceFontKey: 'displayBold', fontPt: 10.0, leadingPt: 11.2, trackingEm: 0.05, caps: CapsType.AllCaps, colour: PALETTE.cortexCyan, spaceAfterPt: 2.0 },
+        { kind: 'body', text: 'HOUSE RULED CORTEX', forceFontKey: 'displayHeavy', fontPt: 16.0, leadingPt: 17.5, caps: CapsType.AllCaps, colour: PALETTE.white, spaceAfterPt: 0 },
+      ],
+    })
   );
+
+  // Pool Equation (y: 0.90 .. 1.66)
+  addLineSegment(doc, ox + MARGIN_IN * IN, oy + 0.90 * IN, ox + (MARGIN_IN + CONTENT_W_IN) * IN, oy + 0.90 * IN, PALETTE.cortexCyan, 1.4, 'p16_pool_top');
+  results.push(
+    createTextFrameWithAutoFit(doc, styles, {
+      id: 'p16_pool_txt',
+      pageNum: 16,
+      rect: makeRectPx(MARGIN_IN, 0.98, CONTENT_W_IN, 0.74, ox, oy),
+      theme: 'cortex',
+      blocks: [
+        { kind: 'body', text: '**POOL:** `d8/d4` Distinction + `Prime 2` + `Prime 3` + *Assets, Resources, Foe Fallout*', fontPt: 10.0, leadingPt: 12.0, colour: PALETTE.white, boldColour: PALETTE.cortexCyan, pillInk: PALETTE.cortexMagentaLight, spaceAfterPt: 3.0 },
+        { kind: 'body', text: '**ROLL:** `1s` Openings · `Sum 2` Total · `1 Die` Impact `d6–d12`', fontPt: 10.0, leadingPt: 12.0, colour: PALETTE.white, boldColour: PALETTE.neutralGold, pillInk: PALETTE.cortexCyan, spaceAfterPt: 0 },
+      ],
+    })
+  );
+
+  // Row 1: Openings & Hinder + Cuts (y: 1.78 .. 3.44)
+  addLineSegment(doc, ox + MARGIN_IN * IN, oy + 1.78 * IN, ox + (MARGIN_IN + CONTENT_W_IN) * IN, oy + 1.78 * IN, PALETTE.neutralDarkBorder, 0.8, 'p16_r1_rule');
+  results.push(
+    createTextFrameWithAutoFit(doc, styles, {
+      id: 'p16_open_txt',
+      pageNum: 16,
+      rect: makeRectPx(col1X, 1.86, COL_W_IN, 1.56, ox, oy),
+      theme: 'cortex',
+      blocks: [
+        { kind: 'body', text: '**OPENINGS**', forceFontKey: 'displayBold', fontPt: 10.0, leadingPt: 11.4, colour: PALETTE.cortexMagentaLight, spaceAfterPt: 3.0 },
+        { kind: 'body', text: 'Set `1`s aside. Foes seize yours → `1 PP`. Spend `1 PP` to seize GM `1`s. Extra `1`s step up die +1.', fontPt: 10.0, leadingPt: 12.0, colour: PALETTE.white, pillInk: PALETTE.cortexCyan, spaceAfterPt: 0 },
+      ],
+    }),
+    createTextFrameWithAutoFit(doc, styles, {
+      id: 'p16_hinder_txt',
+      pageNum: 16,
+      rect: makeRectPx(col2X, 1.86, COL_W_IN, 1.56, ox, oy),
+      theme: 'cortex',
+      blocks: [
+        { kind: 'body', text: '**HINDER & CUTS**', forceFontKey: 'displayBold', fontPt: 10.0, leadingPt: 11.4, colour: PALETTE.neutralGold, spaceAfterPt: 3.0 },
+        { kind: 'body', text: '• Distinction as `d4` → `+1 PP`.', fontPt: 10.0, leadingPt: 12.0, colour: PALETTE.white, pillInk: PALETTE.neutralGold, spaceAfterPt: 2.0 },
+        { kind: 'body', text: '• Fallout `d6`+; past `d12` out.', fontPt: 10.0, leadingPt: 12.0, colour: PALETTE.white, pillInk: PALETTE.cortexCyan, spaceAfterPt: 2.0 },
+        { kind: 'body', text: '• Resource → keep `+1` die.', fontPt: 10.0, leadingPt: 12.0, colour: PALETTE.white, pillInk: PALETTE.cortexCyan, spaceAfterPt: 0 },
+      ],
+    })
+  );
+
+  // Row 2: Three Conflict Speeds (y: 3.48 .. 5.84)
+  addLineSegment(doc, ox + MARGIN_IN * IN, oy + 3.48 * IN, ox + (MARGIN_IN + CONTENT_W_IN) * IN, oy + 3.48 * IN, PALETTE.neutralDarkBorder, 0.8, 'p16_r2_rule');
+  results.push(
+    createTextFrameWithAutoFit(doc, styles, {
+      id: 'p16_speeds_txt',
+      pageNum: 16,
+      rect: makeRectPx(MARGIN_IN, 3.58, CONTENT_W_IN, 2.26, ox, oy),
+      theme: 'cortex',
+      blocks: [
+        { kind: 'body', text: '**THREE CONFLICT SPEEDS**', forceFontKey: 'displayBold', fontPt: 10.0, leadingPt: 11.4, colour: PALETTE.cortexCyan, spaceAfterPt: 5.0 },
+        { kind: 'body', text: '**01 · ROLL** — Single toss vs. `2dX` + traits or Doom Pool. Instigator wins ties.', fontPt: 10.0, leadingPt: 12.0, colour: PALETTE.white, leadColour: PALETTE.cortexCyan, pillInk: PALETTE.cortexCyan, spaceAfterPt: 5.0 },
+        { kind: 'body', text: '**02 · ROW** — Beat lead Total or **Concede** for `+1 PP`. Loser takes Impact as Fallout.', fontPt: 10.0, leadingPt: 12.0, colour: PALETTE.white, leadColour: PALETTE.cortexMagentaLight, pillInk: PALETTE.cortexMagentaLight, spaceAfterPt: 5.0 },
+        { kind: 'body', text: '**03 · ROMP** — vs. `YdX` Romp Pool. Impact `>` die drops it; `≤` steps down smallest. `d4` drops out. Romps act last.', fontPt: 10.0, leadingPt: 12.0, colour: PALETTE.white, leadColour: PALETTE.cortexCyan, pillInk: PALETTE.cortexCyan, spaceAfterPt: 0 },
+      ],
+    })
+  );
+
+  // Bottom Interactive QR + Colophon / Cortex Attribution Strip (y: 5.94 .. 7.98, all >= 10 pt)
+  addLineSegment(doc, ox + MARGIN_IN * IN, oy + 5.94 * IN, ox + (MARGIN_IN + CONTENT_W_IN) * IN, oy + 5.94 * IN, PALETTE.neutralDarkBorder, 0.8, 'p16_qr_rule');
+
+  const qrSize = 1.24;
+  addQrCode(doc, MARGIN_IN, 6.12, qrSize, ox, oy, 'p16_qr');
 
   results.push(
     createTextFrameWithAutoFit(doc, styles, {
-      id: 'p4_col2_quick_compiles',
-      pageNum: 4,
-      rect: makeRectPx(col2X + 0.12, 5.81, COL_W_IN - 0.20, 1.90, ox, oy),
+      id: 'p16_colophon',
+      pageNum: 16,
+      rect: makeRectPx(MARGIN_IN + qrSize + 0.18, 6.08, CONTENT_W_IN - qrSize - 0.18, 1.88, ox, oy),
       theme: 'cortex',
-      ignoreBaselineGrid: true,
       blocks: [
-        {
-          kind: 'h2',
-          text: 'Quick-Compile Examples',
-          fontPt: 8.75,
-          leadingPt: 10.2,
-          spaceAfterPt: 4.0,
-        },
-        {
-          kind: 'body',
-          text: '`8·3·2 [+5]` **Rust Space Punk** *(Sepia)*',
-          fontPt: 7.75,
-          leadingPt: 9.4,
-          boldColour: PALETTE.cortexDark,
-          spaceAfterPt: 1.5,
-        },
-        {
-          kind: 'body',
-          text: '*Sheet:* Distinctions (*Scar / Hull / Grievance*) + Void Arenas & Ship + 3 Bloc Stances.',
-          fontPt: 7.45,
-          leadingPt: 9.0,
-          leftIndentPt: 6,
-          firstIndentPt: 0,
-          spaceAfterPt: 1.0,
-        },
-        {
-          kind: 'body',
-          text: '*Engine:* `2d6` Salvage, Stricken, pre-war Flashbacks.',
-          fontPt: 7.45,
-          leadingPt: 9.0,
-          leftIndentPt: 6,
-          firstIndentPt: 0,
-          spaceAfterPt: 6.5,
-        },
-        {
-          kind: 'body',
-          text: '`6·8·3 [+7]` **Bright Primal Adventure** *(Cozy)*',
-          fontPt: 7.75,
-          leadingPt: 9.4,
-          boldColour: PALETTE.cortexDark,
-          spaceAfterPt: 1.5,
-        },
-        {
-          kind: 'body',
-          text: '*Sheet:* Distinctions (*Banner / Pack / Horizon*) + Survival Arenas & `d8` Beast + Horizon Values.',
-          fontPt: 7.45,
-          leadingPt: 9.0,
-          leftIndentPt: 6,
-          firstIndentPt: 0,
-          spaceAfterPt: 1.0,
-        },
-        {
-          kind: 'body',
-          text: '*Engine:* Open Table Chips & campfire recovery.',
-          fontPt: 7.45,
-          leadingPt: 9.0,
-          leftIndentPt: 6,
-          firstIndentPt: 0,
-          spaceAfterPt: 0,
-        },
+        { kind: 'body', text: 'palette.lynnjones.rocks', forceFontKey: 'monoBold', fontPt: 11.0, leadingPt: 12.8, colour: PALETTE.neutralGold, spaceAfterPt: 3.0 },
+        { kind: 'body', text: '**4D Combinatoric Worldbuilding** · Lynn Jones', fontPt: 10.0, leadingPt: 12.0, colour: PALETTE.white, spaceAfterPt: 4.0 },
+        { kind: 'body', text: 'Compatible with Cortex Prime; not affiliated with Dire Wolf Digital, Inc. Cortex Prime is a registered trademark of Dire Wolf Digital, Inc.', fontPt: 10.0, leadingPt: 11.8, colour: PALETTE.neutralSubtleText, spaceAfterPt: 0 },
       ],
     })
   );
@@ -3440,7 +2857,7 @@ function buildPage4(doc, styles, ox, oy) {
 }
 
 // ---------------------------------------------------------------------------
-// 7. Full Overset Verification, Ink Telemetry & Export
+// 7. Full Overset Verification & Export
 // ---------------------------------------------------------------------------
 
 function verifyAllTextFrames(doc) {
@@ -3481,15 +2898,6 @@ function verifyAllTextFrames(doc) {
 }
 
 function main() {
-  // Release documents left open by prior runs without blocking. A synchronous close() of a
-  // full zine document can stall Affinity for minutes, and closing a dirty document opens a
-  // "save changes?" dialog that hangs MCP. Only close saved documents, and only asynchronously.
-  for (const existing of Document.all) {
-    if (existing.title && existing.title.includes('4d8') && !existing.isDirty) {
-      existing.closeAsync(() => {});
-    }
-  }
-
   const fontMap = buildFontLookup();
   const styles = createStyleRegistry(fontMap);
 
@@ -3509,107 +2917,95 @@ function main() {
   opts.pageCount = 2;
 
   const doc = Document.create(opts);
-  try {
-    doc.addMasterPages(0, 1, 2);
-    doc.addPages(1, true, 2, 1, PageInsertMode.DocumentFlow);
+  // Master 0 = Neutral|Neutral (P1-P6), Master 1 = Cortex|Cortex (P9-P16), Master 2 = Neutral|Cortex (P7-P8)
+  doc.addMasterPages(0, 1, 2);
+  doc.addMasterPages(1, 1, 2);
+  doc.addPages(1, true, 4, 0, PageInsertMode.DocumentFlow);
+  doc.addPages(5, true, 2, 2, PageInsertMode.DocumentFlow);
+  doc.addPages(7, true, 8, 1, PageInsertMode.DocumentFlow);
 
-    const bg = BaselineGridOptions.create();
-    bg.useBaselineGrid = true;
-    bg.relativeTo = BaselineGridRelativeTo.TopMargin;
-    bg.start = 0;
-    bg.spacing = 10.5 * PT;
-    bg.colour = RGBA8(140, 180, 210, 90);
-    doc.executeCommand(DocumentCommand.createSetDocumentBaselineGrid(bg));
+  const bg = BaselineGridOptions.create();
+  bg.useBaselineGrid = true;
+  bg.relativeTo = BaselineGridRelativeTo.TopMargin;
+  bg.start = 0;
+  bg.spacing = 12.0 * PT;
+  bg.colour = RGBA8(140, 180, 210, 90);
+  doc.executeCommand(DocumentCommand.createSetDocumentBaselineGrid(bg));
 
-    const masters = doc.masterSpreads.toArray();
-    populateMasterSpread(doc, styles, masters[0], 'neutral');
-    populateMasterSpread(doc, styles, masters[1], 'cortex');
+  const masters = doc.masterSpreads.toArray();
+  populateMasterSpread(doc, styles, masters[0], 'neutral', 'neutral');
+  populateMasterSpread(doc, styles, masters[1], 'cortex', 'cortex');
+  populateMasterSpread(doc, styles, masters[2], 'neutral', 'cortex');
 
-    const spreads = doc.spreads.toArray();
-    const buildLogs = [];
+  const spreads = doc.spreads.toArray();
+  const buildLogs = [];
 
-    // Spread 0: Pages 1 and 2
-    setSpreadIfNeeded(doc, spreads[0]);
-    const ext0 = spreads[0].getSpreadExtents({
+  const spreadBuilders = [
+    [buildPage1, buildPage2],
+    [buildPage3, buildPage4],
+    [buildPage5, buildPage6],
+    [buildPage7, buildPage8],
+    [buildPage9, buildPage10],
+    [buildPage11, buildPage12],
+    [buildPage13, buildPage14],
+    [buildPage15, buildPage16],
+  ];
+
+  for (let s = 0; s < spreadBuilders.length; s++) {
+    setSpreadIfNeeded(doc, spreads[s]);
+    const ext = spreads[s].getSpreadExtents({
       includeSpread: true,
       includeBleed: false,
       includeChildren: false,
     });
-    buildLogs.push(...buildPage1(doc, styles, ext0.x, ext0.y));
-    buildLogs.push(...buildPage2(doc, styles, ext0.x + ext0.width / 2, ext0.y));
-
-    // Spread 1: Pages 3 and 4
-    setSpreadIfNeeded(doc, spreads[1]);
-    const ext1 = spreads[1].getSpreadExtents({
-      includeSpread: true,
-      includeBleed: false,
-      includeChildren: false,
-    });
-    buildLogs.push(...buildPage3(doc, styles, ext1.x, ext1.y));
-    buildLogs.push(...buildPage4(doc, styles, ext1.x + ext1.width / 2, ext1.y));
-
-    setSpreadIfNeeded(doc, spreads[0]);
-
-    const overflowAudit = verifyAllTextFrames(doc);
-
-    const desktop = Application.userDesktopPath;
-    const stageDir = desktop + '\\PaletteDesign_Staging';
-    fs.createDirectories(stageDir);
-    const nativeExt = Application.productPrimaryFileExtension || 'af';
-    // Save to a unique, timestamped path each run. Affinity can keep a stale "open in app"
-    // registration for a previously closed document path; saving over that path makes
-    // saveAsAsync fail with OPEN_IN_APP and makes synchronous saveAs block on an invisible
-    // dialog (240 s MCP timeout). A fresh filename never collides with that registration.
-    const stamp = new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14);
-    const docPath = stageDir + '\\The_4d8_Setting_Compiler_' + stamp + '.' + nativeExt;
-    doc.saveAs(docPath);
-
-    const reviewPdfPath = stageDir + '\\The_4d8_Setting_Compiler_Review_SinglePages.pdf';
-    if (fs.exists(reviewPdfPath)) fs.remove(reviewPdfPath);
-    const pdfOpts = FileExportOptions.createWithPresetName('PDF (for print)');
-    const exportArea = FileExportArea.createForPages('1-4');
-    const exportRecs = doc.export(reviewPdfPath, pdfOpts, exportArea, null);
-
-    const tightened = buildLogs
-      .filter((b) => b.tightenSteps > 0)
-      .map((b) => ({
-        id: b.id,
-        page: b.page,
-        steps: b.tightenSteps,
-        fontDeltaPt: b.fontDeltaPt,
-        leadDeltaPt: b.leadDeltaPt,
-        overflowValue: b.overflowValue,
-      }));
-
-    const keyFrames = overflowAudit.frames
-      .filter((f) =>
-        /^(p1_pill|p1_undertow_body|p1_matrix_r|p2_col2|p2_pass2|p2_dose_body|p3_speed_body|p3_col2_cuts|p3_hinder|p4_intro|p4_col)/.test(
-          f.name
-        )
-      )
-      .map((f) => ({ name: f.name, spread: f.spread, inkBottomIn: f.inkBottomIn }));
-
-    const auditSummary = {
-      sessionUuid: doc.sessionUuid,
-      pageCount: doc.pageCount,
-      spreadCount: doc.spreadCount,
-      masterCount: masters.length,
-      docPath,
-      reviewPdfPath,
-      exportSuccess: exportRecs.all.map((r) => ({ path: r.path, ok: r.isSuccess, err: r.errorMessage })),
-      totalTextFrames: overflowAudit.totalTextFrames,
-      overflowCount: overflowAudit.overflowCount,
-      tightenedFrames: tightened,
-      overflowingFrames: overflowAudit.frames.filter((f) => f.isWarn),
-      keyFrameInkBottoms: keyFrames,
-    };
-
-    console.log(JSON.stringify(auditSummary));
-  } catch (err) {
-    // Leave the failed document open for inspection: closing an unsaved document would
-    // open a "save changes?" dialog and block MCP.
-    throw err;
+    buildLogs.push(...spreadBuilders[s][0](doc, styles, ext.x, ext.y));
+    buildLogs.push(...spreadBuilders[s][1](doc, styles, ext.x + ext.width / 2, ext.y));
   }
+
+  setSpreadIfNeeded(doc, spreads[0]);
+
+  const overflowAudit = verifyAllTextFrames(doc);
+
+  const desktop = Application.userDesktopPath;
+  const stageDir = desktop + '\\PaletteDesign_Staging';
+  fs.createDirectories(stageDir);
+  const nativeExt = Application.productPrimaryFileExtension || 'af';
+  const stamp = new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14);
+  const docPath = stageDir + '\\4D_Combinatoric_Worldbuilding_' + stamp + '.' + nativeExt;
+  doc.saveAs(docPath);
+
+  const reviewPdfPath = stageDir + '\\4D_Combinatoric_Worldbuilding_Review_SinglePages.pdf';
+  if (fs.exists(reviewPdfPath)) fs.remove(reviewPdfPath);
+  const pdfOpts = FileExportOptions.createWithPresetName('PDF (for print)');
+  const exportArea = FileExportArea.createForPages('1-16');
+  const exportRecs = doc.export(reviewPdfPath, pdfOpts, exportArea, null);
+
+  const tightened = buildLogs
+    .filter((b) => b.tightenSteps > 0)
+    .map((b) => ({
+      id: b.id,
+      page: b.page,
+      steps: b.tightenSteps,
+      fontDeltaPt: b.fontDeltaPt,
+      leadDeltaPt: b.leadDeltaPt,
+    }));
+
+  const auditSummary = {
+    sessionUuid: doc.sessionUuid,
+    pageCount: doc.pageCount,
+    spreadCount: doc.spreadCount,
+    masterCount: masters.length,
+    minFontPtUsed,
+    docPath,
+    reviewPdfPath,
+    exportSuccess: exportRecs.all.map((r) => ({ path: r.path, ok: r.isSuccess, err: r.errorMessage })),
+    totalTextFrames: overflowAudit.totalTextFrames,
+    overflowCount: overflowAudit.overflowCount,
+    tightenedFrames: tightened,
+    overflowingFrames: overflowAudit.frames.filter((f) => f.isWarn),
+  };
+
+  console.log(JSON.stringify(auditSummary));
 }
 
 main();

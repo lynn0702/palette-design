@@ -124,9 +124,12 @@ function apply([p, s, t, u], undertowDial) {
   check('undertow-dial', undertowDial);
 }
 
+const BASE_TITLE = document.title;
+
 function announceStatus([p, s, t, u], undertowDial) {
   if (!pitchStatus || !p || !s || !t) return;
   const base = `${WORDS.palette[p]} ${WORDS.setting[s]} ${WORDS.tone[t]}`;
+  document.title = `${base} · ${BASE_TITLE}`;
   if (u && p === s && s === t && t === u) {
     pitchStatus.textContent = `${base} — 4-of-a-Kind: Pure Archetype.`;
     return;
@@ -377,6 +380,7 @@ form?.addEventListener('reset', () => {
   queueMicrotask(() => {
     tray?.replaceChildren();
     if (pitchStatus) pitchStatus.textContent = '';
+    document.title = BASE_TITLE;
     history.replaceState(null, '', `${location.pathname}`);
   });
 });
