@@ -127,13 +127,13 @@ const PALETTE = {
 // 8-Row Chromatic Dial Spectrum (rows 1..8 — checkerboard order)
 const DIAL_SWATCHES = [
   { name: 'Prismatic', bg: RGB8(139, 44, 226), fg: RGB8(255, 255, 255), text: RGB8(106, 24, 180), light: RGB8(198, 152, 246) },
-  { name: 'Sepia',     bg: RGB8(184, 108, 24), fg: RGB8(255, 255, 255), text: RGB8(142, 78, 10),  light: RGB8(232, 180, 120) },
-  { name: 'Neon',      bg: RGB8(230, 25, 115), fg: RGB8(255, 255, 255), text: RGB8(176, 14, 82),  light: RGB8(248, 134, 184) },
-  { name: 'Pastel',    bg: RGB8(36, 146, 120), fg: RGB8(255, 255, 255), text: RGB8(20, 108, 86),  light: RGB8(134, 212, 192) },
-  { name: 'Bright',    bg: RGB8(244, 174, 30), fg: RGB8(24, 22, 24),    text: RGB8(146, 82, 0),   light: RGB8(252, 214, 124) },
-  { name: 'Dark',      bg: RGB8(42, 52, 86),   fg: RGB8(255, 255, 255), text: RGB8(36, 44, 74),   light: RGB8(152, 164, 198) },
-  { name: 'Chrome',    bg: RGB8(14, 124, 204), fg: RGB8(255, 255, 255), text: RGB8(10, 94, 158),  light: RGB8(126, 192, 242) },
-  { name: 'Rust',      bg: RGB8(192, 60, 32),  fg: RGB8(255, 255, 255), text: RGB8(152, 42, 18),  light: RGB8(234, 142, 122) },
+  { name: 'Sepia', bg: RGB8(184, 108, 24), fg: RGB8(255, 255, 255), text: RGB8(142, 78, 10), light: RGB8(232, 180, 120) },
+  { name: 'Neon', bg: RGB8(230, 25, 115), fg: RGB8(255, 255, 255), text: RGB8(176, 14, 82), light: RGB8(248, 134, 184) },
+  { name: 'Pastel', bg: RGB8(36, 146, 120), fg: RGB8(255, 255, 255), text: RGB8(20, 108, 86), light: RGB8(134, 212, 192) },
+  { name: 'Bright', bg: RGB8(244, 174, 30), fg: RGB8(24, 22, 24), text: RGB8(146, 82, 0), light: RGB8(252, 214, 124) },
+  { name: 'Dark', bg: RGB8(42, 52, 86), fg: RGB8(255, 255, 255), text: RGB8(36, 44, 74), light: RGB8(152, 164, 198) },
+  { name: 'Chrome', bg: RGB8(14, 124, 204), fg: RGB8(255, 255, 255), text: RGB8(10, 94, 158), light: RGB8(126, 192, 242) },
+  { name: 'Rust', bg: RGB8(192, 60, 32), fg: RGB8(255, 255, 255), text: RGB8(152, 42, 18), light: RGB8(234, 142, 122) },
 ];
 
 const TEXTURE_FILENAMES = {
@@ -1483,14 +1483,14 @@ function buildPage1(doc, styles, ox, oy) {
   const swatchNums = ['01', '02', '03', '04', '05', '06', '07', '08'];
   const swatchNames = ['PRISMATIC', 'SEPIA', 'NEON', 'PASTEL', 'BRIGHT', 'DARK', 'CHROME', 'RUST'];
   const coverStock = [
-    { bg: RGB8(24, 16, 40),   border: DIAL_SWATCHES[0].bg, numCol: DIAL_SWATCHES[0].light, lblCol: PALETTE.white },
-    { bg: RGB8(226, 209, 179), border: RGB8(140, 90, 32),   numCol: DIAL_SWATCHES[1].text,  lblCol: PALETTE.neutralDark },
-    { bg: RGB8(15, 9, 22),    border: DIAL_SWATCHES[2].bg, numCol: DIAL_SWATCHES[2].light, lblCol: PALETTE.white },
-    { bg: RGB8(218, 240, 229), border: RGB8(47, 140, 116),  numCol: DIAL_SWATCHES[3].text,  lblCol: PALETTE.neutralDark },
-    { bg: RGB8(252, 247, 234), border: RGB8(212, 144, 10),  numCol: DIAL_SWATCHES[4].text,  lblCol: PALETTE.neutralDark },
-    { bg: RGB8(14, 18, 30),   border: RGB8(72, 86, 126),   numCol: DIAL_SWATCHES[5].light, lblCol: PALETTE.white },
-    { bg: RGB8(20, 44, 72),   border: DIAL_SWATCHES[6].bg, numCol: DIAL_SWATCHES[6].light, lblCol: PALETTE.white },
-    { bg: RGB8(64, 29, 14),   border: RGB8(168, 72, 34),   numCol: DIAL_SWATCHES[7].light, lblCol: PALETTE.white },
+    { bg: RGB8(24, 16, 40), border: DIAL_SWATCHES[0].bg, numCol: DIAL_SWATCHES[0].light, lblCol: PALETTE.white },
+    { bg: RGB8(226, 209, 179), border: RGB8(140, 90, 32), numCol: DIAL_SWATCHES[1].text, lblCol: PALETTE.neutralDark },
+    { bg: RGB8(15, 9, 22), border: DIAL_SWATCHES[2].bg, numCol: DIAL_SWATCHES[2].light, lblCol: PALETTE.white },
+    { bg: RGB8(218, 240, 229), border: RGB8(47, 140, 116), numCol: DIAL_SWATCHES[3].text, lblCol: PALETTE.neutralDark },
+    { bg: RGB8(252, 247, 234), border: RGB8(212, 144, 10), numCol: DIAL_SWATCHES[4].text, lblCol: PALETTE.neutralDark },
+    { bg: RGB8(14, 18, 30), border: RGB8(72, 86, 126), numCol: DIAL_SWATCHES[5].light, lblCol: PALETTE.white },
+    { bg: RGB8(20, 44, 72), border: DIAL_SWATCHES[6].bg, numCol: DIAL_SWATCHES[6].light, lblCol: PALETTE.white },
+    { bg: RGB8(64, 29, 14), border: RGB8(168, 72, 34), numCol: DIAL_SWATCHES[7].light, lblCol: PALETTE.white },
   ];
 
   const drawGridRow = (widths, yPos, startIdx) => {

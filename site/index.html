@@ -1,2629 +1,614 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>4d8 Worlds</title>
-    <meta
-      name="description"
-      content="Find your Palette. Dial in your Setting. Strike a Tone."
-    />
-    <meta property="og:type" content="website" />
-    <meta property="og:site_name" content="4d8 Worlds" />
-    <meta property="og:title" content="4d8 Worlds" />
-    <meta
-      property="og:description"
-      content="Find your Palette. Dial in your Setting. Strike a Tone."
-    />
-    <meta property="og:url" content="https://palette.lynnjones.rocks/" />
-    <meta name="twitter:card" content="summary" />
-    <meta name="twitter:title" content="4d8 Worlds" />
-    <meta
-      name="twitter:description"
-      content="Find your Palette. Dial in your Setting. Strike a Tone."
-    />
-    <meta name="color-scheme" content="light dark" />
-    <meta name="theme-color" content="#1a1718" />
-    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
-    <script>
-      try {
-        const t = localStorage.getItem("palette-theme");
-        if (t === "light" || t === "dark") {
-          document.documentElement.dataset.theme = t;
-          document.documentElement.style.colorScheme = t;
-        }
-      } catch {}
-    </script>
-    <link rel="stylesheet" href="styles.css?v=4" />
-    <script src="app.js?v=2" type="module"></script>
-    <link rel="stylesheet" href="styles.css?v=5" />
-    <script src="app.js?v=3" type="module"></script>
-  </head>
-  <body>
-    <svg class="sprite" aria-hidden="true" focusable="false">
-      <symbol id="d8" viewBox="0 0 24 24">
-        <polygon points="12,2.5 21.5,12 12,21.5 2.5,12" fill="currentColor" />
-      </symbol>
-      <symbol id="icon-arrow-right" viewBox="0 0 24 24">
-        <path
-          d="M5 12h14m-6-6 6 6-6 6"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2.4"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        />
-      </symbol>
-      <symbol id="icon-share" viewBox="0 0 24 24">
-        <circle
-          cx="18"
-          cy="5"
-          r="3"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2.2"
-        />
-        <circle
-          cx="6"
-          cy="12"
-          r="3"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2.2"
-        />
-        <circle
-          cx="18"
-          cy="19"
-          r="3"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2.2"
-        />
-        <line
-          x1="8.7"
-          y1="10.5"
-          x2="15.3"
-          y2="6.5"
-          stroke="currentColor"
-          stroke-width="2.2"
-          stroke-linecap="round"
-        />
-        <line
-          x1="8.7"
-          y1="13.5"
-          x2="15.3"
-          y2="17.5"
-          stroke="currentColor"
-          stroke-width="2.2"
-          stroke-linecap="round"
-        />
-      </symbol>
-      <symbol id="icon-reset" viewBox="0 0 24 24">
-        <path
-          d="M4 12a8 8 0 1 0 2.3-5.6L4 8.8"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2.2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        />
-        <polyline
-          points="4 4 4 8.8 8.8 8.8"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2.2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        />
-      </symbol>
-      <symbol id="icon-sun" viewBox="0 0 24 24">
-        <circle
-          cx="12"
-          cy="12"
-          r="4.2"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2.1"
-        />
-        <path
-          d="M12 2.5v2.2M12 19.3v2.2M4.9 4.9l1.6 1.6M17.5 17.5l1.6 1.6M2.5 12h2.2M19.3 12h2.2M4.9 19.1l1.6-1.6M17.5 6.5l1.6-1.6"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2.1"
-          stroke-linecap="round"
-        />
-      </symbol>
-      <symbol id="icon-moon" viewBox="0 0 24 24">
-        <path
-          d="M20.2 14.8A8.5 8.5 0 0 1 9.2 3.8a8.5 8.5 0 1 0 11 11Z"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2.1"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        />
-      </symbol>
-    </svg>
-    <a class="skip-link" href="#main">Skip to content</a>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>4d8 Worlds</title>
+  <meta name="description" content="Find your Palette. Dial in your Setting. Strike a Tone.">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="4d8 Worlds">
+  <meta property="og:title" content="4d8 Worlds">
+  <meta property="og:description" content="Find your Palette. Dial in your Setting. Strike a Tone.">
+  <meta property="og:url" content="https://palette.lynnjones.rocks/">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="4d8 Worlds">
+  <meta name="twitter:description" content="Find your Palette. Dial in your Setting. Strike a Tone.">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#1a1718">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <script>
+    try {
+      const t = localStorage.getItem('palette-theme');
+      if (t === 'light' || t === 'dark') {
+        document.documentElement.dataset.theme = t;
+        document.documentElement.style.colorScheme = t;
+      }
+    } catch {}
+  </script>
+  <link rel="stylesheet" href="styles.css?v=6">
+  <script src="app.js?v=3" type="module"></script>
+</head>
+<body>
+  <svg class="sprite" aria-hidden="true" focusable="false">
+    <symbol id="d8" viewBox="0 0 24 24">
+      <polygon points="12,2.5 21.5,12 12,21.5 2.5,12" fill="currentColor"/>
+    </symbol>
+    <symbol id="icon-arrow-right" viewBox="0 0 24 24">
+      <path d="M5 12h14m-6-6 6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+    <symbol id="icon-share" viewBox="0 0 24 24">
+      <circle cx="18" cy="5" r="3" fill="none" stroke="currentColor" stroke-width="2.2"/>
+      <circle cx="6" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="2.2"/>
+      <circle cx="18" cy="19" r="3" fill="none" stroke="currentColor" stroke-width="2.2"/>
+      <line x1="8.7" y1="10.5" x2="15.3" y2="6.5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+      <line x1="8.7" y1="13.5" x2="15.3" y2="17.5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="icon-reset" viewBox="0 0 24 24">
+      <path d="M4 12a8 8 0 1 0 2.3-5.6L4 8.8" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+      <polyline points="4 4 4 8.8 8.8 8.8" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+    <symbol id="icon-sun" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="4.2" fill="none" stroke="currentColor" stroke-width="2.1"/>
+      <path d="M12 2.5v2.2M12 19.3v2.2M4.9 4.9l1.6 1.6M17.5 17.5l1.6 1.6M2.5 12h2.2M19.3 12h2.2M4.9 19.1l1.6-1.6M17.5 6.5l1.6-1.6" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="icon-moon" viewBox="0 0 24 24">
+      <path d="M20.2 14.8A8.5 8.5 0 0 1 9.2 3.8a8.5 8.5 0 1 0 11 11Z" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+  </svg>
+  <a class="skip-link" href="#main">Skip to content</a>
 
-    <header class="site-header">
-      <div class="wrap site-header__inner">
-        <a class="brand" href="#top" aria-label="4d8 Worlds, back to top">
-          <svg
-            class="brand__mark"
-            viewBox="0 0 24 24"
-            aria-hidden="true"
-            focusable="false"
-          >
-            <use href="#d8" />
-          </svg>
-          <span class="brand__text">4d8 Worlds</span>
-        </a>
-        <div class="site-header__actions">
-          <nav aria-label="Sections">
-            <ul class="site-nav">
-              <li><a href="#matrix">Matrix</a></li>
-              <li><a href="#session-zero">Pathways</a></li>
-              <li><a href="#cortex">Cortex</a></li>
-            </ul>
-          </nav>
-          <button
-            type="button"
-            class="theme-toggle"
-            id="theme-toggle"
-            data-requires-js
-            hidden
-            aria-label="Toggle color theme"
-            title="Toggle color theme"
-          >
-            <svg
-              class="theme-toggle__sun"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-              focusable="false"
-            >
-              <use href="#icon-sun" />
-            </svg>
-            <svg
-              class="theme-toggle__moon"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-              focusable="false"
-            >
-              <use href="#icon-moon" />
-            </svg>
-          </button>
+  <header class="site-header">
+    <div class="wrap site-header__inner">
+      <a class="brand" href="#top" aria-label="4d8 Worlds, back to top">
+        <svg class="brand__mark" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#d8"/></svg>
+        <span class="brand__text">4d8 Worlds</span>
+      </a>
+      <div class="site-header__actions">
+        <nav aria-label="Sections">
+          <ul class="site-nav">
+            <li><a href="#matrix">Matrix</a></li>
+            <li><a href="#session-zero">Pathways</a></li>
+            <li><a href="#cortex">Cortex</a></li>
+          </ul>
+        </nav>
+        <button type="button" class="theme-toggle" id="theme-toggle" data-requires-js hidden aria-label="Toggle color theme" title="Toggle color theme">
+          <svg class="theme-toggle__sun" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#icon-sun"/></svg>
+          <svg class="theme-toggle__moon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#icon-moon"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="hero" id="top" aria-labelledby="hero-title">
+      <h1 id="hero-title" class="visually-hidden">4d8 Worlds</h1>
+      <div class="wrap hero__inner">
+        <article class="pitch-card" id="pitch-card" aria-labelledby="pitch-heading">
+          <span class="share-toast" id="share-toast" role="status" aria-live="polite" hidden>Link copied</span>
+
+          <h2 class="pitch-title" id="pitch-heading" tabindex="-1">
+            <span class="pitch-line pitch-line--p" data-dial="p">
+              <span class="pitch-word"><span class="ph" data-ph="p">Palette</span><span class="reveal" data-p="1">Prismatic</span><span class="reveal" data-p="2">Sepia</span><span class="reveal" data-p="3">Neon</span><span class="reveal" data-p="4">Pastel</span><span class="reveal" data-p="5">Bright</span><span class="reveal" data-p="6">Dark</span><span class="reveal" data-p="7">Chrome</span><span class="reveal" data-p="8">Rust</span><span class="live-type" data-live="p" aria-hidden="true"></span></span>
+              <span class="pitch-sub" data-ud="p"><span class="visually-hidden">Undertow on Palette: </span><span class="reveal" data-u="1">Prismatic</span><span class="reveal" data-u="2">Sepia</span><span class="reveal" data-u="3">Neon</span><span class="reveal" data-u="4">Pastel</span><span class="reveal" data-u="5">Bright</span><span class="reveal" data-u="6">Dark</span><span class="reveal" data-u="7">Chrome</span><span class="reveal" data-u="8">Rust</span><span class="live-undertow" data-live-u="p" aria-hidden="true"></span></span>
+            </span>
+            <span class="pitch-line pitch-line--s" data-dial="s">
+              <span class="pitch-word"><span class="ph" data-ph="s">Setting</span><span class="reveal" data-s="1">Liminal</span><span class="reveal" data-s="2">Industrial</span><span class="reveal" data-s="3">Future</span><span class="reveal" data-s="4">Hearth</span><span class="reveal" data-s="5">Mythic</span><span class="reveal" data-s="6">Modern</span><span class="reveal" data-s="7">Space</span><span class="reveal" data-s="8">Primal</span><span class="live-type" data-live="s" aria-hidden="true"></span></span>
+              <span class="pitch-sub" data-ud="s"><span class="visually-hidden">Undertow on Setting: </span><span class="reveal" data-u="1">Liminal</span><span class="reveal" data-u="2">Industrial</span><span class="reveal" data-u="3">Future</span><span class="reveal" data-u="4">Hearth</span><span class="reveal" data-u="5">Mythic</span><span class="reveal" data-u="6">Modern</span><span class="reveal" data-u="7">Space</span><span class="reveal" data-u="8">Primal</span><span class="live-undertow" data-live-u="s" aria-hidden="true"></span></span>
+            </span>
+            <span class="pitch-line pitch-line--t" data-dial="t">
+              <span class="pitch-word"><span class="ph" data-ph="t">Tone</span><span class="reveal" data-t="1">Weird</span><span class="reveal" data-t="2">Pulp</span><span class="reveal" data-t="3">Punk</span><span class="reveal" data-t="4">Cozy</span><span class="reveal" data-t="5">Heroic</span><span class="reveal" data-t="6">Noir</span><span class="reveal" data-t="7">Adventure</span><span class="reveal" data-t="8">Peril</span><span class="live-type" data-live="t" aria-hidden="true"></span></span>
+              <span class="pitch-sub" data-ud="t"><span class="visually-hidden">Undertow on Tone: </span><span class="reveal" data-u="1">Weird</span><span class="reveal" data-u="2">Pulp</span><span class="reveal" data-u="3">Punk</span><span class="reveal" data-u="4">Cozy</span><span class="reveal" data-u="5">Heroic</span><span class="reveal" data-u="6">Noir</span><span class="reveal" data-u="7">Adventure</span><span class="reveal" data-u="8">Peril</span><span class="live-undertow" data-live-u="t" aria-hidden="true"></span></span>
+            </span>
+          </h2>
+
+          <p class="visually-hidden" id="pitch-status" role="status" aria-live="polite"></p>
+
+          <dl class="pitch-facts">
+            <div><dt>Identity prompts</dt><dd>
+              <span class="fact"><span class="muted">Texture</span> <span class="ph" data-ph="p">—</span><span class="reveal" data-p="1">Aura</span><span class="reveal" data-p="2">Relic</span><span class="reveal" data-p="3">Vice</span><span class="reveal" data-p="4">Comfort</span><span class="reveal" data-p="5">Banner</span><span class="reveal" data-p="6">Secret</span><span class="reveal" data-p="7">Pedigree</span><span class="reveal" data-p="8">Scar</span></span>
+              <span class="fact"><span class="muted">Foothold</span> <span class="ph" data-ph="s">—</span><span class="reveal" data-s="1">Tether</span><span class="reveal" data-s="2">Trade</span><span class="reveal" data-s="3">Augment</span><span class="reveal" data-s="4">Workshop</span><span class="reveal" data-s="5">Calling</span><span class="reveal" data-s="6">Day Job</span><span class="reveal" data-s="7">World</span><span class="reveal" data-s="8">Kin</span></span>
+              <span class="fact"><span class="muted">Hook</span> <span class="ph" data-ph="t">—</span><span class="reveal" data-t="1">Obsession</span><span class="reveal" data-t="2">Trademark</span><span class="reveal" data-t="3">Grievance</span><span class="reveal" data-t="4">Routine</span><span class="reveal" data-t="5">Oath</span><span class="reveal" data-t="6">Code</span><span class="reveal" data-t="7">Horizon</span><span class="reveal" data-t="8">Liability</span></span>
+            </dd></div>
+            <div><dt>Engine Mod</dt><dd><span class="ph" data-ph="p">—</span><span class="reveal" data-p="1">Bleed</span><span class="reveal" data-p="2">Living Serial</span><span class="reveal" data-p="3">Burnout</span><span class="reveal" data-p="4">Gentle Stakes</span><span class="reveal" data-p="5">Open Table</span><span class="reveal" data-p="6">Doom Pool</span><span class="reveal" data-p="7">Spec Sheet</span><span class="reveal" data-p="8">Scarcity</span></dd></div>
+            <div><dt>Prime Set 2</dt><dd><span class="ph" data-ph="s">—</span><span class="reveal" data-s="1">Attributes + Ability</span><span class="reveal" data-s="2">Skills</span><span class="reveal" data-s="3">Roles</span><span class="reveal" data-s="4">Skills + Specialties</span><span class="reveal" data-s="5">Attributes + Powers</span><span class="reveal" data-s="6">Roles + Talent</span><span class="reveal" data-s="7">Affiliations: Arenas</span><span class="reveal" data-s="8">Affiliations: Arenas</span></dd></div>
+            <div><dt>Prime Set 3</dt><dd><span class="ph" data-ph="t">—</span><span class="reveal" data-t="1">Values + Statements</span><span class="reveal" data-t="2">Affiliations + Hero Dice</span><span class="reveal" data-t="3">Relationships: Factions</span><span class="reveal" data-t="4">Relationships + Team Up</span><span class="reveal" data-t="5">Values + Moral Support</span><span class="reveal" data-t="6">Relationships + Vices</span><span class="reveal" data-t="7">Values + Goals</span><span class="reveal" data-t="8">Reserves + Usage Dice</span></dd></div>
+          </dl>
+
+          <p class="pitch-links"><a href="#session-zero">Pathways</a> <a href="#cortex-sheet">Cortex sheet</a></p>
+        </article>
+
+        <div class="rpg-stack" id="dials-help">
+          <div class="rpg-row rpg-row--roll" data-requires-js hidden>
+            <button type="button" class="button button--gold rpg-btn" id="roll">Roll 4d8</button>
+            <div class="roll-bar__rest">
+              <output class="dice-tray" id="roll-result" for="roll" aria-live="polite"></output>
+              <div class="icon-actions">
+                <button type="submit" form="dials-form" class="icon-btn" id="share-pitch" aria-label="Share link to pitch" title="Share link to pitch">
+                  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#icon-share"/></svg>
+                </button>
+                <button type="reset" form="dials-form" class="icon-btn" id="reset-pitch" aria-label="Reset dials" title="Reset dials">
+                  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#icon-reset"/></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+          <noscript>
+            <div class="rpg-row">
+              <a class="button button--gold rpg-btn" href="#dials">Roll 4d8</a>
+              <p class="rpg-copy">at the table, then set each Dial below.</p>
+            </div>
+          </noscript>
+
+          <div class="rpg-row">
+            <a class="button button--step rpg-btn" href="#dials">Place</a>
+            <p class="rpg-copy">three dice into <strong>Palette</strong>, <strong>Setting</strong> and <strong>Tone</strong>.</p>
+          </div>
+
+          <div class="rpg-row">
+            <a class="button button--step rpg-btn" href="#undertow-dial">Grind</a>
+            <p class="rpg-copy">the fourth into any Dial as the <strong>Undertow</strong>.</p>
+          </div>
         </div>
       </div>
-    </header>
+    </section>
 
-    <main id="main">
-      <section class="hero" id="top" aria-labelledby="hero-title">
-        <h1 id="hero-title" class="visually-hidden">4d8 Worlds</h1>
-        <div class="wrap hero__inner">
-          <article
-            class="pitch-card"
-            id="pitch-card"
-            aria-labelledby="pitch-heading"
-          >
-            <span
-              class="share-toast"
-              id="share-toast"
-              role="status"
-              aria-live="polite"
-              hidden
-              >Link copied</span
-            >
+    <section class="band" id="dials" aria-labelledby="dials-title">
+      <div class="wrap">
+        <header class="section-head section-head--center">
+          <h2 id="dials-title">The Dials</h2>
+        </header>
 
-            <h2 class="pitch-title" id="pitch-heading" tabindex="-1">
-              <span class="pitch-line pitch-line--p" data-dial="p">
-                <span class="pitch-word"
-                  ><span class="ph" data-ph="p">Palette</span
-                  ><span class="reveal" data-p="1">Prismatic</span
-                  ><span class="reveal" data-p="2">Neon</span
-                  ><span class="reveal" data-p="3">Chrome</span
-                  ><span class="reveal" data-p="4">Dark</span
-                  ><span class="reveal" data-p="5">Sepia</span
-                  ><span class="reveal" data-p="6">Bright</span
-                  ><span class="reveal" data-p="7">Pastel</span
-                  ><span class="reveal" data-p="8">Rust</span
-                  ><span
-                    class="live-type"
-                    data-live="p"
-                    aria-hidden="true"
-                  ></span
-                ></span>
-                <span class="pitch-sub" data-ud="p"
-                  ><span class="visually-hidden">Undertow on Palette: </span
-                  ><span class="reveal" data-u="1">Prismatic</span
-                  ><span class="reveal" data-u="2">Neon</span
-                  ><span class="reveal" data-u="3">Chrome</span
-                  ><span class="reveal" data-u="4">Dark</span
-                  ><span class="reveal" data-u="5">Sepia</span
-                  ><span class="reveal" data-u="6">Bright</span
-                  ><span class="reveal" data-u="7">Pastel</span
-                  ><span class="reveal" data-u="8">Rust</span
-                  ><span
-                    class="live-undertow"
-                    data-live-u="p"
-                    aria-hidden="true"
-                  ></span
-                ></span>
-                <span class="pitch-word"
-                  ><span class="ph" data-ph="p">Palette</span
-                  ><span class="reveal" data-p="1">Prismatic</span
-                  ><span class="reveal" data-p="2">Sepia</span
-                  ><span class="reveal" data-p="3">Neon</span
-                  ><span class="reveal" data-p="4">Pastel</span
-                  ><span class="reveal" data-p="5">Bright</span
-                  ><span class="reveal" data-p="6">Dark</span
-                  ><span class="reveal" data-p="7">Chrome</span
-                  ><span class="reveal" data-p="8">Rust</span
-                  ><span
-                    class="live-type"
-                    data-live="p"
-                    aria-hidden="true"
-                  ></span
-                ></span>
-                <span class="pitch-sub" data-ud="p"
-                  ><span class="visually-hidden">Undertow on Palette: </span
-                  ><span class="reveal" data-u="1">Prismatic</span
-                  ><span class="reveal" data-u="2">Sepia</span
-                  ><span class="reveal" data-u="3">Neon</span
-                  ><span class="reveal" data-u="4">Pastel</span
-                  ><span class="reveal" data-u="5">Bright</span
-                  ><span class="reveal" data-u="6">Dark</span
-                  ><span class="reveal" data-u="7">Chrome</span
-                  ><span class="reveal" data-u="8">Rust</span
-                  ><span
-                    class="live-undertow"
-                    data-live-u="p"
-                    aria-hidden="true"
-                  ></span
-                ></span>
-              </span>
-              <span class="pitch-line pitch-line--s" data-dial="s">
-                <span class="pitch-word"
-                  ><span class="ph" data-ph="s">Setting</span
-                  ><span class="reveal" data-s="1">Liminal</span
-                  ><span class="reveal" data-s="2">Future</span
-                  ><span class="reveal" data-s="3">Space</span
-                  ><span class="reveal" data-s="4">Modern</span
-                  ><span class="reveal" data-s="5">Industrial</span
-                  ><span class="reveal" data-s="6">Mythic</span
-                  ><span class="reveal" data-s="7">Hearth</span
-                  ><span class="reveal" data-s="8">Primal</span
-                  ><span
-                    class="live-type"
-                    data-live="s"
-                    aria-hidden="true"
-                  ></span
-                ></span>
-                <span class="pitch-sub" data-ud="s"
-                  ><span class="visually-hidden">Undertow on Setting: </span
-                  ><span class="reveal" data-u="1">Liminal</span
-                  ><span class="reveal" data-u="2">Future</span
-                  ><span class="reveal" data-u="3">Space</span
-                  ><span class="reveal" data-u="4">Modern</span
-                  ><span class="reveal" data-u="5">Industrial</span
-                  ><span class="reveal" data-u="6">Mythic</span
-                  ><span class="reveal" data-u="7">Hearth</span
-                  ><span class="reveal" data-u="8">Primal</span
-                  ><span
-                    class="live-undertow"
-                    data-live-u="s"
-                    aria-hidden="true"
-                  ></span
-                ></span>
-                <span class="pitch-word"
-                  ><span class="ph" data-ph="s">Setting</span
-                  ><span class="reveal" data-s="1">Liminal</span
-                  ><span class="reveal" data-s="2">Industrial</span
-                  ><span class="reveal" data-s="3">Future</span
-                  ><span class="reveal" data-s="4">Hearth</span
-                  ><span class="reveal" data-s="5">Mythic</span
-                  ><span class="reveal" data-s="6">Modern</span
-                  ><span class="reveal" data-s="7">Space</span
-                  ><span class="reveal" data-s="8">Primal</span
-                  ><span
-                    class="live-type"
-                    data-live="s"
-                    aria-hidden="true"
-                  ></span
-                ></span>
-                <span class="pitch-sub" data-ud="s"
-                  ><span class="visually-hidden">Undertow on Setting: </span
-                  ><span class="reveal" data-u="1">Liminal</span
-                  ><span class="reveal" data-u="2">Industrial</span
-                  ><span class="reveal" data-u="3">Future</span
-                  ><span class="reveal" data-u="4">Hearth</span
-                  ><span class="reveal" data-u="5">Mythic</span
-                  ><span class="reveal" data-u="6">Modern</span
-                  ><span class="reveal" data-u="7">Space</span
-                  ><span class="reveal" data-u="8">Primal</span
-                  ><span
-                    class="live-undertow"
-                    data-live-u="s"
-                    aria-hidden="true"
-                  ></span
-                ></span>
-              </span>
-              <span class="pitch-line pitch-line--t" data-dial="t">
-                <span class="pitch-word"
-                  ><span class="ph" data-ph="t">Tone</span
-                  ><span class="reveal" data-t="1">Weird</span
-                  ><span class="reveal" data-t="2">Punk</span
-                  ><span class="reveal" data-t="3">Adventure</span
-                  ><span class="reveal" data-t="4">Noir</span
-                  ><span class="reveal" data-t="5">Pulp</span
-                  ><span class="reveal" data-t="6">Heroic</span
-                  ><span class="reveal" data-t="7">Cozy</span
-                  ><span class="reveal" data-t="8">Peril</span
-                  ><span
-                    class="live-type"
-                    data-live="t"
-                    aria-hidden="true"
-                  ></span
-                ></span>
-                <span class="pitch-sub" data-ud="t"
-                  ><span class="visually-hidden">Undertow on Tone: </span
-                  ><span class="reveal" data-u="1">Weird</span
-                  ><span class="reveal" data-u="2">Punk</span
-                  ><span class="reveal" data-u="3">Adventure</span
-                  ><span class="reveal" data-u="4">Noir</span
-                  ><span class="reveal" data-u="5">Pulp</span
-                  ><span class="reveal" data-u="6">Heroic</span
-                  ><span class="reveal" data-u="7">Cozy</span
-                  ><span class="reveal" data-u="8">Peril</span
-                  ><span
-                    class="live-undertow"
-                    data-live-u="t"
-                    aria-hidden="true"
-                  ></span
-                ></span>
-                <span class="pitch-word"
-                  ><span class="ph" data-ph="t">Tone</span
-                  ><span class="reveal" data-t="1">Weird</span
-                  ><span class="reveal" data-t="2">Pulp</span
-                  ><span class="reveal" data-t="3">Punk</span
-                  ><span class="reveal" data-t="4">Cozy</span
-                  ><span class="reveal" data-t="5">Heroic</span
-                  ><span class="reveal" data-t="6">Noir</span
-                  ><span class="reveal" data-t="7">Adventure</span
-                  ><span class="reveal" data-t="8">Peril</span
-                  ><span
-                    class="live-type"
-                    data-live="t"
-                    aria-hidden="true"
-                  ></span
-                ></span>
-                <span class="pitch-sub" data-ud="t"
-                  ><span class="visually-hidden">Undertow on Tone: </span
-                  ><span class="reveal" data-u="1">Weird</span
-                  ><span class="reveal" data-u="2">Pulp</span
-                  ><span class="reveal" data-u="3">Punk</span
-                  ><span class="reveal" data-u="4">Cozy</span
-                  ><span class="reveal" data-u="5">Heroic</span
-                  ><span class="reveal" data-u="6">Noir</span
-                  ><span class="reveal" data-u="7">Adventure</span
-                  ><span class="reveal" data-u="8">Peril</span
-                  ><span
-                    class="live-undertow"
-                    data-live-u="t"
-                    aria-hidden="true"
-                  ></span
-                ></span>
-              </span>
-            </h2>
-
-            <p
-              class="visually-hidden"
-              id="pitch-status"
-              role="status"
-              aria-live="polite"
-            ></p>
-
-            <dl class="pitch-facts">
-              <div>
-                <dt>Identity prompts</dt>
-                <dd>
-                  <span class="fact"
-                    ><span class="muted">Texture</span>
-                    <span class="ph" data-ph="p">—</span
-                    ><span class="reveal" data-p="1">Aura</span
-                    ><span class="reveal" data-p="2">Vice</span
-                    ><span class="reveal" data-p="3">Pedigree</span
-                    ><span class="reveal" data-p="4">Secret</span
-                    ><span class="reveal" data-p="5">Relic</span
-                    ><span class="reveal" data-p="6">Banner</span
-                    ><span class="reveal" data-p="7">Comfort</span
-                    ><span class="reveal" data-p="8">Scar</span></span
-                  >
-                  <span class="fact"
-                    ><span class="muted">Foothold</span>
-                    <span class="ph" data-ph="s">—</span
-                    ><span class="reveal" data-s="1">Tether</span
-                    ><span class="reveal" data-s="2">Augment</span
-                    ><span class="reveal" data-s="3">World</span
-                    ><span class="reveal" data-s="4">Day Job</span
-                    ><span class="reveal" data-s="5">Trade</span
-                    ><span class="reveal" data-s="6">Calling</span
-                    ><span class="reveal" data-s="7">Workshop</span
-                    ><span class="reveal" data-s="8">Kin</span></span
-                  >
-                  <span class="fact"
-                    ><span class="muted">Hook</span>
-                    <span class="ph" data-ph="t">—</span
-                    ><span class="reveal" data-t="1">Obsession</span
-                    ><span class="reveal" data-t="2">Grievance</span
-                    ><span class="reveal" data-t="3">Horizon</span
-                    ><span class="reveal" data-t="4">Code</span
-                    ><span class="reveal" data-t="5">Trademark</span
-                    ><span class="reveal" data-t="6">Oath</span
-                    ><span class="reveal" data-t="7">Routine</span
-                    ><span class="reveal" data-t="8">Liability</span></span
-                  >
-                  <span class="fact"
-                    ><span class="muted">Texture</span>
-                    <span class="ph" data-ph="p">—</span
-                    ><span class="reveal" data-p="1">Aura</span
-                    ><span class="reveal" data-p="2">Relic</span
-                    ><span class="reveal" data-p="3">Vice</span
-                    ><span class="reveal" data-p="4">Comfort</span
-                    ><span class="reveal" data-p="5">Banner</span
-                    ><span class="reveal" data-p="6">Secret</span
-                    ><span class="reveal" data-p="7">Pedigree</span
-                    ><span class="reveal" data-p="8">Scar</span></span
-                  >
-                  <span class="fact"
-                    ><span class="muted">Foothold</span>
-                    <span class="ph" data-ph="s">—</span
-                    ><span class="reveal" data-s="1">Tether</span
-                    ><span class="reveal" data-s="2">Trade</span
-                    ><span class="reveal" data-s="3">Augment</span
-                    ><span class="reveal" data-s="4">Workshop</span
-                    ><span class="reveal" data-s="5">Calling</span
-                    ><span class="reveal" data-s="6">Day Job</span
-                    ><span class="reveal" data-s="7">World</span
-                    ><span class="reveal" data-s="8">Kin</span></span
-                  >
-                  <span class="fact"
-                    ><span class="muted">Hook</span>
-                    <span class="ph" data-ph="t">—</span
-                    ><span class="reveal" data-t="1">Obsession</span
-                    ><span class="reveal" data-t="2">Trademark</span
-                    ><span class="reveal" data-t="3">Grievance</span
-                    ><span class="reveal" data-t="4">Routine</span
-                    ><span class="reveal" data-t="5">Oath</span
-                    ><span class="reveal" data-t="6">Code</span
-                    ><span class="reveal" data-t="7">Horizon</span
-                    ><span class="reveal" data-t="8">Liability</span></span
-                  >
-                </dd>
-              </div>
-              <div>
-                <dt>Engine Mod</dt>
-                <dd>
-                  <span class="ph" data-ph="p">—</span
-                  ><span class="reveal" data-p="1">Bleed</span
-                  ><span class="reveal" data-p="2">Burnout</span
-                  ><span class="reveal" data-p="3">Spec Sheet</span
-                  ><span class="reveal" data-p="4">Doom Pool</span
-                  ><span class="reveal" data-p="5">Living Serial</span
-                  ><span class="reveal" data-p="6">Open Table</span
-                  ><span class="reveal" data-p="7">Gentle Stakes</span
-                  ><span class="reveal" data-p="8">Scarcity</span>
-                </dd>
-              </div>
-              <div>
-                <dt>Prime Set 2</dt>
-                <dd>
-                  <span class="ph" data-ph="s">—</span
-                  ><span class="reveal" data-s="1">Attributes + Ability</span
-                  ><span class="reveal" data-s="2">Roles</span
-                  ><span class="reveal" data-s="3">Affiliations: Arenas</span
-                  ><span class="reveal" data-s="4">Roles + Talent</span
-                  ><span class="reveal" data-s="5">Skills</span
-                  ><span class="reveal" data-s="6">Attributes + Powers</span
-                  ><span class="reveal" data-s="7">Skills + Specialties</span
-                  ><span class="reveal" data-s="8">Affiliations: Arenas</span>
-                </dd>
-              </div>
-              <div>
-                <dt>Prime Set 3</dt>
-                <dd>
-                  <span class="ph" data-ph="t">—</span
-                  ><span class="reveal" data-t="1">Values + Statements</span
-                  ><span class="reveal" data-t="2">Relationships: Factions</span
-                  ><span class="reveal" data-t="3">Values + Goals</span
-                  ><span class="reveal" data-t="4">Relationships + Vices</span
-                  ><span class="reveal" data-t="5"
-                    >Affiliations + Hero Dice</span
-                  ><span class="reveal" data-t="6">Values + Moral Support</span
-                  ><span class="reveal" data-t="7">Relationships + Team Up</span
-                  ><span class="reveal" data-t="8">Reserves + Usage Dice</span>
-                </dd>
-              </div>
-              <div>
-                <dt>Engine Mod</dt>
-                <dd>
-                  <span class="ph" data-ph="p">—</span
-                  ><span class="reveal" data-p="1">Bleed</span
-                  ><span class="reveal" data-p="2">Living Serial</span
-                  ><span class="reveal" data-p="3">Burnout</span
-                  ><span class="reveal" data-p="4">Gentle Stakes</span
-                  ><span class="reveal" data-p="5">Open Table</span
-                  ><span class="reveal" data-p="6">Doom Pool</span
-                  ><span class="reveal" data-p="7">Spec Sheet</span
-                  ><span class="reveal" data-p="8">Scarcity</span>
-                </dd>
-              </div>
-              <div>
-                <dt>Prime Set 2</dt>
-                <dd>
-                  <span class="ph" data-ph="s">—</span
-                  ><span class="reveal" data-s="1">Attributes + Ability</span
-                  ><span class="reveal" data-s="2">Skills</span
-                  ><span class="reveal" data-s="3">Roles</span
-                  ><span class="reveal" data-s="4">Skills + Specialties</span
-                  ><span class="reveal" data-s="5">Attributes + Powers</span
-                  ><span class="reveal" data-s="6">Roles + Talent</span
-                  ><span class="reveal" data-s="7">Affiliations: Arenas</span
-                  ><span class="reveal" data-s="8">Affiliations: Arenas</span>
-                </dd>
-              </div>
-              <div>
-                <dt>Prime Set 3</dt>
-                <dd>
-                  <span class="ph" data-ph="t">—</span
-                  ><span class="reveal" data-t="1">Values + Statements</span
-                  ><span class="reveal" data-t="2"
-                    >Affiliations + Hero Dice</span
-                  ><span class="reveal" data-t="3">Relationships: Factions</span
-                  ><span class="reveal" data-t="4">Relationships + Team Up</span
-                  ><span class="reveal" data-t="5">Values + Moral Support</span
-                  ><span class="reveal" data-t="6">Relationships + Vices</span
-                  ><span class="reveal" data-t="7">Values + Goals</span
-                  ><span class="reveal" data-t="8">Reserves + Usage Dice</span>
-                </dd>
-              </div>
-            </dl>
-
-            <p class="pitch-links">
-              <a href="#session-zero">Pathways</a>
-              <a href="#cortex-sheet">Cortex sheet</a>
-            </p>
-          </article>
-
-          <div class="rpg-stack" id="dials-help">
-            <div class="rpg-row rpg-row--roll" data-requires-js hidden>
-              <button
-                type="button"
-                class="button button--gold rpg-btn"
-                id="roll"
-              >
-                Roll 4d8
+        <form class="pickers" id="dials-form" method="get" action="#top" aria-describedby="dials-help">
+          <noscript>
+            <p class="note">Pick each Dial by hand below. The dice roller needs JavaScript.</p>
+            <p class="form-actions">
+              <button type="submit" class="icon-btn" aria-label="Share link to pitch" title="Share link to pitch">
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#icon-share"/></svg>
               </button>
-              <div class="roll-bar__rest">
-                <output
-                  class="dice-tray"
-                  id="roll-result"
-                  for="roll"
-                  aria-live="polite"
-                ></output>
-                <div class="icon-actions">
-                  <button
-                    type="submit"
-                    form="dials-form"
-                    class="icon-btn"
-                    id="share-pitch"
-                    aria-label="Share link to pitch"
-                    title="Share link to pitch"
-                  >
-                    <svg
-                      viewBox="0 0 24 24"
-                      aria-hidden="true"
-                      focusable="false"
-                    >
-                      <use href="#icon-share" />
-                    </svg>
-                  </button>
-                  <button
-                    type="reset"
-                    form="dials-form"
-                    class="icon-btn"
-                    id="reset-pitch"
-                    aria-label="Reset dials"
-                    title="Reset dials"
-                  >
-                    <svg
-                      viewBox="0 0 24 24"
-                      aria-hidden="true"
-                      focusable="false"
-                    >
-                      <use href="#icon-reset" />
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            </div>
-            <noscript>
-              <div class="rpg-row">
-                <a class="button button--gold rpg-btn" href="#dials"
-                  >Roll 4d8</a
-                >
-                <p class="rpg-copy">at the table, then set each Dial below.</p>
-              </div>
-            </noscript>
+              <button type="reset" class="icon-btn" aria-label="Reset dials" title="Reset dials">
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#icon-reset"/></svg>
+              </button>
+            </p>
+          </noscript>
 
-            <div class="rpg-row">
-              <a class="button button--step rpg-btn" href="#dials">Place</a>
-              <p class="rpg-copy">
-                three dice into <strong>Palette</strong>,
-                <strong>Setting</strong> and <strong>Tone</strong>.
-              </p>
+          <fieldset class="dial" data-dial="p">
+            <legend><span class="dial__name">Palette</span> <span class="dial__hint">Texture</span></legend>
+            <div class="chips">
+              <input class="visually-hidden" type="radio" name="palette" id="p1" value="1"><label class="chip" for="p1" data-d="1"><span class="chip__num">1</span><span class="chip__name">Prismatic</span></label>
+              <input class="visually-hidden" type="radio" name="palette" id="p2" value="2"><label class="chip" for="p2" data-d="2"><span class="chip__num">2</span><span class="chip__name">Sepia</span></label>
+              <input class="visually-hidden" type="radio" name="palette" id="p3" value="3"><label class="chip" for="p3" data-d="3"><span class="chip__num">3</span><span class="chip__name">Neon</span></label>
+              <input class="visually-hidden" type="radio" name="palette" id="p4" value="4"><label class="chip" for="p4" data-d="4"><span class="chip__num">4</span><span class="chip__name">Pastel</span></label>
+              <input class="visually-hidden" type="radio" name="palette" id="p5" value="5"><label class="chip" for="p5" data-d="5"><span class="chip__num">5</span><span class="chip__name">Bright</span></label>
+              <input class="visually-hidden" type="radio" name="palette" id="p6" value="6"><label class="chip" for="p6" data-d="6"><span class="chip__num">6</span><span class="chip__name">Dark</span></label>
+              <input class="visually-hidden" type="radio" name="palette" id="p7" value="7"><label class="chip" for="p7" data-d="7"><span class="chip__num">7</span><span class="chip__name">Chrome</span></label>
+              <input class="visually-hidden" type="radio" name="palette" id="p8" value="8"><label class="chip" for="p8" data-d="8"><span class="chip__num">8</span><span class="chip__name">Rust</span></label>
             </div>
+          </fieldset>
 
-            <div class="rpg-row">
-              <a class="button button--step rpg-btn" href="#undertow-dial"
-                >Grind</a
-              >
-              <p class="rpg-copy">
-                the fourth into any Dial as the <strong>Undertow</strong>.
-              </p>
+          <fieldset class="dial" data-dial="s">
+            <legend><span class="dial__name">Setting</span> <span class="dial__hint">Play space</span></legend>
+            <div class="chips">
+              <input class="visually-hidden" type="radio" name="setting" id="s1" value="1"><label class="chip" for="s1" data-d="1"><span class="chip__num">1</span><span class="chip__name">Liminal</span></label>
+              <input class="visually-hidden" type="radio" name="setting" id="s2" value="2"><label class="chip" for="s2" data-d="2"><span class="chip__num">2</span><span class="chip__name">Industrial</span></label>
+              <input class="visually-hidden" type="radio" name="setting" id="s3" value="3"><label class="chip" for="s3" data-d="3"><span class="chip__num">3</span><span class="chip__name">Future</span></label>
+              <input class="visually-hidden" type="radio" name="setting" id="s4" value="4"><label class="chip" for="s4" data-d="4"><span class="chip__num">4</span><span class="chip__name">Hearth</span></label>
+              <input class="visually-hidden" type="radio" name="setting" id="s5" value="5"><label class="chip" for="s5" data-d="5"><span class="chip__num">5</span><span class="chip__name">Mythic</span></label>
+              <input class="visually-hidden" type="radio" name="setting" id="s6" value="6"><label class="chip" for="s6" data-d="6"><span class="chip__num">6</span><span class="chip__name">Modern</span></label>
+              <input class="visually-hidden" type="radio" name="setting" id="s7" value="7"><label class="chip" for="s7" data-d="7"><span class="chip__num">7</span><span class="chip__name">Space</span></label>
+              <input class="visually-hidden" type="radio" name="setting" id="s8" value="8"><label class="chip" for="s8" data-d="8"><span class="chip__num">8</span><span class="chip__name">Primal</span></label>
             </div>
-          </div>
+          </fieldset>
+
+          <fieldset class="dial" data-dial="t">
+            <legend><span class="dial__name">Tone</span> <span class="dial__hint">Drive</span></legend>
+            <div class="chips">
+              <input class="visually-hidden" type="radio" name="tone" id="t1" value="1"><label class="chip" for="t1" data-d="1"><span class="chip__num">1</span><span class="chip__name">Weird</span></label>
+              <input class="visually-hidden" type="radio" name="tone" id="t2" value="2"><label class="chip" for="t2" data-d="2"><span class="chip__num">2</span><span class="chip__name">Pulp</span></label>
+              <input class="visually-hidden" type="radio" name="tone" id="t3" value="3"><label class="chip" for="t3" data-d="3"><span class="chip__num">3</span><span class="chip__name">Punk</span></label>
+              <input class="visually-hidden" type="radio" name="tone" id="t4" value="4"><label class="chip" for="t4" data-d="4"><span class="chip__num">4</span><span class="chip__name">Cozy</span></label>
+              <input class="visually-hidden" type="radio" name="tone" id="t5" value="5"><label class="chip" for="t5" data-d="5"><span class="chip__num">5</span><span class="chip__name">Heroic</span></label>
+              <input class="visually-hidden" type="radio" name="tone" id="t6" value="6"><label class="chip" for="t6" data-d="6"><span class="chip__num">6</span><span class="chip__name">Noir</span></label>
+              <input class="visually-hidden" type="radio" name="tone" id="t7" value="7"><label class="chip" for="t7" data-d="7"><span class="chip__num">7</span><span class="chip__name">Adventure</span></label>
+              <input class="visually-hidden" type="radio" name="tone" id="t8" value="8"><label class="chip" for="t8" data-d="8"><span class="chip__num">8</span><span class="chip__name">Peril</span></label>
+            </div>
+          </fieldset>
+
+          <fieldset class="dial dial--undertow" id="undertow-dial">
+            <legend><span class="dial__name">Undertow</span> <span class="dial__hint">4th die</span></legend>
+            <div class="segmented">
+              <input class="visually-hidden" type="radio" name="undertow-dial" id="ud-none" value="none" checked>
+              <label for="ud-none">None</label>
+              <input class="visually-hidden" type="radio" name="undertow-dial" id="ud-p" value="palette">
+              <label for="ud-p">On Palette</label>
+              <input class="visually-hidden" type="radio" name="undertow-dial" id="ud-s" value="setting">
+              <label for="ud-s">On Setting</label>
+              <input class="visually-hidden" type="radio" name="undertow-dial" id="ud-t" value="tone">
+              <label for="ud-t">On Tone</label>
+            </div>
+            <div class="chips chips--numbers">
+              <input class="visually-hidden" type="radio" name="undertow" id="u1" value="1"><label class="chip chip--num" for="u1" data-d="1" aria-label="Undertow die 1"><span class="chip__num">1</span></label><input class="visually-hidden" type="radio" name="undertow" id="u2" value="2"><label class="chip chip--num" for="u2" data-d="2" aria-label="Undertow die 2"><span class="chip__num">2</span></label><input class="visually-hidden" type="radio" name="undertow" id="u3" value="3"><label class="chip chip--num" for="u3" data-d="3" aria-label="Undertow die 3"><span class="chip__num">3</span></label><input class="visually-hidden" type="radio" name="undertow" id="u4" value="4"><label class="chip chip--num" for="u4" data-d="4" aria-label="Undertow die 4"><span class="chip__num">4</span></label><input class="visually-hidden" type="radio" name="undertow" id="u5" value="5"><label class="chip chip--num" for="u5" data-d="5" aria-label="Undertow die 5"><span class="chip__num">5</span></label><input class="visually-hidden" type="radio" name="undertow" id="u6" value="6"><label class="chip chip--num" for="u6" data-d="6" aria-label="Undertow die 6"><span class="chip__num">6</span></label><input class="visually-hidden" type="radio" name="undertow" id="u7" value="7"><label class="chip chip--num" for="u7" data-d="7" aria-label="Undertow die 7"><span class="chip__num">7</span></label><input class="visually-hidden" type="radio" name="undertow" id="u8" value="8"><label class="chip chip--num" for="u8" data-d="8" aria-label="Undertow die 8"><span class="chip__num">8</span></label>
+            </div>
+          </fieldset>
+        </form>
+      </div>
+    </section>
+
+    <section class="band band--alt" id="procedure" aria-labelledby="procedure-title">
+      <div class="wrap">
+        <header class="section-head">
+          <h2 id="procedure-title">The Undertow</h2>
+        </header>
+        <div class="cards cards--3">
+          <article class="card mode hl" data-ud="p" data-d="1">
+            <h3>On Palette <span class="tag">Divide</span></h3>
+            <p>Split class, zone, or day and night: <em>Chrome spires, Rust slums</em>.</p>
+          </article>
+          <article class="card mode hl" data-ud="s" data-d="7">
+            <h3>On Setting <span class="tag">Layer</span></h3>
+            <p>Stack or collide play spaces: <em>Modern streets, Mythic spirits</em>.</p>
+          </article>
+          <article class="card mode hl" data-ud="t" data-d="3">
+            <h3>On Tone <span class="tag">Counter</span></h3>
+            <p>Contrast front vs. stakes, or wilds vs. home: <em>wild Perils, Cozy camp</em>.</p>
+          </article>
         </div>
-      </section>
 
-      <section class="band" id="dials" aria-labelledby="dials-title">
-        <div class="wrap">
-          <header class="section-head section-head--center">
-            <h2 id="dials-title">The Dials</h2>
-          </header>
-
-          <form
-            class="pickers"
-            id="dials-form"
-            method="get"
-            action="#top"
-            aria-describedby="dials-help"
-          >
-            <noscript>
-              <p class="note">
-                Pick each Dial by hand below. The dice roller needs JavaScript.
-              </p>
-              <p class="form-actions">
-                <button
-                  type="submit"
-                  class="icon-btn"
-                  aria-label="Share link to pitch"
-                  title="Share link to pitch"
-                >
-                  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                    <use href="#icon-share" />
-                  </svg>
-                </button>
-                <button
-                  type="reset"
-                  class="icon-btn"
-                  aria-label="Reset dials"
-                  title="Reset dials"
-                >
-                  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                    <use href="#icon-reset" />
-                  </svg>
-                </button>
-              </p>
-            </noscript>
-
-            <fieldset class="dial" data-dial="p">
-              <legend>
-                <span class="dial__name">Palette</span>
-                <span class="dial__hint">Texture</span>
-              </legend>
-              <div class="chips">
-                <input
-                  class="visually-hidden"
-                  type="radio"
-                  name="palette"
-                  id="p1"
-                  value="1"
-                /><label class="chip" for="p1" data-d="1"
-                  ><span class="chip__num">1</span
-                  ><span class="chip__name">Prismatic</span></label
-                >
-                <input
-                  class="visually-hidden"
-                  type="radio"
-                  name="palette"
-                  id="p2"
-                  value="2"
-                /><label class="chip" for="p2" data-d="2"
-                  ><span class="chip__num">2</span
-                  ><span class="chip__name">Neon</span></label
-                >
-                <input
-                  class="visually-hidden"
-                  type="radio"
-                  name="palette"
-                  id="p3"
-                  value="3"
-                /><label class="chip" for="p3" data-d="3"
-                  ><span class="chip__num">3</span
-                  ><span class="chip__name">Chrome</span></label
-                >
-                <input
-                  class="visually-hidden"
-                  type="radio"
-                  name="palette"
-                  id="p4"
-                  value="4"
-                /><label class="chip" for="p4" data-d="4"
-                  ><span class="chip__num">4</span
-                  ><span class="chip__name">Dark</span></label
-                >
-                <input
-                  class="visually-hidden"
-                  type="radio"
-                  name="palette"
-                  id="p5"
-                  value="5"
-                /><label class="chip" for="p5" data-d="5"
-                  ><span class="chip__num">5</span
-                  ><span class="chip__name">Sepia</span></label
-                >
-                <input
-                  class="visually-hidden"
-                  type="radio"
-                  name="palette"
-                  id="p6"
-                  value="6"
-                /><label class="chip" for="p6" data-d="6"
-                  ><span class="chip__num">6</span
-                  ><span class="chip__name">Bright</span></label
-                >
-                <input
-                  class="visually-hidden"
-                  type="radio"
-                  name="palette"
-                  id="p7"
-                  value="7"
-                /><label class="chip" for="p7" data-d="7"
-                  ><span class="chip__num">7</span
-                  ><span class="chip__name">Pastel</span></label
-                >
-                <input
-                  class="visually-hidden"
-                  type="radio"
-                  name="palette"
-                  id="p2"
-                  value="2"
-                /><label class="chip" for="p2" data-d="2"
-                  ><span class="chip__num">2</span
-                  ><span class="chip__name">Sepia</span></label
-                >
-                <input
-                  class="visually-hidden"
-                  type="radio"
-                  name="palette"
-                  id="p3"
-                  value="3"
-                /><label class="chip" for="p3" data-d="3"
-                  ><span class="chip__num">3</span
-                  ><span class="chip__name">Neon</span></label
-                >
-                <input
-                  class="visually-hidden"
-                  type="radio"
-                  name="palette"
-                  id="p4"
-                  value="4"
-                /><label class="chip" for="p4" data-d="4"
-                  ><span class="chip__num">4</span
-                  ><span class="chip__name">Pastel</span></label
-                >
-                <input
-                  class="visually-hidden"
-                  type="radio"
-                  name="palette"
-                  id="p5"
-                  value="5"
-                /><label class="chip" for="p5" data-d="5"
-                  ><span class="chip__num">5</span
-                  ><span class="chip__name">Bright</span></label
-                >
-                <input
-                  class="visually-hidden"
-                  type="radio"
-                  name="palette"
-                  id="p6"
-                  value="6"
-                /><label class="chip" for="p6" data-d="6"
-                  ><span class="chip__num">6</span
-                  ><span class="chip__name">Dark</span></label
-                >
-                <input
-                  class="visually-hidden"
-                  type="radio"
-                  name="palette"
-                  id="p7"
-                  value="7"
-                /><label class="chip" for="p7" data-d="7"
-                  ><span class="chip__num">7</span
-                  ><span class="chip__name">Chrome</span></label
-                >
-                <input
-                  class="visually-hidden"
-                  type="radio"
-                  name="palette"
-                  id="p8"
-                  value="8"
-                /><label class="chip" for="p8" data-d="8"
-                  ><span class="chip__num">8</span
-                  ><span class="chip__name">Rust</span></label
-                >
-              </div>
-            </fieldset>
-
-            <fieldset class="dial" data-dial="s">
-              <legend>
-                <span class="dial__name">Setting</span>
-                <span class="dial__hint">Play space</span>
-              </legend>
-              <div class="chips">
-                <input
-                  class="visually-hidden"
-                  type="radio"
-                  name="setting"
-                  id="s1"
-                  value="1"
-                /><label class="chip" for="s1" data-d="1"
-                  ><span class="chip__num">1</span
-                  ><span class="chip__name">Liminal</span></label
-                >
-                <input
-                  class="visually-hidden"
-                  type="radio"
-                  name="setting"
-                  id="s2"
-                  value="2"
-                /><label class="chip" for="s2" data-d="2"
-                  ><span class="chip__num">2</span
-                  ><span class="chip__name">Future</span></label
-                >
-                <input
-                  class="visually-hidden"
-                  type="radio"
-                  name="setting"
-                  id="s3"
-                  value="3"
-                /><label class="chip" for="s3" data-d="3"
-                  ><span class="chip__num">3</span
-                  ><span class="chip__name">Space</span></label
-                >
-                <input
-                  class="visually-hidden"
-                  type="radio"
-                  name="setting"
-                  id="s4"
-                  value="4"
-                /><label class="chip" for="s4" data-d="4"
-                  ><span class="chip__num">4</span
-                  ><span class="chip__name">Modern</span></label
-                >
-                <input
-                  class="visually-hidden"
-                  type="radio"
-                  name="setting"
-                  id="s5"
-                  value="5"
-                /><label class="chip" for="s5" data-d="5"
-                  ><span class="chip__num">5</span
-                  ><span class="chip__name">Industrial</span></label
-                >
-                <input
-                  class="visually-hidden"
-                  type="radio"
-                  name="setting"
-                  id="s6"
-                  value="6"
-                /><label class="chip" for="s6" data-d="6"
-                  ><span class="chip__num">6</span
-                  ><span class="chip__name">Mythic</span></label
-                >
-                <input
-                  class="visually-hidden"
-                  type="radio"
-                  name="setting"
-                  id="s7"
-                  value="7"
-                /><label class="chip" for="s7" data-d="7"
-                  ><span class="chip__num">7</span
-                  ><span class="chip__name">Hearth</span></label
-                >
-                <input
-                  class="visually-hidden"
-                  type="radio"
-                  name="setting"
-                  id="s2"
-                  value="2"
-                /><label class="chip" for="s2" data-d="2"
-                  ><span class="chip__num">2</span
-                  ><span class="chip__name">Industrial</span></label
-                >
-                <input
-                  class="visually-hidden"
-                  type="radio"
-                  name="setting"
-                  id="s3"
-                  value="3"
-                /><label class="chip" for="s3" data-d="3"
-                  ><span class="chip__num">3</span
-                  ><span class="chip__name">Future</span></label
-                >
-                <input
-                  class="visually-hidden"
-                  type="radio"
-                  name="setting"
-                  id="s4"
-                  value="4"
-                /><label class="chip" for="s4" data-d="4"
-                  ><span class="chip__num">4</span
-                  ><span class="chip__name">Hearth</span></label
-                >
-                <input
-                  class="visually-hidden"
-                  type="radio"
-                  name="setting"
-                  id="s5"
-                  value="5"
-                /><label class="chip" for="s5" data-d="5"
-                  ><span class="chip__num">5</span
-                  ><span class="chip__name">Mythic</span></label
-                >
-                <input
-                  class="visually-hidden"
-                  type="radio"
-                  name="setting"
-                  id="s6"
-                  value="6"
-                /><label class="chip" for="s6" data-d="6"
-                  ><span class="chip__num">6</span
-                  ><span class="chip__name">Modern</span></label
-                >
-                <input
-                  class="visually-hidden"
-                  type="radio"
-                  name="setting"
-                  id="s7"
-                  value="7"
-                /><label class="chip" for="s7" data-d="7"
-                  ><span class="chip__num">7</span
-                  ><span class="chip__name">Space</span></label
-                >
-                <input
-                  class="visually-hidden"
-                  type="radio"
-                  name="setting"
-                  id="s8"
-                  value="8"
-                /><label class="chip" for="s8" data-d="8"
-                  ><span class="chip__num">8</span
-                  ><span class="chip__name">Primal</span></label
-                >
-              </div>
-            </fieldset>
-
-            <fieldset class="dial" data-dial="t">
-              <legend>
-                <span class="dial__name">Tone</span>
-                <span class="dial__hint">Drive</span>
-              </legend>
-              <div class="chips">
-                <input
-                  class="visually-hidden"
-                  type="radio"
-                  name="tone"
-                  id="t1"
-                  value="1"
-                /><label class="chip" for="t1" data-d="1"
-                  ><span class="chip__num">1</span
-                  ><span class="chip__name">Weird</span></label
-                >
-                <input
-                  class="visually-hidden"
-                  type="radio"
-                  name="tone"
-                  id="t2"
-                  value="2"
-                /><label class="chip" for="t2" data-d="2"
-                  ><span class="chip__num">2</span
-                  ><span class="chip__name">Punk</span></label
-                >
-                <input
-                  class="visually-hidden"
-                  type="radio"
-                  name="tone"
-                  id="t3"
-                  value="3"
-                /><label class="chip" for="t3" data-d="3"
-                  ><span class="chip__num">3</span
-                  ><span class="chip__name">Adventure</span></label
-                >
-                <input
-                  class="visually-hidden"
-                  type="radio"
-                  name="tone"
-                  id="t4"
-                  value="4"
-                /><label class="chip" for="t4" data-d="4"
-                  ><span class="chip__num">4</span
-                  ><span class="chip__name">Noir</span></label
-                >
-                <input
-                  class="visually-hidden"
-                  type="radio"
-                  name="tone"
-                  id="t5"
-                  value="5"
-                /><label class="chip" for="t5" data-d="5"
-                  ><span class="chip__num">5</span
-                  ><span class="chip__name">Pulp</span></label
-                >
-                <input
-                  class="visually-hidden"
-                  type="radio"
-                  name="tone"
-                  id="t6"
-                  value="6"
-                /><label class="chip" for="t6" data-d="6"
-                  ><span class="chip__num">6</span
-                  ><span class="chip__name">Heroic</span></label
-                >
-                <input
-                  class="visually-hidden"
-                  type="radio"
-                  name="tone"
-                  id="t7"
-                  value="7"
-                /><label class="chip" for="t7" data-d="7"
-                  ><span class="chip__num">7</span
-                  ><span class="chip__name">Cozy</span></label
-                >
-                <input
-                  class="visually-hidden"
-                  type="radio"
-                  name="tone"
-                  id="t2"
-                  value="2"
-                /><label class="chip" for="t2" data-d="2"
-                  ><span class="chip__num">2</span
-                  ><span class="chip__name">Pulp</span></label
-                >
-                <input
-                  class="visually-hidden"
-                  type="radio"
-                  name="tone"
-                  id="t3"
-                  value="3"
-                /><label class="chip" for="t3" data-d="3"
-                  ><span class="chip__num">3</span
-                  ><span class="chip__name">Punk</span></label
-                >
-                <input
-                  class="visually-hidden"
-                  type="radio"
-                  name="tone"
-                  id="t4"
-                  value="4"
-                /><label class="chip" for="t4" data-d="4"
-                  ><span class="chip__num">4</span
-                  ><span class="chip__name">Cozy</span></label
-                >
-                <input
-                  class="visually-hidden"
-                  type="radio"
-                  name="tone"
-                  id="t5"
-                  value="5"
-                /><label class="chip" for="t5" data-d="5"
-                  ><span class="chip__num">5</span
-                  ><span class="chip__name">Heroic</span></label
-                >
-                <input
-                  class="visually-hidden"
-                  type="radio"
-                  name="tone"
-                  id="t6"
-                  value="6"
-                /><label class="chip" for="t6" data-d="6"
-                  ><span class="chip__num">6</span
-                  ><span class="chip__name">Noir</span></label
-                >
-                <input
-                  class="visually-hidden"
-                  type="radio"
-                  name="tone"
-                  id="t7"
-                  value="7"
-                /><label class="chip" for="t7" data-d="7"
-                  ><span class="chip__num">7</span
-                  ><span class="chip__name">Adventure</span></label
-                >
-                <input
-                  class="visually-hidden"
-                  type="radio"
-                  name="tone"
-                  id="t8"
-                  value="8"
-                /><label class="chip" for="t8" data-d="8"
-                  ><span class="chip__num">8</span
-                  ><span class="chip__name">Peril</span></label
-                >
-              </div>
-            </fieldset>
-
-            <fieldset class="dial dial--undertow" id="undertow-dial">
-              <legend>
-                <span class="dial__name">Undertow</span>
-                <span class="dial__hint">4th die</span>
-              </legend>
-              <div class="segmented">
-                <input
-                  class="visually-hidden"
-                  type="radio"
-                  name="undertow-dial"
-                  id="ud-none"
-                  value="none"
-                  checked
-                />
-                <label for="ud-none">None</label>
-                <input
-                  class="visually-hidden"
-                  type="radio"
-                  name="undertow-dial"
-                  id="ud-p"
-                  value="palette"
-                />
-                <label for="ud-p">On Palette</label>
-                <input
-                  class="visually-hidden"
-                  type="radio"
-                  name="undertow-dial"
-                  id="ud-s"
-                  value="setting"
-                />
-                <label for="ud-s">On Setting</label>
-                <input
-                  class="visually-hidden"
-                  type="radio"
-                  name="undertow-dial"
-                  id="ud-t"
-                  value="tone"
-                />
-                <label for="ud-t">On Tone</label>
-              </div>
-              <div class="chips chips--numbers">
-                <input
-                  class="visually-hidden"
-                  type="radio"
-                  name="undertow"
-                  id="u1"
-                  value="1"
-                /><label
-                  class="chip chip--num"
-                  for="u1"
-                  data-d="1"
-                  aria-label="Undertow die 1"
-                  ><span class="chip__num">1</span></label
-                ><input
-                  class="visually-hidden"
-                  type="radio"
-                  name="undertow"
-                  id="u2"
-                  value="2"
-                /><label
-                  class="chip chip--num"
-                  for="u2"
-                  data-d="2"
-                  aria-label="Undertow die 2"
-                  ><span class="chip__num">2</span></label
-                ><input
-                  class="visually-hidden"
-                  type="radio"
-                  name="undertow"
-                  id="u3"
-                  value="3"
-                /><label
-                  class="chip chip--num"
-                  for="u3"
-                  data-d="3"
-                  aria-label="Undertow die 3"
-                  ><span class="chip__num">3</span></label
-                ><input
-                  class="visually-hidden"
-                  type="radio"
-                  name="undertow"
-                  id="u4"
-                  value="4"
-                /><label
-                  class="chip chip--num"
-                  for="u4"
-                  data-d="4"
-                  aria-label="Undertow die 4"
-                  ><span class="chip__num">4</span></label
-                ><input
-                  class="visually-hidden"
-                  type="radio"
-                  name="undertow"
-                  id="u5"
-                  value="5"
-                /><label
-                  class="chip chip--num"
-                  for="u5"
-                  data-d="5"
-                  aria-label="Undertow die 5"
-                  ><span class="chip__num">5</span></label
-                ><input
-                  class="visually-hidden"
-                  type="radio"
-                  name="undertow"
-                  id="u6"
-                  value="6"
-                /><label
-                  class="chip chip--num"
-                  for="u6"
-                  data-d="6"
-                  aria-label="Undertow die 6"
-                  ><span class="chip__num">6</span></label
-                ><input
-                  class="visually-hidden"
-                  type="radio"
-                  name="undertow"
-                  id="u7"
-                  value="7"
-                /><label
-                  class="chip chip--num"
-                  for="u7"
-                  data-d="7"
-                  aria-label="Undertow die 7"
-                  ><span class="chip__num">7</span></label
-                ><input
-                  class="visually-hidden"
-                  type="radio"
-                  name="undertow"
-                  id="u8"
-                  value="8"
-                /><label
-                  class="chip chip--num"
-                  for="u8"
-                  data-d="8"
-                  aria-label="Undertow die 8"
-                  ><span class="chip__num">8</span></label
-                >
-              </div>
-            </fieldset>
-          </form>
+        <div class="cards cards--2">
+          <article class="card card--accent">
+            <h3>Matched pair <svg class="icon-arrow" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#icon-arrow-right"/></svg> Double Down</h3>
+            <p>Polish instead of grind. Turn up the volume on one dial.</p>
+          </article>
+          <article class="card card--accent">
+            <h3>4-of-a-Kind <svg class="icon-arrow" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#icon-arrow-right"/></svg> Pure Archetype</h3>
+            <p>Skip the Undertow. Lean in on tropes. Enjoy some popcorn.</p>
+          </article>
         </div>
-      </section>
+      </div>
+    </section>
 
-      <section
-        class="band band--alt"
-        id="procedure"
-        aria-labelledby="procedure-title"
-      >
-        <div class="wrap">
-          <header class="section-head">
-            <h2 id="procedure-title">The Undertow</h2>
-          </header>
-          <div class="cards cards--3">
-            <article class="card mode hl" data-ud="p" data-d="1">
-              <h3>On Palette <span class="tag">Divide</span></h3>
-              <p>
-                Split class, zone, or day and night:
-                <em>Chrome spires, Rust slums</em>.
-              </p>
-            </article>
-            <article class="card mode hl" data-ud="s" data-d="3">
-              <h3>On Setting <span class="tag">Layer</span></h3>
-              <p>
-                Stack or collide play spaces:
-                <em>Modern streets, Mythic spirits</em>.
-              </p>
-            </article>
-            <article class="card mode hl" data-ud="t" data-d="2">
-              <h3>On Tone <span class="tag">Counter</span></h3>
-              <p>
-                Contrast front vs. stakes, or wilds vs. home:
-                <em>wild Perils, Cozy camp</em>.
-              </p>
-            </article>
+    <section class="band" id="matrix" aria-labelledby="matrix-title">
+      <div class="wrap">
+        <header class="section-head">
+          <h2 id="matrix-title">The Master Dial Matrix</h2>
+        </header>
+        <section class="table-scroll" aria-labelledby="matrix-caption" tabindex="0">
+          <table class="matrix">
+            <caption id="matrix-caption" class="visually-hidden">Master Dial Matrix: each d8 result for Palette, Setting and Tone, plus the pure archetype for four of a kind</caption>
+            <thead>
+              <tr>
+                <th scope="col">d8</th>
+                <th scope="col">1 · Palette <span class="th-hint">Texture</span></th>
+                <th scope="col">2 · Setting <span class="th-hint">Space</span></th>
+                <th scope="col">3 · Tone <span class="th-hint">Drive</span></th>
+                <th scope="col">Pure Archetype <span class="th-hint">4 of a kind</span></th>
+              </tr>
+            </thead>
+            <tbody>
+            <tr>
+              <th scope="row" data-d="1"><span class="die">1</span></th>
+              <td class="hl" data-p="1" data-d="1"><strong>Prismatic:</strong> Reality-bleed, shifting hues.</td>
+              <td class="hl" data-s="1" data-d="1"><strong>Liminal:</strong> Thresholds, portals, crossroads.</td>
+              <td class="hl" data-t="1" data-d="1"><strong>Weird:</strong> Uncanny mystery, impossible rules.</td>
+              <td class="hl arch" data-a="1" data-d="1"><strong>Labyrinthine Surrealism</strong> <span class="arch__refs">Control, Piranesi</span></td>
+            </tr>
+            <tr>
+              <th scope="row" data-d="2"><span class="die">2</span></th>
+              <td class="hl" data-p="2" data-d="2"><strong>Sepia:</strong> Brass warmth, weathered maps.</td>
+              <td class="hl" data-s="2" data-d="2"><strong>Industrial:</strong> Coal smoke, ironworks, gears.</td>
+              <td class="hl" data-t="2" data-d="2"><strong>Pulp:</strong> Two-fisted stunts, cliffhangers.</td>
+              <td class="hl arch" data-a="2" data-d="2"><strong>Gaslamp Serial</strong> <span class="arch__refs">The Mummy, Arcane</span></td>
+            </tr>
+            <tr>
+              <th scope="row" data-d="3"><span class="die">3</span></th>
+              <td class="hl" data-p="3" data-d="3"><strong>Neon:</strong> Rain-slick glow, overload.</td>
+              <td class="hl" data-s="3" data-d="3"><strong>Future:</strong> Wired sprawl, near-out tech.</td>
+              <td class="hl" data-t="3" data-d="3"><strong>Punk:</strong> Reject the system.</td>
+              <td class="hl arch" data-a="3" data-d="3"><strong>Classic Cyberpunk</strong> <span class="arch__refs">Edgerunners, Akira</span></td>
+            </tr>
+            <tr>
+              <th scope="row" data-d="4"><span class="die">4</span></th>
+              <td class="hl" data-p="4" data-d="4"><strong>Pastel:</strong> Soft light, hand-painted calm.</td>
+              <td class="hl" data-s="4" data-d="4"><strong>Hearth:</strong> Workshops, ovens, tended valleys.</td>
+              <td class="hl" data-t="4" data-d="4"><strong>Cozy:</strong> Mutual aid, mending rifts, routine.</td>
+              <td class="hl arch" data-a="4" data-d="4"><strong>Pastoral Storycraft</strong> <span class="arch__refs">Kiki&#x27;s, Wanderhome</span></td>
+            </tr>
+            <tr>
+              <th scope="row" data-d="5"><span class="die">5</span></th>
+              <td class="hl" data-p="5" data-d="5"><strong>Bright:</strong> Sun-drenched, high-contrast skies.</td>
+              <td class="hl" data-s="5" data-d="5"><strong>Mythic:</strong> Active gods, spirits, sacred realms.</td>
+              <td class="hl" data-t="5" data-d="5"><strong>Heroic:</strong> Clear stakes, shielding the weak.</td>
+              <td class="hl arch" data-a="5" data-d="5"><strong>High Mythic Fantasy</strong> <span class="arch__refs">Hades, Mononoke</span></td>
+            </tr>
+            <tr>
+              <th scope="row" data-d="6"><span class="die">6</span></th>
+              <td class="hl" data-p="6" data-d="6"><strong>Dark:</strong> Deep shadows, sodium-lit corners.</td>
+              <td class="hl" data-s="6" data-d="6"><strong>Modern:</strong> A reflection of today&#x27;s society and tech.</td>
+              <td class="hl" data-t="6" data-d="6"><strong>Noir:</strong> A web of lies and hard choices.</td>
+              <td class="hl arch" data-a="6" data-d="6"><strong>Hardboiled Crime</strong> <span class="arch__refs">Se7en, True Detective</span></td>
+            </tr>
+            <tr>
+              <th scope="row" data-d="7"><span class="die">7</span></th>
+              <td class="hl" data-p="7" data-d="7"><strong>Chrome:</strong> Mirrored sheen, sterile polish.</td>
+              <td class="hl" data-s="7" data-d="7"><strong>Space:</strong> Jump-lanes, habitats, void transit.</td>
+              <td class="hl" data-t="7" data-d="7"><strong>Adventure:</strong> Bold crews, uncharted horizons.</td>
+              <td class="hl arch" data-a="7" data-d="7"><strong>Golden-Age Sci-Fi</strong> <span class="arch__refs">Star Trek, Mass Effect</span></td>
+            </tr>
+            <tr>
+              <th scope="row" data-d="8"><span class="die">8</span></th>
+              <td class="hl" data-p="8" data-d="8"><strong>Rust:</strong> Corroded iron, patched salvage.</td>
+              <td class="hl" data-s="8" data-d="8"><strong>Primal:</strong> Megafauna, untamed wilds, bone.</td>
+              <td class="hl" data-t="8" data-d="8"><strong>Peril:</strong> Scarce safety, lethal hazards.</td>
+              <td class="hl arch" data-a="8" data-d="8"><strong>Grim Survival</strong> <span class="arch__refs">Mad Max, Scavengers Reign</span></td>
+            </tr>
+            </tbody>
+          </table>
+        </section>
+      </div>
+    </section>
+
+    <section class="band band--alt" id="session-zero" aria-labelledby="session-zero-title">
+      <div class="wrap">
+        <header class="section-head">
+          <h2 id="session-zero-title">Pathways Spaghetti Map</h2>
+          <p class="section-head__lede">Center your Pitch + Undertow on a blank canvas. Pass the pencil around the table 4 times.</p>
+        </header>
+
+        <div class="knot-grid">
+          <div>
+            <h3 class="subhead">Pass 1: Identity prompts</h3>
+            <p>Draw a <strong>Character Circle</strong> on the edge and write your 3 Dial prompt answers inside it.</p>
+            <section class="table-scroll" aria-labelledby="prompts-caption" tabindex="0">
+              <table class="matrix matrix--compact">
+                <caption id="prompts-caption" class="visually-hidden">Identity prompts for each d8 result on each Dial</caption>
+                <thead>
+                  <tr><th scope="col">d8</th><th scope="col">Palette <span class="th-hint">Texture</span></th><th scope="col">Setting <span class="th-hint">Foothold</span></th><th scope="col">Tone <span class="th-hint">Hook</span></th></tr>
+                </thead>
+                <tbody>
+            <tr>
+              <th scope="row" data-d="1"><span class="die">1</span></th>
+              <td class="hl" data-p="1" data-d="1"><strong>Aura</strong></td>
+              <td class="hl" data-s="1" data-d="1"><strong>Tether</strong></td>
+              <td class="hl" data-t="1" data-d="1"><strong>Obsession</strong></td>
+            </tr>
+            <tr>
+              <th scope="row" data-d="2"><span class="die">2</span></th>
+              <td class="hl" data-p="2" data-d="2"><strong>Relic</strong></td>
+              <td class="hl" data-s="2" data-d="2"><strong>Trade</strong></td>
+              <td class="hl" data-t="2" data-d="2"><strong>Trademark</strong></td>
+            </tr>
+            <tr>
+              <th scope="row" data-d="3"><span class="die">3</span></th>
+              <td class="hl" data-p="3" data-d="3"><strong>Vice</strong></td>
+              <td class="hl" data-s="3" data-d="3"><strong>Augment</strong></td>
+              <td class="hl" data-t="3" data-d="3"><strong>Grievance</strong></td>
+            </tr>
+            <tr>
+              <th scope="row" data-d="4"><span class="die">4</span></th>
+              <td class="hl" data-p="4" data-d="4"><strong>Comfort</strong></td>
+              <td class="hl" data-s="4" data-d="4"><strong>Workshop</strong></td>
+              <td class="hl" data-t="4" data-d="4"><strong>Routine</strong></td>
+            </tr>
+            <tr>
+              <th scope="row" data-d="5"><span class="die">5</span></th>
+              <td class="hl" data-p="5" data-d="5"><strong>Banner</strong></td>
+              <td class="hl" data-s="5" data-d="5"><strong>Calling</strong></td>
+              <td class="hl" data-t="5" data-d="5"><strong>Oath</strong></td>
+            </tr>
+            <tr>
+              <th scope="row" data-d="6"><span class="die">6</span></th>
+              <td class="hl" data-p="6" data-d="6"><strong>Secret</strong></td>
+              <td class="hl" data-s="6" data-d="6"><strong>Day Job</strong></td>
+              <td class="hl" data-t="6" data-d="6"><strong>Code</strong></td>
+            </tr>
+            <tr>
+              <th scope="row" data-d="7"><span class="die">7</span></th>
+              <td class="hl" data-p="7" data-d="7"><strong>Pedigree</strong></td>
+              <td class="hl" data-s="7" data-d="7"><strong>World</strong></td>
+              <td class="hl" data-t="7" data-d="7"><strong>Horizon</strong></td>
+            </tr>
+            <tr>
+              <th scope="row" data-d="8"><span class="die">8</span></th>
+              <td class="hl" data-p="8" data-d="8"><strong>Scar</strong></td>
+              <td class="hl" data-s="8" data-d="8"><strong>Kin</strong></td>
+              <td class="hl" data-t="8" data-d="8"><strong>Liability</strong></td>
+            </tr>
+                </tbody>
+              </table>
+            </section>
+
+            <h3 class="subhead">Pass 2: Cross the wires</h3>
+            <ul class="bullets">
+              <li><strong>Left · Rumor:</strong> Draw a line to your left neighbor. State something you've heard about them. They name the real truth.</li>
+              <li><strong>Right · Bond:</strong> Draw a shared Box between you and your right neighbor. Name a shared tie or asset you both rely on: <em>Ride, Hideout, Workshop, Beast, Patron</em>.</li>
+            </ul>
+
+            <h3 class="subhead">Pass 3: Stake your claim</h3>
+            <ul class="bullets">
+              <li><strong>Edge:</strong> Tag your Character Circle with what you're best at in this Setting (your top role, skill, or turf).</li>
+              <li><strong>Fact:</strong> Drop a Diamond onto the canvas for a world truth, Faction, Neighbor, Belief, or Goal pulling at you. Wire your Character to it.</li>
+            </ul>
+
+            <h3 class="subhead">Pass 4: Event triangle</h3>
+            <p>GM drops a central inverted Event Triangle where the <em>Undertow</em> bites and wires it to 2+ nodes on the map. Start <em>in medias res</em>.</p>
           </div>
 
-          <div class="cards cards--2">
-            <div class="callout callout--gold">
-              <h3>
-                Matched Pair
-                <svg
-                  class="icon-arrow"
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
-                  focusable="false"
-                >
-                  <use href="#icon-arrow-right" /></svg
-                ><span class="visually-hidden">becomes</span> Double Down
-              </h3>
-              <p>Polish instead of grind. Turn up the volume on one dial.</p>
+          <figure class="knot-figure">
+            <svg viewBox="0 0 320 260" role="img" aria-labelledby="knot-title knot-desc">
+              <title id="knot-title">Spaghetti map schematic</title>
+              <desc id="knot-desc">Character A, Character B and Character C circles are linked by Rumor wires. A shared Bond box sits between Character B and Character C. A Fact diamond is wired to Character A. A central inverted Event triangle is wired to Character A and the Bond.</desc>
+              <g class="wire wire--credit">
+                <line x1="60" y1="54" x2="260" y2="54"/>
+                <line x1="60" y1="54" x2="152" y2="212"/>
+              </g>
+              <g class="wire wire--drive">
+                <line x1="60" y1="54" x2="54" y2="148"/>
+              </g>
+              <g class="wire wire--anchor">
+                <line x1="260" y1="54" x2="254" y2="140"/>
+                <line x1="254" y1="140" x2="152" y2="212"/>
+              </g>
+              <g class="wire wire--ignite">
+                <line x1="176" y1="118" x2="60" y2="54"/>
+                <line x1="176" y1="118" x2="254" y2="140"/>
+              </g>
+              <g class="node node--pc"><circle cx="60" cy="54" r="32"/><text x="60" y="51">Character</text><text x="60" y="65">A</text></g>
+              <g class="node node--pc"><circle cx="260" cy="54" r="32"/><text x="260" y="51">Character</text><text x="260" y="65">B</text></g>
+              <g class="node node--pc"><circle cx="152" cy="212" r="32"/><text x="152" y="209">Character</text><text x="152" y="223">C</text></g>
+              <g class="node node--drive"><polygon points="54,126 76,148 54,170 32,148"/><text class="label" x="54" y="186">Fact</text></g>
+              <g class="node node--anchor"><rect x="226" y="124" width="56" height="32" rx="4"/><text class="label" x="254" y="172">Bond</text></g>
+              <g class="node node--ignite"><polygon points="150,98 202,98 176,142"/><text class="label" x="176" y="158">Event</text></g>
+              <text class="label label--credit" x="160" y="42">Rumor</text>
+            </svg>
+            <figcaption>
+              <span><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5"/></svg> Character</span>
+              <span><svg viewBox="0 0 20 14" aria-hidden="true"><rect x="1" y="1" width="18" height="12" rx="2"/></svg> Bond</span>
+              <span><svg viewBox="0 0 16 16" aria-hidden="true"><polygon points="8,1 15,8 8,15 1,8"/></svg> Fact</span>
+              <span><svg viewBox="0 0 16 16" aria-hidden="true"><polygon points="1,1 15,1 8,15"/></svg> Event</span>
+            </figcaption>
+          </figure>
+        </div>
+      </div>
+    </section>
+
+    <section class="band band--cortex" id="cortex" aria-labelledby="cortex-title">
+      <div class="wrap">
+        <header class="section-head">
+          <h2 id="cortex-title">House Ruled Cortex</h2>
+          <p class="section-head__lede">A <strong>Cortex Prime</strong> baseplate to snap your <code>4d8</code> pitch to.</p>
+        </header>
+
+        <figure class="equation">
+          <figcaption>Baseline pool equation <span class="muted">· + Assets, Resources, Foe Fallout</span></figcaption>
+          <ol class="equation__terms">
+            <li class="term term--magenta"><span>1 · Distinction</span><code>d8 / d4</code></li>
+            <li class="term"><span>2 · Setting</span><code>Prime 2</code></li>
+            <li class="term"><span>3 · Tone</span><code>Prime 3</code></li>
+          </ol>
+          <span class="equation__arrow"><svg class="icon-arrow" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#icon-arrow-right"/></svg><span class="visually-hidden">gives</span></span>
+          <ul class="equation__results">
+            <li class="result result--magenta"><strong>1s</strong> Openings</li>
+            <li class="result"><strong>Sum 2</strong> Total</li>
+            <li class="result"><strong>1 die size</strong> Impact d6–d12</li>
+          </ul>
+        </figure>
+
+        <div class="cortex-grid">
+          <div>
+            <div class="callout callout--magenta">
+              <h3>Openings</h3>
+              <p>Set rolled <code>1</code>s aside. They never count toward Total or Impact. Foes seize your Openings, handing you <code>1 PP</code>, to inflict <code>d6</code> Fallout, step up Fallout, or claim an edge. Spend <code>1 PP</code> to seize GM Openings. Extra <code>1</code>s step up the die by +1 each.</p>
             </div>
-            <div class="callout callout--vermilion">
-              <h3>
-                4-of-a-Kind
-                <svg
-                  class="icon-arrow"
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
-                  focusable="false"
-                >
-                  <use href="#icon-arrow-right" /></svg
-                ><span class="visually-hidden">becomes</span> Pure Archetype
-              </h3>
-              <p>Skip the Undertow. Lean in on tropes. Enjoy some popcorn.</p>
+
+            <h3 class="subhead">Three conflict speeds</h3>
+            <div class="speeds">
+              <details class="speed" name="speed" open>
+                <summary><span class="speed__num">01</span> Roll <span class="muted">· single test</span></summary>
+                <p>One toss vs. GM difficulty: <code>2dX</code> + scene traits, or the Doom Pool. High Total wins. Instigator wins ties.</p>
+              </details>
+              <details class="speed speed--magenta" name="speed">
+                <summary><span class="speed__num">02</span> Row <span class="muted">· escalating contest</span></summary>
+                <p>Beat the lead Total to take control, or <strong>Concede</strong> on your terms for <code>+1 PP</code> when you could roll again. Failing inflicts the winner's Impact as Fallout.</p>
+              </details>
+              <details class="speed" name="speed">
+                <summary><span class="speed__num">03</span> Romp <span class="muted">· multi-die challenge</span></summary>
+                <p>Roll vs. a central <code>YdX</code> Romp Pool. Win with Impact <code>&gt;</code> a Romp die to drop it, or <code>≤</code> to step down the smallest. <code>d4</code> drops out. Romps act last.</p>
+              </details>
             </div>
           </div>
-        </div>
-      </section>
 
-      <section class="band" id="matrix" aria-labelledby="matrix-title">
-        <div class="wrap">
-          <header class="section-head">
-            <h2 id="matrix-title">The Master Dial Matrix</h2>
-          </header>
-          <section
-            class="table-scroll"
-            aria-labelledby="matrix-caption"
-            tabindex="0"
-          >
-            <table class="matrix">
-              <caption id="matrix-caption" class="visually-hidden">
-                Master Dial Matrix: each d8 result for Palette, Setting and
-                Tone, plus the pure archetype for four of a kind
-              </caption>
-              <thead>
-                <tr>
-                  <th scope="col">d8</th>
-                  <th scope="col">
-                    1 · Palette <span class="th-hint">Texture</span>
-                  </th>
-                  <th scope="col">
-                    2 · Setting <span class="th-hint">Space</span>
-                  </th>
-                  <th scope="col">
-                    3 · Tone <span class="th-hint">Drive</span>
-                  </th>
-                  <th scope="col">
-                    Pure Archetype <span class="th-hint">4 of a kind</span>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <th scope="row" data-d="1"><span class="die">1</span></th>
-                  <td class="hl" data-p="1" data-d="1">
-                    <strong>Prismatic:</strong> Reality-bleed, shifting hues.
-                  </td>
-                  <td class="hl" data-s="1" data-d="1">
-                    <strong>Liminal:</strong> Thresholds, portals, crossroads.
-                  </td>
-                  <td class="hl" data-t="1" data-d="1">
-                    <strong>Weird:</strong> Uncanny mystery, impossible rules.
-                  </td>
-                  <td class="hl arch" data-a="1" data-d="1">
-                    <strong>Labyrinthine Surrealism</strong>
-                    <span class="arch__refs">Control, Piranesi</span>
-                  </td>
-                </tr>
-                <tr>
-                  <th scope="row" data-d="2"><span class="die">2</span></th>
-                  <td class="hl" data-p="2" data-d="2">
-                    <strong>Neon:</strong> Rain-slick glow, overload.
-                  </td>
-                  <td class="hl" data-s="2" data-d="2">
-                    <strong>Future:</strong> Wired sprawl, near-out tech.
-                  </td>
-                  <td class="hl" data-t="2" data-d="2">
-                    <strong>Punk:</strong> Reject the system.
-                  </td>
-                  <td class="hl arch" data-a="2" data-d="2">
-                    <strong>Classic Cyberpunk</strong>
-                    <span class="arch__refs">Edgerunners, Akira</span>
-                  </td>
-                  <td class="hl" data-p="2" data-d="2">
-                    <strong>Sepia:</strong> Brass warmth, weathered maps.
-                  </td>
-                  <td class="hl" data-s="2" data-d="2">
-                    <strong>Industrial:</strong> Coal smoke, ironworks, gears.
-                  </td>
-                  <td class="hl" data-t="2" data-d="2">
-                    <strong>Pulp:</strong> Two-fisted stunts, cliffhangers.
-                  </td>
-                  <td class="hl arch" data-a="2" data-d="2">
-                    <strong>Gaslamp Serial</strong>
-                    <span class="arch__refs">The Mummy, Arcane</span>
-                  </td>
-                </tr>
-                <tr>
-                  <th scope="row" data-d="3"><span class="die">3</span></th>
-                  <td class="hl" data-p="3" data-d="3">
-                    <strong>Chrome:</strong> Mirrored sheen, sterile polish.
-                  </td>
-                  <td class="hl" data-s="3" data-d="3">
-                    <strong>Space:</strong> Jump-lanes, habitats, void transit.
-                  </td>
-                  <td class="hl" data-t="3" data-d="3">
-                    <strong>Adventure:</strong> Bold crews, uncharted horizons.
-                  </td>
-                  <td class="hl arch" data-a="3" data-d="3">
-                    <strong>Golden-Age Sci-Fi</strong>
-                    <span class="arch__refs">Star Trek, Mass Effect</span>
-                  </td>
-                  <td class="hl" data-p="3" data-d="3">
-                    <strong>Neon:</strong> Rain-slick glow, overload.
-                  </td>
-                  <td class="hl" data-s="3" data-d="3">
-                    <strong>Future:</strong> Wired sprawl, near-out tech.
-                  </td>
-                  <td class="hl" data-t="3" data-d="3">
-                    <strong>Punk:</strong> Reject the system.
-                  </td>
-                  <td class="hl arch" data-a="3" data-d="3">
-                    <strong>Classic Cyberpunk</strong>
-                    <span class="arch__refs">Edgerunners, Akira</span>
-                  </td>
-                </tr>
-                <tr>
-                  <th scope="row" data-d="4"><span class="die">4</span></th>
-                  <td class="hl" data-p="4" data-d="4">
-                    <strong>Dark:</strong> Deep shadows, sodium-lit corners.
-                  </td>
-                  <td class="hl" data-s="4" data-d="4">
-                    <strong>Modern:</strong> A reflection of today&#x27;s
-                    society and tech.
-                  </td>
-                  <td class="hl" data-t="4" data-d="4">
-                    <strong>Noir:</strong> A web of lies and hard choices.
-                  </td>
-                  <td class="hl arch" data-a="4" data-d="4">
-                    <strong>Hardboiled Crime</strong>
-                    <span class="arch__refs">Se7en, True Detective</span>
-                  </td>
-                  <td class="hl" data-p="4" data-d="4">
-                    <strong>Pastel:</strong> Soft light, hand-painted calm.
-                  </td>
-                  <td class="hl" data-s="4" data-d="4">
-                    <strong>Hearth:</strong> Workshops, ovens, tended valleys.
-                  </td>
-                  <td class="hl" data-t="4" data-d="4">
-                    <strong>Cozy:</strong> Mutual aid, mending rifts, routine.
-                  </td>
-                  <td class="hl arch" data-a="4" data-d="4">
-                    <strong>Pastoral Storycraft</strong>
-                    <span class="arch__refs">Kiki&#x27;s, Wanderhome</span>
-                  </td>
-                </tr>
-                <tr>
-                  <th scope="row" data-d="5"><span class="die">5</span></th>
-                  <td class="hl" data-p="5" data-d="5">
-                    <strong>Sepia:</strong> Brass warmth, weathered maps.
-                  </td>
-                  <td class="hl" data-s="5" data-d="5">
-                    <strong>Industrial:</strong> Coal smoke, ironworks, gears.
-                  </td>
-                  <td class="hl" data-t="5" data-d="5">
-                    <strong>Pulp:</strong> Two-fisted stunts, cliffhangers.
-                  </td>
-                  <td class="hl arch" data-a="5" data-d="5">
-                    <strong>Gaslamp Serial</strong>
-                    <span class="arch__refs">The Mummy, Arcane</span>
-                  </td>
-                  <td class="hl" data-p="5" data-d="5">
-                    <strong>Bright:</strong> Sun-drenched, high-contrast skies.
-                  </td>
-                  <td class="hl" data-s="5" data-d="5">
-                    <strong>Mythic:</strong> Active gods, spirits, sacred
-                    realms.
-                  </td>
-                  <td class="hl" data-t="5" data-d="5">
-                    <strong>Heroic:</strong> Clear stakes, shielding the weak.
-                  </td>
-                  <td class="hl arch" data-a="5" data-d="5">
-                    <strong>High Mythic Fantasy</strong>
-                    <span class="arch__refs">Hades, Mononoke</span>
-                  </td>
-                </tr>
-                <tr>
-                  <th scope="row" data-d="6"><span class="die">6</span></th>
-                  <td class="hl" data-p="6" data-d="6">
-                    <strong>Bright:</strong> Sun-drenched, high-contrast skies.
-                  </td>
-                  <td class="hl" data-s="6" data-d="6">
-                    <strong>Mythic:</strong> Active gods, spirits, sacred
-                    realms.
-                  </td>
-                  <td class="hl" data-t="6" data-d="6">
-                    <strong>Heroic:</strong> Clear stakes, shielding the weak.
-                  </td>
-                  <td class="hl arch" data-a="6" data-d="6">
-                    <strong>High Mythic Fantasy</strong>
-                    <span class="arch__refs">Hades, Mononoke</span>
-                  </td>
-                  <td class="hl" data-p="6" data-d="6">
-                    <strong>Dark:</strong> Deep shadows, sodium-lit corners.
-                  </td>
-                  <td class="hl" data-s="6" data-d="6">
-                    <strong>Modern:</strong> A reflection of today&#x27;s
-                    society and tech.
-                  </td>
-                  <td class="hl" data-t="6" data-d="6">
-                    <strong>Noir:</strong> A web of lies and hard choices.
-                  </td>
-                  <td class="hl arch" data-a="6" data-d="6">
-                    <strong>Hardboiled Crime</strong>
-                    <span class="arch__refs">Se7en, True Detective</span>
-                  </td>
-                </tr>
-                <tr>
-                  <th scope="row" data-d="7"><span class="die">7</span></th>
-                  <td class="hl" data-p="7" data-d="7">
-                    <strong>Pastel:</strong> Soft light, hand-painted calm.
-                  </td>
-                  <td class="hl" data-s="7" data-d="7">
-                    <strong>Hearth:</strong> Workshops, ovens, tended valleys.
-                  </td>
-                  <td class="hl" data-t="7" data-d="7">
-                    <strong>Cozy:</strong> Mutual aid, mending rifts, routine.
-                  </td>
-                  <td class="hl arch" data-a="7" data-d="7">
-                    <strong>Pastoral Storycraft</strong>
-                    <span class="arch__refs">Kiki&#x27;s, Wanderhome</span>
-                  </td>
-                  <td class="hl" data-p="7" data-d="7">
-                    <strong>Chrome:</strong> Mirrored sheen, sterile polish.
-                  </td>
-                  <td class="hl" data-s="7" data-d="7">
-                    <strong>Space:</strong> Jump-lanes, habitats, void transit.
-                  </td>
-                  <td class="hl" data-t="7" data-d="7">
-                    <strong>Adventure:</strong> Bold crews, uncharted horizons.
-                  </td>
-                  <td class="hl arch" data-a="7" data-d="7">
-                    <strong>Golden-Age Sci-Fi</strong>
-                    <span class="arch__refs">Star Trek, Mass Effect</span>
-                  </td>
-                </tr>
-                <tr>
-                  <th scope="row" data-d="8"><span class="die">8</span></th>
-                  <td class="hl" data-p="8" data-d="8">
-                    <strong>Rust:</strong> Corroded iron, patched salvage.
-                  </td>
-                  <td class="hl" data-s="8" data-d="8">
-                    <strong>Primal:</strong> Megafauna, untamed wilds, bone.
-                  </td>
-                  <td class="hl" data-t="8" data-d="8">
-                    <strong>Peril:</strong> Scarce safety, lethal hazards.
-                  </td>
-                  <td class="hl arch" data-a="8" data-d="8">
-                    <strong>Grim Survival</strong>
-                    <span class="arch__refs">Mad Max, Scavengers Reign</span>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+          <div>
+            <h3 class="subhead">Four house cuts</h3>
+            <ul class="bullets bullets--cortex">
+              <li><strong>Full-Force Hits:</strong> Never step down your Impact against a loser's bigger die. Win the Total, land full Impact.</li>
+              <li><strong>Real Fallout Only:</strong> Starts at <code>d6</code> minimum. No <code>d4</code> PP-farming. Steps down by one in quiet recovery scenes. Stepping past <code>d12</code> drops you out of the scene.</li>
+              <li><strong>In-Pool Resources:</strong> Roll a Resource die inside your pool to keep <code>+1</code> Total die, then expend until recovery.</li>
+              <li><strong>Supports:</strong> Shared use Allies, Vehicles, Locations, etc. Starting with 1–3 traits; mix and swap their traits with yours in pools; let them absorb fitting Fallout.</li>
+            </ul>
+
+            <article class="feature feature--cortex">
+              <h3>Prime Set 1: Distinctions</h3>
+              <p>Write three <code>d8</code> Distinctions titled after your world's <a href="#session-zero">Identity Prompts</a>.</p>
+              <p class="core-loop core-loop--cortex"><strong>Hinder:</strong> Roll any Distinction as <code>d4</code> instead of <code>d8</code> to gain <code>1 PP</code>.</p>
+            </article>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="band band--cortex-alt" id="cortex-sheet" aria-labelledby="cortex-sheet-title">
+      <div class="wrap">
+        <header class="section-head">
+          <h2 id="cortex-sheet-title">Cortex Sheet &amp; Mods</h2>
+          <p class="section-head__lede"><strong>Undertow:</strong> Players gain 1 related <code>d8</code> Support or Special. GMs run its Engine Mod in contrast scenes.</p>
+        </header>
+
+        <div class="sheet-grid">
+          <section class="sheet-col" aria-labelledby="engine-title">
+            <h3 id="engine-title" class="col-head col-head--cyan">1 · Palette <svg class="icon-arrow" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#icon-arrow-right"/></svg><span class="visually-hidden">feeds</span> Engine Mod</h3>
+            <ol class="ref-list">
+              <li class="hl" data-p="1" data-d="1"><span class="die">1</span><p><strong>Prismatic · Bleed</strong> — When the uncanny bleeds into a scene, <code>1</code>s &amp; <code>2</code>s both count as Openings. Spend <code>1 PP</code> to rename any Asset or Fallout in play.</p></li>
+              <li class="hl" data-p="2" data-d="2"><span class="die">2</span><p><strong>Sepia · Living Serial</strong> — Log Session Titles as Session Records. Once per session, invoke one for a free <code>1 PP</code> effect or Flashback. Cross it off between sessions to step up a trait or add a <code>d8</code> Signature Asset.</p></li>
+              <li class="hl" data-p="3" data-d="3"><span class="die">3</span><p><strong>Neon · Burnout</strong> — Created Assets last 1 roll. Spend <code>1 PP</code> to sustain for the scene. <strong>Lean In:</strong> roll your own Fallout, then step it up.</p></li>
+              <li class="hl" data-p="4" data-d="4"><span class="die">4</span><p><strong>Pastel · Gentle Stakes</strong> — PC Fallout lands at <code>d6</code>, or steps up existing Fallout by one. It steps down automatically in quiet scenes.</p></li>
+              <li class="hl" data-p="5" data-d="5"><span class="die">5</span><p><strong>Bright · Open Table</strong> — <strong>No GM Bank:</strong> GM <code>PP</code> spends go straight to targeted PCs. Allies share created Assets for free.</p></li>
+              <li class="hl" data-p="6" data-d="6"><span class="die">6</span><p><strong>Dark · Doom Pool</strong> — An escalating <code>d8, d6, d4</code> GM pool replaces difficulty dice pairs. It grows on player Openings and spends dice for twists or Romps.</p></li>
+              <li class="hl" data-p="7" data-d="7"><span class="die">7</span><p><strong>Chrome · Spec Sheet</strong> — Gain two <code>d8</code> Signature Assets with <em>Gear Limit</em>: shut one down for the scene to gain <code>1 PP</code>.</p></li>
+              <li class="hl" data-p="8" data-d="8"><span class="die">8</span><p><strong>Rust · Scarcity</strong> — Gain <code>2d6</code> Salvage Resources. <strong>Stricken:</strong> Any <code>d10+</code> Fallout restricts you to keeping 1 Total die.</p></li>
+            </ol>
+          </section>
+          <section class="sheet-col" aria-labelledby="prime2-title">
+            <h3 id="prime2-title" class="col-head col-head--cyan">2 · Setting <svg class="icon-arrow" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#icon-arrow-right"/></svg><span class="visually-hidden">feeds</span> Prime Set 2</h3>
+            <ol class="ref-list">
+              <li class="hl" data-s="1" data-d="1"><span class="die">1</span><p><strong>Liminal</strong> — Attributes <code>d10, d8, d6</code>: <em>Pulse, Pattern, Poise</em> + one <code>d8</code> Ability with 1 Special &amp; Limit: shut down for the scene for <code>+1 PP</code>.</p></li>
+              <li class="hl" data-s="2" data-d="2"><span class="die">2</span><p><strong>Industrial</strong> — Skills <code>d10, 2×d8, 3×d6</code>, rest <code>d4</code>: <em>Brawl, Craft, Delve, Doctor, Prowl, Rig, Survey, Sway</em>.</p></li>
+              <li class="hl" data-s="3" data-d="3"><span class="die">3</span><p><strong>Future</strong> — Roles <code>d10, 2×d8, d6, d4</code>: <em>Hacker, Fixer, Operator, Tech, Face</em>.</p></li>
+              <li class="hl" data-s="4" data-d="4"><span class="die">4</span><p><strong>Hearth</strong> — Skills <code>d10, 2×d8, 3×d6</code>, rest <code>d4</code>: <em>Cook, Grow, Mend, Notice, Parley, Tinker, Travel, Ward</em> + two <code>d6</code> Specialties.</p></li>
+              <li class="hl" data-s="5" data-d="5"><span class="die">5</span><p><strong>Mythic</strong> — Attributes <code>d10, d8, d6</code>: <em>Might, Grace, Lore</em> + Power Set of two <code>d8</code> mythic Powers &amp; a Limit.</p></li>
+              <li class="hl" data-s="6" data-d="6"><span class="die">6</span><p><strong>Modern</strong> — Roles <code>d10, d8, d6</code>: <em>Mouth, Mind, Muscle</em> + one unrated narrative Talent.</p></li>
+              <li class="hl" data-s="7" data-d="7"><span class="die">7</span><p><strong>Space</strong> — Affiliations: Arenas <code>d10, d8, d6</code>: <em>Void, Station, Surface</em> + shared <code>d8</code> Vehicle rated in <em>Engines, Frame, Systems</em>.</p></li>
+              <li class="hl" data-s="8" data-d="8"><span class="die">8</span><p><strong>Primal</strong> — Affiliations: Arenas <code>d10, d8, d6</code>: <em>Camp, Wilds, Lair</em> + <code>d8</code> Beast Support or Signature Asset.</p></li>
+            </ol>
+          </section>
+          <section class="sheet-col" aria-labelledby="prime3-title">
+            <h3 id="prime3-title" class="col-head col-head--magenta">3 · Tone <svg class="icon-arrow" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#icon-arrow-right"/></svg><span class="visually-hidden">feeds</span> Prime Set 3</h3>
+            <ol class="ref-list">
+              <li class="hl" data-t="1" data-d="1"><span class="die">1</span><p><strong>Weird</strong> — Values <code>d10, d8, 2×d6</code>: <em>Order, Truth, Wonder, Self</em> with Statements. <strong>Question</strong> a belief to triple its die for one roll, then step down &amp; rewrite.</p></li>
+              <li class="hl" data-t="2" data-d="2"><span class="die">2</span><p><strong>Pulp</strong> — Affiliations <code>d10, d8, d6</code>: <em>Solo, Duo, Team</em> + <strong>Hero Dice:</strong> win by 5+ to bank a foe's top-rolling die. Spend <code>1 PP</code> later to roll &amp; add to Total.</p></li>
+              <li class="hl" data-t="3" data-d="3"><span class="die">3</span><p><strong>Punk</strong> — Relationships: Factions <code>d10, d8, d6</code> across 3 dominant Blocs with Statements. <strong>Question</strong> your stance to triple its die &amp; burn standing.</p></li>
+              <li class="hl" data-t="4" data-d="4"><span class="die">4</span><p><strong>Cozy</strong> — Relationships <code>d10, 2×d8</code>, rest <code>d6</code> toward PCs &amp; neighbors + <strong>Team Up:</strong> lend your Relationship die into an ally's pool risk-free.</p></li>
+              <li class="hl" data-t="5" data-d="5"><span class="die">5</span><p><strong>Heroic</strong> — Values <code>d10, d8, 2×d6</code>: <em>Courage, Justice, Mercy, Truth</em> + <strong>Moral Support:</strong> step down your Value for the session to step up an ally's.</p></li>
+              <li class="hl" data-t="6" data-d="6"><span class="die">6</span><p><strong>Noir</strong> — Relationships <code>d10, 2×d8</code>, rest <code>d6</code> toward PCs, informants &amp; suspects with Statements + <strong>GMC Vices:</strong> GMCs oppose using <em>Greed, Control, Wrath</em>.</p></li>
+              <li class="hl" data-t="7" data-d="7"><span class="die">7</span><p><strong>Adventure</strong> — Values <code>d10, d8, 2×d6, d4</code>: <em>Discovery, Duty, Fortune, Glory, Loyalty</em> + three Goals at <code>d6, d8, d10</code>: roll &amp; cross off in opposition, or check off when achieved to step up a trait.</p></li>
+              <li class="hl" data-t="8" data-d="8"><span class="die">8</span><p><strong>Peril</strong> — Reserves <code>d10, d8, 2×d6</code>: <em>Stamina, Resolve, Supply, Luck</em> + <strong>Usage Dice:</strong> rolling <code>1–2</code> on a Reserve steps it down after the roll. <code>d4</code> drops out. Rest resets them.</p></li>
+            </ol>
           </section>
         </div>
-      </section>
 
-      <section
-        class="band band--alt"
-        id="session-zero"
-        aria-labelledby="session-zero-title"
-      >
-        <div class="wrap">
-          <header class="section-head">
-            <h2 id="session-zero-title">Pathways Spaghetti Map</h2>
-            <p class="section-head__lede">
-              Center your Pitch + Undertow on a blank canvas. Pass the pencil
-              around the table 4 times.
-            </p>
-          </header>
-
-          <div class="knot-grid">
-            <div>
-              <h3 class="subhead">Pass 1: Identity prompts</h3>
-              <p>
-                Draw a <strong>Character Circle</strong> on the edge and write
-                your 3 Dial prompt answers inside it.
-              </p>
-              <section
-                class="table-scroll"
-                aria-labelledby="prompts-caption"
-                tabindex="0"
-              >
-                <table class="matrix matrix--compact">
-                  <caption id="prompts-caption" class="visually-hidden">
-                    Identity prompts for each d8 result on each Dial
-                  </caption>
-                  <thead>
-                    <tr>
-                      <th scope="col">d8</th>
-                      <th scope="col">
-                        Palette <span class="th-hint">Texture</span>
-                      </th>
-                      <th scope="col">
-                        Setting <span class="th-hint">Foothold</span>
-                      </th>
-                      <th scope="col">
-                        Tone <span class="th-hint">Hook</span>
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <th scope="row" data-d="1"><span class="die">1</span></th>
-                      <td class="hl" data-p="1" data-d="1">
-                        <strong>Aura</strong>
-                      </td>
-                      <td class="hl" data-s="1" data-d="1">
-                        <strong>Tether</strong>
-                      </td>
-                      <td class="hl" data-t="1" data-d="1">
-                        <strong>Obsession</strong>
-                      </td>
-                    </tr>
-                    <tr>
-                      <th scope="row" data-d="2"><span class="die">2</span></th>
-                      <td class="hl" data-p="2" data-d="2">
-                        <strong>Vice</strong>
-                      </td>
-                      <td class="hl" data-s="2" data-d="2">
-                        <strong>Augment</strong>
-                      </td>
-                      <td class="hl" data-t="2" data-d="2">
-                        <strong>Grievance</strong>
-                      </td>
-                      <td class="hl" data-p="2" data-d="2">
-                        <strong>Relic</strong>
-                      </td>
-                      <td class="hl" data-s="2" data-d="2">
-                        <strong>Trade</strong>
-                      </td>
-                      <td class="hl" data-t="2" data-d="2">
-                        <strong>Trademark</strong>
-                      </td>
-                    </tr>
-                    <tr>
-                      <th scope="row" data-d="3"><span class="die">3</span></th>
-                      <td class="hl" data-p="3" data-d="3">
-                        <strong>Pedigree</strong>
-                      </td>
-                      <td class="hl" data-s="3" data-d="3">
-                        <strong>World</strong>
-                      </td>
-                      <td class="hl" data-t="3" data-d="3">
-                        <strong>Horizon</strong>
-                      </td>
-                      <td class="hl" data-p="3" data-d="3">
-                        <strong>Vice</strong>
-                      </td>
-                      <td class="hl" data-s="3" data-d="3">
-                        <strong>Augment</strong>
-                      </td>
-                      <td class="hl" data-t="3" data-d="3">
-                        <strong>Grievance</strong>
-                      </td>
-                    </tr>
-                    <tr>
-                      <th scope="row" data-d="4"><span class="die">4</span></th>
-                      <td class="hl" data-p="4" data-d="4">
-                        <strong>Secret</strong>
-                      </td>
-                      <td class="hl" data-s="4" data-d="4">
-                        <strong>Day Job</strong>
-                      </td>
-                      <td class="hl" data-t="4" data-d="4">
-                        <strong>Code</strong>
-                      </td>
-                      <td class="hl" data-p="4" data-d="4">
-                        <strong>Comfort</strong>
-                      </td>
-                      <td class="hl" data-s="4" data-d="4">
-                        <strong>Workshop</strong>
-                      </td>
-                      <td class="hl" data-t="4" data-d="4">
-                        <strong>Routine</strong>
-                      </td>
-                    </tr>
-                    <tr>
-                      <th scope="row" data-d="5"><span class="die">5</span></th>
-                      <td class="hl" data-p="5" data-d="5">
-                        <strong>Relic</strong>
-                      </td>
-                      <td class="hl" data-s="5" data-d="5">
-                        <strong>Trade</strong>
-                      </td>
-                      <td class="hl" data-t="5" data-d="5">
-                        <strong>Trademark</strong>
-                      </td>
-                      <td class="hl" data-p="5" data-d="5">
-                        <strong>Banner</strong>
-                      </td>
-                      <td class="hl" data-s="5" data-d="5">
-                        <strong>Calling</strong>
-                      </td>
-                      <td class="hl" data-t="5" data-d="5">
-                        <strong>Oath</strong>
-                      </td>
-                    </tr>
-                    <tr>
-                      <th scope="row" data-d="6"><span class="die">6</span></th>
-                      <td class="hl" data-p="6" data-d="6">
-                        <strong>Banner</strong>
-                      </td>
-                      <td class="hl" data-s="6" data-d="6">
-                        <strong>Calling</strong>
-                      </td>
-                      <td class="hl" data-t="6" data-d="6">
-                        <strong>Oath</strong>
-                      </td>
-                      <td class="hl" data-p="6" data-d="6">
-                        <strong>Secret</strong>
-                      </td>
-                      <td class="hl" data-s="6" data-d="6">
-                        <strong>Day Job</strong>
-                      </td>
-                      <td class="hl" data-t="6" data-d="6">
-                        <strong>Code</strong>
-                      </td>
-                    </tr>
-                    <tr>
-                      <th scope="row" data-d="7"><span class="die">7</span></th>
-                      <td class="hl" data-p="7" data-d="7">
-                        <strong>Comfort</strong>
-                      </td>
-                      <td class="hl" data-s="7" data-d="7">
-                        <strong>Workshop</strong>
-                      </td>
-                      <td class="hl" data-t="7" data-d="7">
-                        <strong>Routine</strong>
-                      </td>
-                      <td class="hl" data-p="7" data-d="7">
-                        <strong>Pedigree</strong>
-                      </td>
-                      <td class="hl" data-s="7" data-d="7">
-                        <strong>World</strong>
-                      </td>
-                      <td class="hl" data-t="7" data-d="7">
-                        <strong>Horizon</strong>
-                      </td>
-                    </tr>
-                    <tr>
-                      <th scope="row" data-d="8"><span class="die">8</span></th>
-                      <td class="hl" data-p="8" data-d="8">
-                        <strong>Scar</strong>
-                      </td>
-                      <td class="hl" data-s="8" data-d="8">
-                        <strong>Kin</strong>
-                      </td>
-                      <td class="hl" data-t="8" data-d="8">
-                        <strong>Liability</strong>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </section>
-
-              <h3 class="subhead">Pass 2: Cross the wires</h3>
-              <ul class="bullets">
-                <li>
-                  <strong>Left · Rumor:</strong> Draw a line to your left
-                  neighbor. State something you've heard about them. They name
-                  the real truth.
-                </li>
-                <li>
-                  <strong>Right · Bond:</strong> Draw a shared Box between you
-                  and your right neighbor. Name a shared tie or asset you both
-                  rely on: <em>Ride, Hideout, Workshop, Beast, Patron</em>.
-                </li>
-              </ul>
-
-              <h3 class="subhead">Pass 3: Stake your claim</h3>
-              <ul class="bullets">
-                <li>
-                  <strong>Edge:</strong> Tag your Character Circle with what
-                  you're best at in this Setting (your top role, skill, or
-                  turf).
-                </li>
-                <li>
-                  <strong>Fact:</strong> Drop a Diamond onto the canvas for a
-                  world truth, Faction, Neighbor, Belief, or Goal pulling at
-                  you. Wire your Character to it.
-                </li>
-              </ul>
-
-              <h3 class="subhead">Pass 4: Event triangle</h3>
-              <p>
-                GM drops a central inverted Event Triangle where the
-                <em>Undertow</em> bites and wires it to 2+ nodes on the map.
-                Start <em>in medias res</em>.
-              </p>
-            </div>
-
-            <figure class="knot-figure">
-              <svg
-                viewBox="0 0 320 260"
-                role="img"
-                aria-labelledby="knot-title knot-desc"
-              >
-                <title id="knot-title">Spaghetti map schematic</title>
-                <desc id="knot-desc">
-                  Character A, Character B and Character C circles are linked by
-                  Rumor wires. A shared Bond box sits between Character B and
-                  Character C. A Fact diamond is wired to Character A. A central
-                  inverted Event triangle is wired to Character A and the Bond.
-                </desc>
-                <g class="wire wire--credit">
-                  <line x1="60" y1="54" x2="260" y2="54" />
-                  <line x1="60" y1="54" x2="152" y2="212" />
-                </g>
-                <g class="wire wire--drive">
-                  <line x1="60" y1="54" x2="54" y2="148" />
-                </g>
-                <g class="wire wire--anchor">
-                  <line x1="260" y1="54" x2="254" y2="140" />
-                  <line x1="254" y1="140" x2="152" y2="212" />
-                </g>
-                <g class="wire wire--ignite">
-                  <line x1="176" y1="118" x2="60" y2="54" />
-                  <line x1="176" y1="118" x2="254" y2="140" />
-                </g>
-                <g class="node node--pc">
-                  <circle cx="60" cy="54" r="32" />
-                  <text x="60" y="51">Character</text>
-                  <text x="60" y="65">A</text>
-                </g>
-                <g class="node node--pc">
-                  <circle cx="260" cy="54" r="32" />
-                  <text x="260" y="51">Character</text>
-                  <text x="260" y="65">B</text>
-                </g>
-                <g class="node node--pc">
-                  <circle cx="152" cy="212" r="32" />
-                  <text x="152" y="209">Character</text>
-                  <text x="152" y="223">C</text>
-                </g>
-                <g class="node node--drive">
-                  <polygon points="54,126 76,148 54,170 32,148" />
-                  <text class="label" x="54" y="186">Fact</text>
-                </g>
-                <g class="node node--anchor">
-                  <rect x="226" y="124" width="56" height="32" rx="4" />
-                  <text class="label" x="254" y="172">Bond</text>
-                </g>
-                <g class="node node--ignite">
-                  <polygon points="150,98 202,98 176,142" />
-                  <text class="label" x="176" y="158">Event</text>
-                </g>
-                <text class="label label--credit" x="160" y="42">Rumor</text>
-              </svg>
-              <figcaption>
-                <span
-                  ><svg viewBox="0 0 16 16" aria-hidden="true">
-                    <circle cx="8" cy="8" r="6.5" />
-                  </svg>
-                  Character</span
-                >
-                <span
-                  ><svg viewBox="0 0 20 14" aria-hidden="true">
-                    <rect x="1" y="1" width="18" height="12" rx="2" />
-                  </svg>
-                  Bond</span
-                >
-                <span
-                  ><svg viewBox="0 0 16 16" aria-hidden="true">
-                    <polygon points="8,1 15,8 8,15 1,8" />
-                  </svg>
-                  Fact</span
-                >
-                <span
-                  ><svg viewBox="0 0 16 16" aria-hidden="true">
-                    <polygon points="1,1 15,1 8,15" />
-                  </svg>
-                  Event</span
-                >
-              </figcaption>
-            </figure>
-          </div>
+        <h3 class="subhead">Sample pitches</h3>
+        <div class="cards cards--2">
+          <article class="card example">
+            <h4><code>8·7·3 +2</code> Rust Space Punk · <span class="muted">Sepia Undertow</span></h4>
+            <p><em>Sheet:</em> Distinctions <em>Scar · World · Grievance</em> + Affiliations: Arenas &amp; <code>d8</code> Vehicle + Relationships: Factions w/ Statements.</p>
+            <p><em>Engine:</em> <code>2d6</code> Salvage Resources, Stricken, pre-war Flashbacks.</p>
+            <p data-requires-js hidden><button type="button" class="button button--ghost" data-preset="8 7 3 palette 2">Load this pitch</button></p>
+          </article>
+          <article class="card example">
+            <h4><code>5·8·7 +4</code> Bright Primal Adventure · <span class="muted">Cozy Undertow</span></h4>
+            <p><em>Sheet:</em> Distinctions <em>Banner · Kin · Horizon</em> + Affiliations: Arenas &amp; <code>d8</code> Beast + Values &amp; 3 Goals.</p>
+            <p><em>Engine:</em> Open Table <code>PP</code> &amp; shared Assets, anchored by Cozy campfire recovery scenes.</p>
+            <p data-requires-js hidden><button type="button" class="button button--ghost" data-preset="5 8 7 tone 4">Load this pitch</button></p>
+          </article>
         </div>
-      </section>
-
-      <section
-        class="band band--cortex"
-        id="cortex"
-        aria-labelledby="cortex-title"
-      >
-        <div class="wrap">
-          <header class="section-head">
-            <h2 id="cortex-title">House Ruled Cortex</h2>
-            <p class="section-head__lede">
-              A <strong>Cortex Prime</strong> baseplate to snap your
-              <code>4d8</code> pitch to.
-            </p>
-          </header>
-
-          <figure class="equation">
-            <figcaption>
-              Baseline pool equation
-              <span class="muted">· + Assets, Resources, Foe Fallout</span>
-            </figcaption>
-            <ol class="equation__terms">
-              <li class="term term--magenta">
-                <span>1 · Distinction</span><code>d8 / d4</code>
-              </li>
-              <li class="term"><span>2 · Setting</span><code>Prime 2</code></li>
-              <li class="term"><span>3 · Tone</span><code>Prime 3</code></li>
-            </ol>
-            <span class="equation__arrow"
-              ><svg
-                class="icon-arrow"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-                focusable="false"
-              >
-                <use href="#icon-arrow-right" /></svg
-              ><span class="visually-hidden">gives</span></span
-            >
-            <ul class="equation__results">
-              <li class="result result--magenta">
-                <strong>1s</strong> Openings
-              </li>
-              <li class="result"><strong>Sum 2</strong> Total</li>
-              <li class="result"><strong>1 die size</strong> Impact d6–d12</li>
-            </ul>
-          </figure>
-
-          <div class="cortex-grid">
-            <div>
-              <div class="callout callout--magenta">
-                <h3>Openings</h3>
-                <p>
-                  Set rolled <code>1</code>s aside. They never count toward
-                  Total or Impact. Foes seize your Openings, handing you
-                  <code>1 PP</code>, to inflict <code>d6</code> Fallout, step up
-                  Fallout, or claim an edge. Spend <code>1 PP</code> to seize GM
-                  Openings. Extra <code>1</code>s step up the die by +1 each.
-                </p>
-              </div>
-
-              <h3 class="subhead">Three conflict speeds</h3>
-              <div class="speeds">
-                <details class="speed" name="speed" open>
-                  <summary>
-                    <span class="speed__num">01</span> Roll
-                    <span class="muted">· single test</span>
-                  </summary>
-                  <p>
-                    One toss vs. GM difficulty: <code>2dX</code> + scene traits,
-                    or the Doom Pool. High Total wins. Instigator wins ties.
-                  </p>
-                </details>
-                <details class="speed speed--magenta" name="speed">
-                  <summary>
-                    <span class="speed__num">02</span> Row
-                    <span class="muted">· escalating contest</span>
-                  </summary>
-                  <p>
-                    Beat the lead Total to take control, or
-                    <strong>Concede</strong> on your terms for
-                    <code>+1 PP</code> when you could roll again. Failing
-                    inflicts the winner's Impact as Fallout.
-                  </p>
-                </details>
-                <details class="speed" name="speed">
-                  <summary>
-                    <span class="speed__num">03</span> Romp
-                    <span class="muted">· multi-die challenge</span>
-                  </summary>
-                  <p>
-                    Roll vs. a central <code>YdX</code> Romp Pool. Win with
-                    Impact <code>&gt;</code> a Romp die to drop it, or
-                    <code>≤</code> to step down the smallest.
-                    <code>d4</code> drops out. Romps act last.
-                  </p>
-                </details>
-              </div>
-            </div>
-
-            <div>
-              <h3 class="subhead">Four house cuts</h3>
-              <ul class="bullets bullets--cortex">
-                <li>
-                  <strong>Full-Force Hits:</strong> Never step down your Impact
-                  against a loser's bigger die. Win the Total, land full Impact.
-                </li>
-                <li>
-                  <strong>Real Fallout Only:</strong> Starts at
-                  <code>d6</code> minimum. No <code>d4</code> PP-farming. Steps
-                  down by one in quiet recovery scenes. Stepping past
-                  <code>d12</code> drops you out of the scene.
-                </li>
-                <li>
-                  <strong>In-Pool Resources:</strong> Roll a Resource die inside
-                  your pool to keep <code>+1</code> Total die, then expend until
-                  recovery.
-                </li>
-                <li>
-                  <strong>Supports:</strong> Shared use Allies, Vehicles,
-                  Locations, etc. Starting with 1–3 traits; mix and swap their
-                  traits with yours in pools; let them absorb fitting Fallout.
-                </li>
-              </ul>
-
-              <article class="feature feature--cortex">
-                <h3>Prime Set 1: Distinctions</h3>
-                <p>
-                  Write three <code>d8</code> Distinctions titled after your
-                  world's <a href="#session-zero">Identity Prompts</a>.
-                </p>
-                <p class="core-loop core-loop--cortex">
-                  <strong>Hinder:</strong> Roll any Distinction as
-                  <code>d4</code> instead of <code>d8</code> to gain
-                  <code>1 PP</code>.
-                </p>
-              </article>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section
-        class="band band--cortex-alt"
-        id="cortex-sheet"
-        aria-labelledby="cortex-sheet-title"
-      >
-        <div class="wrap">
-          <header class="section-head">
-            <h2 id="cortex-sheet-title">Cortex Sheet &amp; Mods</h2>
-            <p class="section-head__lede">
-              <strong>Undertow:</strong> Players gain 1 related
-              <code>d8</code> Support or Special. GMs run its Engine Mod in
-              contrast scenes.
-            </p>
-          </header>
-
-          <div class="sheet-grid">
-            <section class="sheet-col" aria-labelledby="engine-title">
-              <h3 id="engine-title" class="col-head col-head--cyan">
-                1 · Palette
-                <svg
-                  class="icon-arrow"
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
-                  focusable="false"
-                >
-                  <use href="#icon-arrow-right" /></svg
-                ><span class="visually-hidden">feeds</span> Engine Mod
-              </h3>
-              <ol class="ref-list">
-                <li class="hl" data-p="1" data-d="1">
-                  <span class="die">1</span>
-                  <p>
-                    <strong>Prismatic · Bleed</strong> — When the uncanny bleeds
-                    into a scene, <code>1</code>s &amp; <code>2</code>s both
-                    count as Openings. Spend <code>1 PP</code> to rename any
-                    Asset or Fallout in play.
-                  </p>
-                </li>
-                <li class="hl" data-p="2" data-d="2">
-                  <span class="die">2</span>
-                  <p>
-                    <strong>Neon · Burnout</strong> — Created Assets last 1
-                    roll. Spend <code>1 PP</code> to sustain for the scene.
-                    <strong>Lean In:</strong> roll your own Fallout, then step
-                    it up.
-                  </p>
-                </li>
-                <li class="hl" data-p="3" data-d="3">
-                  <span class="die">3</span>
-                  <p>
-                    <strong>Chrome · Spec Sheet</strong> — Gain two
-                    <code>d8</code> Signature Assets with <em>Gear Limit</em>:
-                    shut one down for the scene to gain <code>1 PP</code>.
-                  </p>
-                </li>
-                <li class="hl" data-p="4" data-d="4">
-                  <span class="die">4</span>
-                  <p>
-                    <strong>Dark · Doom Pool</strong> — An escalating
-                    <code>d8, d6, d4</code> GM pool replaces difficulty dice
-                    pairs. It grows on player Openings and spends dice for
-                    twists or Romps.
-                  </p>
-                </li>
-                <li class="hl" data-p="5" data-d="5">
-                  <span class="die">5</span>
-                  <p>
-                    <strong>Sepia · Living Serial</strong> — Log Session Titles
-                    as Session Records. Once per session, invoke one for a free
-                    <code>1 PP</code> effect or Flashback. Cross it off between
-                    sessions to step up a trait or add a
-                    <code>d8</code> Signature Asset.
-                  </p>
-                </li>
-                <li class="hl" data-p="6" data-d="6">
-                  <span class="die">6</span>
-                  <p>
-                    <strong>Bright · Open Table</strong> —
-                    <strong>No GM Bank:</strong> GM <code>PP</code> spends go
-                    straight to targeted PCs. Allies share created Assets for
-                    free.
-                  </p>
-                </li>
-                <li class="hl" data-p="7" data-d="7">
-                  <span class="die">7</span>
-                  <p>
-                    <strong>Pastel · Gentle Stakes</strong> — PC Fallout lands
-                    at <code>d6</code>, or steps up existing Fallout by one. It
-                    steps down automatically in quiet scenes.
-                  </p>
-                </li>
-                <li class="hl" data-p="2" data-d="2">
-                  <span class="die">2</span>
-                  <p>
-                    <strong>Sepia · Living Serial</strong> — Log Session Titles
-                    as Session Records. Once per session, invoke one for a free
-                    <code>1 PP</code> effect or Flashback. Cross it off between
-                    sessions to step up a trait or add a
-                    <code>d8</code> Signature Asset.
-                  </p>
-                </li>
-                <li class="hl" data-p="3" data-d="3">
-                  <span class="die">3</span>
-                  <p>
-                    <strong>Neon · Burnout</strong> — Created Assets last 1
-                    roll. Spend <code>1 PP</code> to sustain for the scene.
-                    <strong>Lean In:</strong> roll your own Fallout, then step
-                    it up.
-                  </p>
-                </li>
-                <li class="hl" data-p="4" data-d="4">
-                  <span class="die">4</span>
-                  <p>
-                    <strong>Pastel · Gentle Stakes</strong> — PC Fallout lands
-                    at <code>d6</code>, or steps up existing Fallout by one. It
-                    steps down automatically in quiet scenes.
-                  </p>
-                </li>
-                <li class="hl" data-p="5" data-d="5">
-                  <span class="die">5</span>
-                  <p>
-                    <strong>Bright · Open Table</strong> —
-                    <strong>No GM Bank:</strong> GM <code>PP</code> spends go
-                    straight to targeted PCs. Allies share created Assets for
-                    free.
-                  </p>
-                </li>
-                <li class="hl" data-p="6" data-d="6">
-                  <span class="die">6</span>
-                  <p>
-                    <strong>Dark · Doom Pool</strong> — An escalating
-                    <code>d8, d6, d4</code> GM pool replaces difficulty dice
-                    pairs. It grows on player Openings and spends dice for
-                    twists or Romps.
-                  </p>
-                </li>
-                <li class="hl" data-p="7" data-d="7">
-                  <span class="die">7</span>
-                  <p>
-                    <strong>Chrome · Spec Sheet</strong> — Gain two
-                    <code>d8</code> Signature Assets with <em>Gear Limit</em>:
-                    shut one down for the scene to gain <code>1 PP</code>.
-                  </p>
-                </li>
-                <li class="hl" data-p="8" data-d="8">
-                  <span class="die">8</span>
-                  <p>
-                    <strong>Rust · Scarcity</strong> — Gain
-                    <code>2d6</code> Salvage Resources.
-                    <strong>Stricken:</strong> Any <code>d10+</code> Fallout
-                    restricts you to keeping 1 Total die.
-                  </p>
-                </li>
-              </ol>
-            </section>
-            <section class="sheet-col" aria-labelledby="prime2-title">
-              <h3 id="prime2-title" class="col-head col-head--cyan">
-                2 · Setting
-                <svg
-                  class="icon-arrow"
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
-                  focusable="false"
-                >
-                  <use href="#icon-arrow-right" /></svg
-                ><span class="visually-hidden">feeds</span> Prime Set 2
-              </h3>
-              <ol class="ref-list">
-                <li class="hl" data-s="1" data-d="1">
-                  <span class="die">1</span>
-                  <p>
-                    <strong>Liminal</strong> — Attributes
-                    <code>d10, d8, d6</code>: <em>Pulse, Pattern, Poise</em> +
-                    one <code>d8</code> Ability with 1 Special &amp; Limit: shut
-                    down for the scene for <code>+1 PP</code>.
-                  </p>
-                </li>
-                <li class="hl" data-s="2" data-d="2">
-                  <span class="die">2</span>
-                  <p>
-                    <strong>Future</strong> — Roles
-                    <code>d10, 2×d8, d6, d4</code>:
-                    <em>Hacker, Fixer, Operator, Tech, Face</em>.
-                  </p>
-                </li>
-                <li class="hl" data-s="3" data-d="3">
-                  <span class="die">3</span>
-                  <p>
-                    <strong>Space</strong> — Affiliations: Arenas
-                    <code>d10, d8, d6</code>: <em>Void, Station, Surface</em> +
-                    shared <code>d8</code> Vehicle rated in
-                    <em>Engines, Frame, Systems</em>.
-                  </p>
-                </li>
-                <li class="hl" data-s="4" data-d="4">
-                  <span class="die">4</span>
-                  <p>
-                    <strong>Modern</strong> — Roles <code>d10, d8, d6</code>:
-                    <em>Mouth, Mind, Muscle</em> + one unrated narrative Talent.
-                  </p>
-                </li>
-                <li class="hl" data-s="5" data-d="5">
-                  <span class="die">5</span>
-                  <p>
-                    <strong>Industrial</strong> — Skills
-                    <code>d10, 2×d8, 3×d6</code>, rest <code>d4</code>:
-                    <em
-                      >Brawl, Craft, Delve, Doctor, Prowl, Rig, Survey, Sway</em
-                    >.
-                  </p>
-                </li>
-                <li class="hl" data-s="6" data-d="6">
-                  <span class="die">6</span>
-                  <p>
-                    <strong>Mythic</strong> — Attributes
-                    <code>d10, d8, d6</code>: <em>Might, Grace, Lore</em> +
-                    Power Set of two <code>d8</code> mythic Powers &amp; a
-                    Limit.
-                  </p>
-                </li>
-                <li class="hl" data-s="7" data-d="7">
-                  <span class="die">7</span>
-                  <p>
-                    <strong>Hearth</strong> — Skills
-                    <code>d10, 2×d8, 3×d6</code>, rest <code>d4</code>:
-                    <em
-                      >Cook, Grow, Mend, Notice, Parley, Tinker, Travel,
-                      Ward</em
-                    >
-                    + two <code>d6</code> Specialties.
-                  </p>
-                </li>
-                <li class="hl" data-s="2" data-d="2">
-                  <span class="die">2</span>
-                  <p>
-                    <strong>Industrial</strong> — Skills
-                    <code>d10, 2×d8, 3×d6</code>, rest <code>d4</code>:
-                    <em
-                      >Brawl, Craft, Delve, Doctor, Prowl, Rig, Survey, Sway</em
-                    >.
-                  </p>
-                </li>
-                <li class="hl" data-s="3" data-d="3">
-                  <span class="die">3</span>
-                  <p>
-                    <strong>Future</strong> — Roles
-                    <code>d10, 2×d8, d6, d4</code>:
-                    <em>Hacker, Fixer, Operator, Tech, Face</em>.
-                  </p>
-                </li>
-                <li class="hl" data-s="4" data-d="4">
-                  <span class="die">4</span>
-                  <p>
-                    <strong>Hearth</strong> — Skills
-                    <code>d10, 2×d8, 3×d6</code>, rest <code>d4</code>:
-                    <em
-                      >Cook, Grow, Mend, Notice, Parley, Tinker, Travel,
-                      Ward</em
-                    >
-                    + two <code>d6</code> Specialties.
-                  </p>
-                </li>
-                <li class="hl" data-s="5" data-d="5">
-                  <span class="die">5</span>
-                  <p>
-                    <strong>Mythic</strong> — Attributes
-                    <code>d10, d8, d6</code>: <em>Might, Grace, Lore</em> +
-                    Power Set of two <code>d8</code> mythic Powers &amp; a
-                    Limit.
-                  </p>
-                </li>
-                <li class="hl" data-s="6" data-d="6">
-                  <span class="die">6</span>
-                  <p>
-                    <strong>Modern</strong> — Roles <code>d10, d8, d6</code>:
-                    <em>Mouth, Mind, Muscle</em> + one unrated narrative Talent.
-                  </p>
-                </li>
-                <li class="hl" data-s="7" data-d="7">
-                  <span class="die">7</span>
-                  <p>
-                    <strong>Space</strong> — Affiliations: Arenas
-                    <code>d10, d8, d6</code>: <em>Void, Station, Surface</em> +
-                    shared <code>d8</code> Vehicle rated in
-                    <em>Engines, Frame, Systems</em>.
-                  </p>
-                </li>
-                <li class="hl" data-s="8" data-d="8">
-                  <span class="die">8</span>
-                  <p>
-                    <strong>Primal</strong> — Affiliations: Arenas
-                    <code>d10, d8, d6</code>: <em>Camp, Wilds, Lair</em> +
-                    <code>d8</code> Beast Support or Signature Asset.
-                  </p>
-                </li>
-              </ol>
-            </section>
-            <section class="sheet-col" aria-labelledby="prime3-title">
-              <h3 id="prime3-title" class="col-head col-head--magenta">
-                3 · Tone
-                <svg
-                  class="icon-arrow"
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
-                  focusable="false"
-                >
-                  <use href="#icon-arrow-right" /></svg
-                ><span class="visually-hidden">feeds</span> Prime Set 3
-              </h3>
-              <ol class="ref-list">
-                <li class="hl" data-t="1" data-d="1">
-                  <span class="die">1</span>
-                  <p>
-                    <strong>Weird</strong> — Values <code>d10, d8, 2×d6</code>:
-                    <em>Order, Truth, Wonder, Self</em> with Statements.
-                    <strong>Question</strong> a belief to triple its die for one
-                    roll, then step down &amp; rewrite.
-                  </p>
-                </li>
-                <li class="hl" data-t="2" data-d="2">
-                  <span class="die">2</span>
-                  <p>
-                    <strong>Punk</strong> — Relationships: Factions
-                    <code>d10, d8, d6</code> across 3 dominant Blocs with
-                    Statements. <strong>Question</strong> your stance to triple
-                    its die &amp; burn standing.
-                  </p>
-                </li>
-                <li class="hl" data-t="3" data-d="3">
-                  <span class="die">3</span>
-                  <p>
-                    <strong>Adventure</strong> — Values
-                    <code>d10, d8, 2×d6, d4</code>:
-                    <em>Discovery, Duty, Fortune, Glory, Loyalty</em> + three
-                    Goals at <code>d6, d8, d10</code>: roll &amp; cross off in
-                    opposition, or check off when achieved to step up a trait.
-                  </p>
-                </li>
-                <li class="hl" data-t="4" data-d="4">
-                  <span class="die">4</span>
-                  <p>
-                    <strong>Noir</strong> — Relationships
-                    <code>d10, 2×d8</code>, rest <code>d6</code> toward PCs,
-                    informants &amp; suspects with Statements +
-                    <strong>GMC Vices:</strong> GMCs oppose using
-                    <em>Greed, Control, Wrath</em>.
-                  </p>
-                </li>
-                <li class="hl" data-t="5" data-d="5">
-                  <span class="die">5</span>
-                  <p>
-                    <strong>Pulp</strong> — Affiliations
-                    <code>d10, d8, d6</code>: <em>Solo, Duo, Team</em> +
-                    <strong>Hero Dice:</strong> win by 5+ to bank a foe's
-                    top-rolling die. Spend <code>1 PP</code> later to roll &amp;
-                    add to Total.
-                  </p>
-                </li>
-                <li class="hl" data-t="6" data-d="6">
-                  <span class="die">6</span>
-                  <p>
-                    <strong>Heroic</strong> — Values <code>d10, d8, 2×d6</code>:
-                    <em>Courage, Justice, Mercy, Truth</em> +
-                    <strong>Moral Support:</strong> step down your Value for the
-                    session to step up an ally's.
-                  </p>
-                </li>
-                <li class="hl" data-t="7" data-d="7">
-                  <span class="die">7</span>
-                  <p>
-                    <strong>Cozy</strong> — Relationships
-                    <code>d10, 2×d8</code>, rest <code>d6</code> toward PCs
-                    &amp; neighbors + <strong>Team Up:</strong> lend your
-                    Relationship die into an ally's pool risk-free.
-                  </p>
-                </li>
-                <li class="hl" data-t="2" data-d="2">
-                  <span class="die">2</span>
-                  <p>
-                    <strong>Pulp</strong> — Affiliations
-                    <code>d10, d8, d6</code>: <em>Solo, Duo, Team</em> +
-                    <strong>Hero Dice:</strong> win by 5+ to bank a foe's
-                    top-rolling die. Spend <code>1 PP</code> later to roll &amp;
-                    add to Total.
-                  </p>
-                </li>
-                <li class="hl" data-t="3" data-d="3">
-                  <span class="die">3</span>
-                  <p>
-                    <strong>Punk</strong> — Relationships: Factions
-                    <code>d10, d8, d6</code> across 3 dominant Blocs with
-                    Statements. <strong>Question</strong> your stance to triple
-                    its die &amp; burn standing.
-                  </p>
-                </li>
-                <li class="hl" data-t="4" data-d="4">
-                  <span class="die">4</span>
-                  <p>
-                    <strong>Cozy</strong> — Relationships
-                    <code>d10, 2×d8</code>, rest <code>d6</code> toward PCs
-                    &amp; neighbors + <strong>Team Up:</strong> lend your
-                    Relationship die into an ally's pool risk-free.
-                  </p>
-                </li>
-                <li class="hl" data-t="5" data-d="5">
-                  <span class="die">5</span>
-                  <p>
-                    <strong>Heroic</strong> — Values <code>d10, d8, 2×d6</code>:
-                    <em>Courage, Justice, Mercy, Truth</em> +
-                    <strong>Moral Support:</strong> step down your Value for the
-                    session to step up an ally's.
-                  </p>
-                </li>
-                <li class="hl" data-t="6" data-d="6">
-                  <span class="die">6</span>
-                  <p>
-                    <strong>Noir</strong> — Relationships
-                    <code>d10, 2×d8</code>, rest <code>d6</code> toward PCs,
-                    informants &amp; suspects with Statements +
-                    <strong>GMC Vices:</strong> GMCs oppose using
-                    <em>Greed, Control, Wrath</em>.
-                  </p>
-                </li>
-                <li class="hl" data-t="7" data-d="7">
-                  <span class="die">7</span>
-                  <p>
-                    <strong>Adventure</strong> — Values
-                    <code>d10, d8, 2×d6, d4</code>:
-                    <em>Discovery, Duty, Fortune, Glory, Loyalty</em> + three
-                    Goals at <code>d6, d8, d10</code>: roll &amp; cross off in
-                    opposition, or check off when achieved to step up a trait.
-                  </p>
-                </li>
-                <li class="hl" data-t="8" data-d="8">
-                  <span class="die">8</span>
-                  <p>
-                    <strong>Peril</strong> — Reserves
-                    <code>d10, d8, 2×d6</code>:
-                    <em>Stamina, Resolve, Supply, Luck</em> +
-                    <strong>Usage Dice:</strong> rolling <code>1–2</code> on a
-                    Reserve steps it down after the roll. <code>d4</code> drops
-                    out. Rest resets them.
-                  </p>
-                </li>
-              </ol>
-            </section>
-          </div>
-
-          <h3 class="subhead">Sample pitches</h3>
-          <div class="cards cards--2">
-            <article class="card example">
-              <h4>
-                <code>8·3·2 +5</code> Rust Space Punk ·
-                <span class="muted">Sepia Undertow</span>
-              </h4>
-              <h4>
-                <code>8·7·3 +2</code> Rust Space Punk ·
-                <span class="muted">Sepia Undertow</span>
-              </h4>
-              <p>
-                <em>Sheet:</em> Distinctions <em>Scar · World · Grievance</em> +
-                Affiliations: Arenas &amp; <code>d8</code> Vehicle +
-                Relationships: Factions w/ Statements.
-              </p>
-              <p>
-                <em>Engine:</em> <code>2d6</code> Salvage Resources, Stricken,
-                pre-war Flashbacks.
-              </p>
-              <p data-requires-js hidden>
-                <button
-                  type="button"
-                  class="button button--ghost"
-                  data-preset="8 3 2 palette 5"
-                >
-                  Load this pitch
-                </button>
-              </p>
-              <p data-requires-js hidden>
-                <button
-                  type="button"
-                  class="button button--ghost"
-                  data-preset="8 7 3 palette 2"
-                >
-                  Load this pitch
-                </button>
-              </p>
-            </article>
-            <article class="card example">
-              <h4>
-                <code>6·8·3 +7</code> Bright Primal Adventure ·
-                <span class="muted">Cozy Undertow</span>
-              </h4>
-              <h4>
-                <code>5·8·7 +4</code> Bright Primal Adventure ·
-                <span class="muted">Cozy Undertow</span>
-              </h4>
-              <p>
-                <em>Sheet:</em> Distinctions <em>Banner · Kin · Horizon</em> +
-                Affiliations: Arenas &amp; <code>d8</code> Beast + Values &amp;
-                3 Goals.
-              </p>
-              <p>
-                <em>Engine:</em> Open Table <code>PP</code> &amp; shared Assets,
-                anchored by Cozy campfire recovery scenes.
-              </p>
-              <p data-requires-js hidden>
-                <button
-                  type="button"
-                  class="button button--ghost"
-                  data-preset="6 8 3 tone 7"
-                >
-                  Load this pitch
-                </button>
-              </p>
-              <p data-requires-js hidden>
-                <button
-                  type="button"
-                  class="button button--ghost"
-                  data-preset="5 8 7 tone 4"
-                >
-                  Load this pitch
-                </button>
-              </p>
-            </article>
-          </div>
-        </div>
-      </section>
-    </main>
-
-    <footer class="site-footer">
-      <div class="wrap site-footer__inner">
-        <p><strong>4d8 Worlds</strong> · by Lynn Jones</p>
-        <p class="muted">System-neutral engine · Cortex Prime compatible</p>
-        <p class="muted site-footer__legal">
-          Independent work compatible with Cortex Prime; not affiliated with or
-          endorsed by Dire Wolf Digital, Inc. Cortex Prime is a registered
-          trademark of Dire Wolf Digital, Inc.
-        </p>
       </div>
-    </footer>
-  </body>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap site-footer__inner">
+      <p><strong>4d8 Worlds</strong> · by Lynn Jones</p>
+      <p class="muted">System-neutral engine · Cortex Prime compatible</p>
+      <p class="muted site-footer__legal">Independent work compatible with Cortex Prime; not affiliated with or endorsed by Dire Wolf Digital, Inc. Cortex Prime is a registered trademark of Dire Wolf Digital, Inc.</p>
+    </div>
+  </footer>
+</body>
 </html>
