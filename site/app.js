@@ -14,9 +14,9 @@ const pitchStatus = document.getElementById('pitch-status');
 const DIALS = ['palette', 'setting', 'tone'];
 const DIAL_TITLES = { palette: 'Palette', setting: 'Setting', tone: 'Tone' };
 const WORDS = {
-  palette: ['', 'Prismatic', 'Neon', 'Chrome', 'Dark', 'Sepia', 'Bright', 'Pastel', 'Rust'],
-  setting: ['', 'Liminal', 'Future', 'Space', 'Modern', 'Industrial', 'Mythic', 'Hearth', 'Primal'],
-  tone: ['', 'Weird', 'Punk', 'Adventure', 'Noir', 'Pulp', 'Heroic', 'Cozy', 'Peril'],
+  palette: ['', 'Prismatic', 'Sepia', 'Neon', 'Pastel', 'Bright', 'Dark', 'Chrome', 'Rust'],
+  setting: ['', 'Liminal', 'Industrial', 'Future', 'Hearth', 'Mythic', 'Modern', 'Space', 'Primal'],
+  tone: ['', 'Weird', 'Pulp', 'Punk', 'Cozy', 'Heroic', 'Noir', 'Adventure', 'Peril'],
 };
 
 const liveWords = {
@@ -316,6 +316,39 @@ function flashToast(msg) {
 
 document.querySelectorAll('[data-requires-js]').forEach((el) => { el.hidden = false; });
 
+// Site-wide Light / Dark mode toggle (poster card stock stays independent via Palette Dial 1)
+{
+  const themeBtn = document.getElementById('theme-toggle');
+  const darkMql = window.matchMedia('(prefers-color-scheme: dark)');
+  const themeMeta = document.querySelector('meta[name="theme-color"]');
+
+  const currentTheme = () =>
+    document.documentElement.dataset.theme || (darkMql.matches ? 'dark' : 'light');
+
+  const syncThemeUI = () => {
+    const isDark = currentTheme() === 'dark';
+    const nextLabel = isDark ? 'Switch to light mode' : 'Switch to dark mode';
+    if (themeBtn) {
+      themeBtn.setAttribute('aria-label', nextLabel);
+      themeBtn.setAttribute('title', nextLabel);
+    }
+    if (themeMeta) {
+      themeMeta.setAttribute('content', isDark ? '#141213' : '#fbf7f0');
+    }
+  };
+
+  syncThemeUI();
+  darkMql.addEventListener('change', syncThemeUI);
+
+  themeBtn?.addEventListener('click', () => {
+    const next = currentTheme() === 'dark' ? 'light' : 'dark';
+    document.documentElement.dataset.theme = next;
+    document.documentElement.style.colorScheme = next;
+    try { localStorage.setItem('palette-theme', next); } catch { }
+    syncThemeUI();
+  });
+}
+
 // Restore pitch from URL if present; otherwise run the slowed-down 4d8 roll in the Pitch Poster.
 {
   const params = new URLSearchParams(location.search);
@@ -355,7 +388,7 @@ form?.addEventListener('submit', async (event) => {
   const state = readCurrentState();
   const title = state
     ? `${WORDS.palette[state.values[0]]} ${WORDS.setting[state.values[1]]} ${WORDS.tone[state.values[2]]}`
-    : '4D Combinatoric Worldbuilding';
+    : '4d8 Worlds';
 
   if (navigator.share) {
     try {

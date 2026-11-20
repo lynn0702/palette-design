@@ -1,6 +1,6 @@
-# 4D Combinatoric Worldbuilding
+# 4d8 Worlds
 
-_Dial in your inspiration_
+_Find your Palette. Dial in your Setting. Strike a Tone._
 
 Live interactive reference & dice roller: **https://palette.lynnjones.rocks/**
 
@@ -22,4 +22,4 @@ node --check site/app.js
 
 Code and build scripts are licensed under the [MIT License](LICENSE). Rules text is by Lynn Jones.
 
-_4D Combinatoric Worldbuilding is an independent work compatible with Cortex Prime and is not affiliated with or endorsed by Dire Wolf Digital, Inc. Cortex Prime is a registered trademark of Dire Wolf Digital, Inc._
+_4d8 Worlds is an independent work compatible with Cortex Prime and is not affiliated with or endorsed by Dire Wolf Digital, Inc. Cortex Prime is a registered trademark of Dire Wolf Digital, Inc._

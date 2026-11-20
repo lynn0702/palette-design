@@ -51,11 +51,13 @@ const { Curve, CurveBuilder, PolyCurve, Rectangle, Transform } = require('/geome
 const { LineStyleDescriptor } = require('/linestyle.js');
 const {
   FrameTextNodeDefinition,
+  ImageNodeDefinition,
   NodeChildType,
   PolyCurveNodeDefinition,
   ShapeNodeDefinition,
   getNodeChildrenRecursive,
 } = require('/nodes.js');
+const { Bitmap, RasterFormat } = require('/rasterobject.js');
 const {
   ParagraphAlignXType,
   ParagraphAttDoubleType,
@@ -122,17 +124,58 @@ const PALETTE = {
   cortexDarkPillBg: RGBA8(34, 48, 76, 255),
 };
 
-// 8-Row Chromatic Dial Spectrum (rows 1..8)
+// 8-Row Chromatic Dial Spectrum (rows 1..8 — checkerboard order)
 const DIAL_SWATCHES = [
   { name: 'Prismatic', bg: RGB8(139, 44, 226), fg: RGB8(255, 255, 255), text: RGB8(106, 24, 180), light: RGB8(198, 152, 246) },
-  { name: 'Neon',      bg: RGB8(230, 25, 115), fg: RGB8(255, 255, 255), text: RGB8(176, 14, 82),  light: RGB8(248, 134, 184) },
-  { name: 'Chrome',    bg: RGB8(14, 124, 204), fg: RGB8(255, 255, 255), text: RGB8(10, 94, 158),  light: RGB8(126, 192, 242) },
-  { name: 'Dark',      bg: RGB8(42, 52, 86),   fg: RGB8(255, 255, 255), text: RGB8(36, 44, 74),   light: RGB8(152, 164, 198) },
   { name: 'Sepia',     bg: RGB8(184, 108, 24), fg: RGB8(255, 255, 255), text: RGB8(142, 78, 10),  light: RGB8(232, 180, 120) },
-  { name: 'Bright',    bg: RGB8(244, 174, 30), fg: RGB8(24, 22, 24),    text: RGB8(146, 82, 0),   light: RGB8(252, 214, 124) },
+  { name: 'Neon',      bg: RGB8(230, 25, 115), fg: RGB8(255, 255, 255), text: RGB8(176, 14, 82),  light: RGB8(248, 134, 184) },
   { name: 'Pastel',    bg: RGB8(36, 146, 120), fg: RGB8(255, 255, 255), text: RGB8(20, 108, 86),  light: RGB8(134, 212, 192) },
+  { name: 'Bright',    bg: RGB8(244, 174, 30), fg: RGB8(24, 22, 24),    text: RGB8(146, 82, 0),   light: RGB8(252, 214, 124) },
+  { name: 'Dark',      bg: RGB8(42, 52, 86),   fg: RGB8(255, 255, 255), text: RGB8(36, 44, 74),   light: RGB8(152, 164, 198) },
+  { name: 'Chrome',    bg: RGB8(14, 124, 204), fg: RGB8(255, 255, 255), text: RGB8(10, 94, 158),  light: RGB8(126, 192, 242) },
   { name: 'Rust',      bg: RGB8(192, 60, 32),  fg: RGB8(255, 255, 255), text: RGB8(152, 42, 18),  light: RGB8(234, 142, 122) },
 ];
+
+const TEXTURE_FILENAMES = {
+  1: 'p1_prismatic.png',
+  2: 'p2_sepia.png',
+  3: 'p3_neon.png',
+  4: 'p4_pastel.png',
+  5: 'p5_bright.png',
+  6: 'p6_dark.png',
+  7: 'p7_chrome.png',
+  8: 'p8_rust.png',
+};
+const TEXTURE_CACHE = new Map();
+
+function addClippedTextureImage(doc, targetNode, rect, pIdx, name) {
+  const fname = TEXTURE_FILENAMES[pIdx];
+  if (!fname || !targetNode) return null;
+  const path = `${Application.userDesktopPath}/PaletteDesign_Staging/textures/${fname}`;
+  let bm = TEXTURE_CACHE.get(pIdx);
+  if (!bm) {
+    bm = Bitmap.loadFromFile(path);
+    TEXTURE_CACHE.set(pIdx, bm);
+  }
+  if (!bm || !bm.width || !bm.height) return null;
+  const imgDef = ImageNodeDefinition.create(RasterFormat.RGBA8);
+  imgDef.bitmap = bm;
+  if (name) imgDef.userDescription = name;
+  const builder = AddChildNodesCommandBuilder.create();
+  builder.setInsertionTarget(targetNode);
+  builder.addNode(imgDef);
+  const cmd = builder.createCommand(false, NodeChildType.Main);
+  doc.executeCommand(cmd);
+  const imgNode = cmd.newNodes && cmd.newNodes[0];
+  if (imgNode) {
+    const xform = Transform.createTranslate(rect.x, rect.y).multiply(
+      Transform.createScale(rect.width / bm.width, rect.height / bm.height)
+    );
+    doc.executeCommand(DocumentCommand.createTransform(Selection.create(doc, imgNode), xform, { mergeable: false }));
+    doc.selection.clear();
+  }
+  return imgNode;
+}
 
 // Exact 29×29 Version-3 ECC-M QR code path for https://palette.lynnjones.rocks/
 const QR_SIZE = 29;
@@ -370,8 +413,9 @@ function makeRectPx(xIn, yIn, wIn, hIn, originX, originY) {
 
 function addNode(doc, def) {
   const builder = AddChildNodesCommandBuilder.create();
+  if (doc.currentSpread) builder.setInsertionTarget(doc.currentSpread);
   builder.addNode(def);
-  const cmd = builder.createCommand(true, NodeChildType.Main);
+  const cmd = builder.createCommand(false, NodeChildType.Main);
   doc.executeCommand(cmd);
   return cmd.newNodes[0];
 }
@@ -419,6 +463,21 @@ function addDiamondShape(doc, rect, fillColour, strokeColour, strokePt, name) {
 
 function addTriangleShape(doc, rect, fillColour, strokeColour, strokePt, name) {
   return addShapeNode(doc, ShapeTriangle.create(), rect, fillColour, strokeColour, strokePt, name);
+}
+
+function addInvertedTriangleShape(doc, rect, fillColour, strokeColour, strokePt, name) {
+  return addPolygon(
+    doc,
+    [
+      [rect.x, rect.y],
+      [rect.x + rect.width, rect.y],
+      [rect.x + rect.width / 2, rect.y + rect.height],
+    ],
+    fillColour,
+    strokeColour,
+    strokePt,
+    name
+  );
 }
 
 function addCircleShape(doc, rect, fillColour, strokeColour, strokePt, name) {
@@ -952,11 +1011,25 @@ function addPitchPosterCard(doc, styles, cfg) {
   const uSw = DIAL_SWATCHES[uIdx - 1];
   const out = [];
 
-  addShadowCard(
+  const isLightStock = pIdx === 2 || pIdx === 4 || pIdx === 5;
+  const stockMap = {
+    1: { bg: RGB8(22, 16, 36), border: pSw.bg, panel: RGB8(30, 22, 46) },
+    2: { bg: RGB8(226, 209, 179), border: RGB8(140, 90, 32), panel: RGB8(216, 196, 160) },
+    3: { bg: RGB8(15, 9, 22), border: pSw.bg, panel: RGB8(26, 14, 36) },
+    4: { bg: RGB8(218, 240, 229), border: RGB8(47, 140, 116), panel: RGB8(204, 232, 218) },
+    5: { bg: RGB8(252, 247, 234), border: RGB8(212, 144, 10), panel: RGB8(244, 233, 205) },
+    6: { bg: RGB8(12, 14, 24), border: pSw.bg, panel: RGB8(20, 24, 38) },
+    7: { bg: RGB8(20, 44, 72), border: pSw.bg, panel: RGB8(26, 54, 86) },
+    8: { bg: RGB8(64, 29, 14), border: RGB8(140, 61, 32), panel: RGB8(42, 19, 10) },
+  };
+  const stock = stockMap[pIdx] || { bg: PALETTE.neutralCard, border: pSw.bg, panel: PALETTE.neutralPanel };
+
+  const cardRect = makeRectPx(xIn, yIn, wIn, hIn, ox, oy);
+  const cardNode = addShadowCard(
     doc,
-    makeRectPx(xIn, yIn, wIn, hIn, ox, oy),
-    PALETTE.neutralCard,
-    pSw.bg,
+    cardRect,
+    stock.bg,
+    stock.border,
     1.4,
     pSw.bg,
     3.0,
@@ -964,6 +1037,7 @@ function addPitchPosterCard(doc, styles, cfg) {
     ShapeCornerType.Round,
     `${id}_card`
   );
+  addClippedTextureImage(doc, cardNode, cardRect, pIdx, `${id}_tex`);
 
   const pad = fullBento ? 0.16 : 0.12;
   const innerW = wIn - 2 * pad;
@@ -974,85 +1048,111 @@ function addPitchPosterCard(doc, styles, cfg) {
 
   let cy = yIn + (fullBento ? 0.14 : 0.10);
 
+  const inkFor = (sw) => (isLightStock ? sw.text : sw.light);
   const lines = [
-    { key: 'p', word: pWord, align: ParagraphAlignXType.Left, col: pSw.light },
-    { key: 's', word: sWord, align: ParagraphAlignXType.Centre, col: sSw.light },
-    { key: 't', word: tWord, align: ParagraphAlignXType.Right, col: tSw.light },
+    { key: 'p', word: pWord, align: ParagraphAlignXType.Left, col: inkFor(pSw) },
+    { key: 's', word: sWord, align: ParagraphAlignXType.Centre, col: inkFor(sSw) },
+    { key: 't', word: tWord, align: ParagraphAlignXType.Right, col: inkFor(tSw) },
   ];
 
   for (const ln of lines) {
-    out.push(
-      createTextFrameWithAutoFit(doc, styles, {
-        id: `${id}_w_${ln.key}`,
+    const wRes = createTextFrameWithAutoFit(doc, styles, {
+      id: `${id}_w_${ln.key}`,
+      pageNum,
+      rect: makeRectPx(xIn + pad, cy, innerW, fullBento ? 0.29 : 0.22, ox, oy),
+      theme: 'neutral',
+      allowAutoTighten: false,
+      blocks: [
+        {
+          kind: 'body',
+          text: ln.word,
+          forceFontKey: 'displayHeavy',
+          fontPt: wordPt,
+          leadingPt: wordLead,
+          caps: CapsType.AllCaps,
+          colour: ln.col,
+          align: ln.align,
+          spaceAfterPt: 0,
+        },
+      ],
+    });
+    out.push(wRes);
+    cy += fullBento ? 0.29 : 0.22;
+
+    if (uDial === ln.key && uWord) {
+      // Measure actual Dial word ink box so the hairline sits dead-center between Dial & Undertow ink
+      let wInk = null;
+      try {
+        wInk = wRes.node.getExactSpreadVisibleBox(false, false);
+      } catch {
+        wInk = null;
+      }
+      const gapIn = fullBento ? 0.12 : 0.10;
+      const wBottomIn = wInk ? (wInk.y + wInk.height - oy) / IN : cy - 0.03;
+      const wMidXIn = wInk ? (wInk.x + wInk.width / 2 - ox) / IN : xIn + wIn / 2;
+      const ruleW = wInk ? Math.max(0.75, (wInk.width / IN) * 1.04) : Math.min(innerW * 0.48, Math.max(0.88, ln.word.length * (fullBento ? 0.155 : 0.115)));
+      const rx1 = wMidXIn - ruleW / 2;
+      const uTopIn = wBottomIn + gapIn;
+
+      const uCol = inkFor(uSw);
+      const uRes = createTextFrameWithAutoFit(doc, styles, {
+        id: `${id}_u_txt`,
         pageNum,
-        rect: makeRectPx(xIn + pad, cy, innerW, fullBento ? 0.29 : 0.22, ox, oy),
+        rect: makeRectPx(rx1 - 0.16, uTopIn, ruleW + 0.32, 0.20, ox, oy),
         theme: 'neutral',
         allowAutoTighten: false,
         blocks: [
           {
             kind: 'body',
-            text: ln.word,
-            forceFontKey: 'displayHeavy',
-            fontPt: wordPt,
-            leadingPt: wordLead,
-            caps: CapsType.AllCaps,
-            colour: ln.col,
-            align: ln.align,
+            text: uWord,
+            forceFontKey: 'monoBold',
+            fontPt: subPt,
+            leadingPt: subLead,
+            colour: uCol,
+            align: ParagraphAlignXType.Centre,
             spaceAfterPt: 0,
           },
         ],
-      })
-    );
-    cy += fullBento ? 0.29 : 0.22;
+      });
+      out.push(uRes);
 
-    if (uDial === ln.key && uWord) {
-      // Hairline divider centered under parent Dial placement
-      const ruleW = Math.min(innerW * 0.48, Math.max(0.85, ln.word.length * (fullBento ? 0.155 : 0.115)));
-      let rx1 = xIn + pad;
-      if (ln.align === ParagraphAlignXType.Centre) rx1 = xIn + pad + (innerW - ruleW) / 2;
-      if (ln.align === ParagraphAlignXType.Right) rx1 = xIn + pad + innerW - ruleW;
+      let uInk = null;
+      try {
+        uInk = uRes.node.getExactSpreadVisibleBox(false, false);
+      } catch {
+        uInk = null;
+      }
+      const ruleYPx = wInk && uInk
+        ? (wInk.y + wInk.height + uInk.y) / 2
+        : oy + (wBottomIn + gapIn / 2) * IN;
+
       addLineSegment(
         doc,
         ox + rx1 * IN,
-        oy + (cy + 0.02) * IN,
+        ruleYPx,
         ox + (rx1 + ruleW) * IN,
-        oy + (cy + 0.02) * IN,
-        uSw.light,
+        ruleYPx,
+        uCol,
         0.75,
         `${id}_u_rule`
       );
-      out.push(
-        createTextFrameWithAutoFit(doc, styles, {
-          id: `${id}_u_txt`,
-          pageNum,
-          rect: makeRectPx(rx1 - 0.12, cy + 0.04, ruleW + 0.24, 0.20, ox, oy),
-          theme: 'neutral',
-          allowAutoTighten: false,
-          blocks: [
-            {
-              kind: 'body',
-              text: uWord,
-              forceFontKey: 'monoBold',
-              fontPt: subPt,
-              leadingPt: subLead,
-              colour: uSw.light,
-              align: ParagraphAlignXType.Centre,
-              spaceAfterPt: 0,
-            },
-          ],
-        })
-      );
-      cy += 0.24;
+      cy = (uInk ? (uInk.y + uInk.height - oy) / IN : uTopIn + 0.16) + (fullBento ? 0.08 : 0.06);
     } else {
       cy += fullBento ? 0.04 : 0.02;
     }
   }
 
-  if (fullBento && prompts && mods) {
-    // Identity Prompts Bento Box (10 pt floor throughout)
-    const idY = yIn + 1.46;
+  if (fullBento && prompts) {
+    // Identity Prompts Bento Box (10 pt floor, system-neutral!)
+    const idY = yIn + 1.48;
     const idH = 0.86;
-    addRectShape(doc, makeRectPx(xIn + pad, idY, innerW, idH, ox, oy), PALETTE.neutralPanel, PALETTE.neutralGold, 0.75, `${id}_id_box`, 0);
+    const bentoBorder = isLightStock ? PALETTE.neutralGoldText : PALETTE.neutralGold;
+    const bentoHdrCol = isLightStock ? PALETTE.neutralGoldText : PALETTE.neutralGold;
+    const bentoSubCol = isLightStock ? PALETTE.mutedInk : PALETTE.neutralSubtleText;
+    const bentoValCol = isLightStock ? PALETTE.neutralDark : PALETTE.white;
+    const bentoDivCol = isLightStock ? PALETTE.neutralBorder : PALETTE.neutralDarkBorder;
+
+    addRectShape(doc, makeRectPx(xIn + pad, idY, innerW, idH, ox, oy), stock.panel, bentoBorder, 0.75, `${id}_id_box`, 0);
     out.push(
       createTextFrameWithAutoFit(doc, styles, {
         id: `${id}_id_hdr`,
@@ -1067,7 +1167,7 @@ function addPitchPosterCard(doc, styles, cfg) {
             forceFontKey: 'displayBold',
             fontPt: 10.0,
             leadingPt: 11.2,
-            colour: PALETTE.neutralGold,
+            colour: bentoHdrCol,
             spaceAfterPt: 0,
           },
         ],
@@ -1079,7 +1179,7 @@ function addPitchPosterCard(doc, styles, cfg) {
     for (let i = 0; i < 3; i++) {
       const px = xIn + pad + 0.10 + i * pColW;
       if (i > 0) {
-        addLineSegment(doc, ox + (px - 0.04) * IN, oy + (idY + 0.30) * IN, ox + (px - 0.04) * IN, oy + (idY + idH - 0.08) * IN, PALETTE.neutralDarkBorder, 0.5, `${id}_id_div${i}`);
+        addLineSegment(doc, ox + (px - 0.04) * IN, oy + (idY + 0.30) * IN, ox + (px - 0.04) * IN, oy + (idY + idH - 0.08) * IN, bentoDivCol, 0.5, `${id}_id_div${i}`);
       }
       out.push(
         createTextFrameWithAutoFit(doc, styles, {
@@ -1094,7 +1194,7 @@ function addPitchPosterCard(doc, styles, cfg) {
               forceFontKey: 'displaySemi',
               fontPt: 10.0,
               leadingPt: 11.4,
-              colour: PALETTE.neutralSubtleText,
+              colour: bentoSubCol,
               spaceAfterPt: 1.5,
             },
             {
@@ -1103,7 +1203,7 @@ function addPitchPosterCard(doc, styles, cfg) {
               forceFontKey: 'displayBold',
               fontPt: 10.5,
               leadingPt: 12.0,
-              colour: PALETTE.white,
+              colour: bentoValCol,
               spaceAfterPt: 0,
             },
           ],
@@ -1111,53 +1211,55 @@ function addPitchPosterCard(doc, styles, cfg) {
       );
     }
 
-    // 3 Bottom Cortex Bento Tiles (10 pt floor)
-    const modY = idY + idH + 0.10;
-    const modH = hIn - (modY - yIn) - 0.14;
-    const gap = 0.08;
-    const tileW = (innerW - 2 * gap) / 3;
-    const mLabels = ['Engine Mod', 'Prime Set 2', 'Prime Set 3'];
-    const mCols = [pSw.bg, sSw.bg, tSw.bg];
-    for (let i = 0; i < 3; i++) {
-      const tx = xIn + pad + i * (tileW + gap);
-      addRectShape(doc, makeRectPx(tx, modY, tileW, modH, ox, oy), PALETTE.neutralPanel, mCols[i], 0.85, `${id}_mod_${i}`, 0);
-      out.push(
-        createTextFrameWithAutoFit(doc, styles, {
-          id: `${id}_mod_hdr_${i}`,
-          pageNum,
-          rect: makeRectPx(tx + 0.08, modY + 0.07, tileW - 0.16, 0.20, ox, oy),
-          theme: 'neutral',
-          allowAutoTighten: false,
-          blocks: [
-            {
-              kind: 'body',
-              text: mLabels[i],
-              forceFontKey: 'displayBold',
-              fontPt: 10.0,
-              leadingPt: 11.2,
-              colour: PALETTE.neutralGold,
-              spaceAfterPt: 0,
-            },
-          ],
-        }),
-        createTextFrameWithAutoFit(doc, styles, {
-          id: `${id}_mod_txt_${i}`,
-          pageNum,
-          rect: makeRectPx(tx + 0.08, modY + 0.30, tileW - 0.16, modH - 0.36, ox, oy),
-          theme: 'neutral',
-          blocks: [
-            {
-              kind: 'body',
-              text: mods[i],
-              forceFontKey: 'displayBold',
-              fontPt: 10.0,
-              leadingPt: 11.6,
-              colour: PALETTE.white,
-              spaceAfterPt: 0,
-            },
-          ],
-        })
-      );
+    // 3 Bottom Cortex Bento Tiles (10 pt floor — only drawn when mods are provided)
+    if (mods) {
+      const modY = idY + idH + 0.10;
+      const modH = hIn - (modY - yIn) - 0.14;
+      const gap = 0.08;
+      const tileW = (innerW - 2 * gap) / 3;
+      const mLabels = ['Engine Mod', 'Prime Set 2', 'Prime Set 3'];
+      const mCols = [pSw.bg, sSw.bg, tSw.bg];
+      for (let i = 0; i < 3; i++) {
+        const tx = xIn + pad + i * (tileW + gap);
+        addRectShape(doc, makeRectPx(tx, modY, tileW, modH, ox, oy), PALETTE.neutralPanel, mCols[i], 0.85, `${id}_mod_${i}`, 0);
+        out.push(
+          createTextFrameWithAutoFit(doc, styles, {
+            id: `${id}_mod_hdr_${i}`,
+            pageNum,
+            rect: makeRectPx(tx + 0.08, modY + 0.07, tileW - 0.16, 0.20, ox, oy),
+            theme: 'neutral',
+            allowAutoTighten: false,
+            blocks: [
+              {
+                kind: 'body',
+                text: mLabels[i],
+                forceFontKey: 'displayBold',
+                fontPt: 10.0,
+                leadingPt: 11.2,
+                colour: PALETTE.neutralGold,
+                spaceAfterPt: 0,
+              },
+            ],
+          }),
+          createTextFrameWithAutoFit(doc, styles, {
+            id: `${id}_mod_txt_${i}`,
+            pageNum,
+            rect: makeRectPx(tx + 0.08, modY + 0.30, tileW - 0.16, modH - 0.36, ox, oy),
+            theme: 'neutral',
+            blocks: [
+              {
+                kind: 'body',
+                text: mods[i],
+                forceFontKey: 'displayBold',
+                fontPt: 10.0,
+                leadingPt: 11.6,
+                colour: PALETTE.white,
+                spaceAfterPt: 0,
+              },
+            ],
+          })
+        );
+      }
     }
   }
 
@@ -1189,7 +1291,7 @@ function populateMasterSpread(doc, styles, masterSpread, leftTheme, rightTheme =
 
   for (const pg of pageOrigins) {
     const isCortex = pg.theme === 'cortex';
-    const footerLeft = '4D WORLDBUILDING';
+    const footerLeft = '4D8 WORLDS';
     const footerRight = isCortex ? 'CORTEX PRIME' : 'SYSTEM-NEUTRAL';
 
     if (isCortex) {
@@ -1308,7 +1410,7 @@ function buildPage1(doc, styles, ox, oy) {
       blocks: [
         {
           kind: 'body',
-          text: 'P2–7: SYSTEM-NEUTRAL  ·  P8–16: CORTEX PRIME',
+          text: 'P2–8: SYSTEM-NEUTRAL  ·  P9–16: CORTEX PRIME',
           forceFontKey: 'displaySemi',
           fontPt: 10.0,
           leadingPt: 11.4,
@@ -1321,52 +1423,40 @@ function buildPage1(doc, styles, ox, oy) {
     })
   );
 
-  // Display Cover Title
+  // Display Cover Title — bold 2-line lockup for "4d8 Worlds"
   results.push(
     createTextFrameWithAutoFit(doc, styles, {
       id: 'p1_title',
       pageNum: 1,
-      rect: makeRectPx(MARGIN_IN, 0.72, CONTENT_W_IN, 1.96, ox, oy),
+      rect: makeRectPx(MARGIN_IN, 0.78, CONTENT_W_IN, 1.78, ox, oy),
       theme: 'neutral',
       allowAutoTighten: false,
       blocks: [
         {
           kind: 'body',
-          text: '4D',
+          text: '4d8',
           forceFontKey: 'displayHeavy',
-          fontPt: 34.0,
-          leadingPt: 33.0,
+          fontPt: 46.0,
+          leadingPt: 44.0,
           trackingEm: 0.02,
-          caps: CapsType.AllCaps,
           colour: PALETTE.white,
           spaceAfterPt: 0,
         },
         {
           kind: 'body',
-          text: 'COMBINATORIC',
+          text: 'WORLDS',
           forceFontKey: 'displayHeavy',
-          fontPt: 30.0,
-          leadingPt: 31.0,
-          trackingEm: 0.015,
-          caps: CapsType.AllCaps,
-          colour: PALETTE.white,
-          spaceAfterPt: 1.0,
-        },
-        {
-          kind: 'body',
-          text: 'WORLDBUILDING',
-          forceFontKey: 'displayHeavy',
-          fontPt: 27.5,
-          leadingPt: 29.0,
-          trackingEm: 0.025,
+          fontPt: 44.0,
+          leadingPt: 44.0,
+          trackingEm: 0.03,
           caps: CapsType.AllCaps,
           colour: PALETTE.neutralGold,
-          spaceAfterPt: 8.0,
+          spaceAfterPt: 10.0,
         },
         {
           kind: 'body',
-          text: '*Dial in your inspiration*',
-          fontPt: 11.5,
+          text: '*Find your Palette. Dial in your Setting. Strike a Tone.*',
+          fontPt: 10.8,
           leadingPt: 14.0,
           colour: PALETTE.neutralSubtleText,
           spaceAfterPt: 0,
@@ -1375,11 +1465,11 @@ function buildPage1(doc, styles, ox, oy) {
     })
   );
 
-  // Pure Geometric 4D Color Grid (Stepped 8-Swatch Bauhaus Composition, 10 pt labels)
+  // 8-Swatch Tactile Material Preview Grid (matching Pass 1 poster stocks!)
   const gx = MARGIN_IN;
-  const gy = 2.74;
+  const gy = 2.66;
   const gw = CONTENT_W_IN;
-  const gh = 2.04;
+  const gh = 2.12;
   const gridGap = 0.06;
 
   addRectShape(doc, makeRectPx(gx, gy, gw, gh, ox, oy), PALETTE.neutralCard, PALETTE.neutralDarkBorder, 0.85, 'p1_grid_frame', 0);
@@ -1391,7 +1481,17 @@ function buildPage1(doc, styles, ox, oy) {
   const row1W = [0.29, 0.23, 0.26, 0.22];
   const row2W = [0.22, 0.26, 0.27, 0.25];
   const swatchNums = ['01', '02', '03', '04', '05', '06', '07', '08'];
-  const swatchNames = ['PRISMATIC', 'NEON', 'CHROME', 'DARK', 'SEPIA', 'BRIGHT', 'PASTEL', 'RUST'];
+  const swatchNames = ['PRISMATIC', 'SEPIA', 'NEON', 'PASTEL', 'BRIGHT', 'DARK', 'CHROME', 'RUST'];
+  const coverStock = [
+    { bg: RGB8(24, 16, 40),   border: DIAL_SWATCHES[0].bg, numCol: DIAL_SWATCHES[0].light, lblCol: PALETTE.white },
+    { bg: RGB8(226, 209, 179), border: RGB8(140, 90, 32),   numCol: DIAL_SWATCHES[1].text,  lblCol: PALETTE.neutralDark },
+    { bg: RGB8(15, 9, 22),    border: DIAL_SWATCHES[2].bg, numCol: DIAL_SWATCHES[2].light, lblCol: PALETTE.white },
+    { bg: RGB8(218, 240, 229), border: RGB8(47, 140, 116),  numCol: DIAL_SWATCHES[3].text,  lblCol: PALETTE.neutralDark },
+    { bg: RGB8(252, 247, 234), border: RGB8(212, 144, 10),  numCol: DIAL_SWATCHES[4].text,  lblCol: PALETTE.neutralDark },
+    { bg: RGB8(14, 18, 30),   border: RGB8(72, 86, 126),   numCol: DIAL_SWATCHES[5].light, lblCol: PALETTE.white },
+    { bg: RGB8(20, 44, 72),   border: DIAL_SWATCHES[6].bg, numCol: DIAL_SWATCHES[6].light, lblCol: PALETTE.white },
+    { bg: RGB8(64, 29, 14),   border: RGB8(168, 72, 34),   numCol: DIAL_SWATCHES[7].light, lblCol: PALETTE.white },
+  ];
 
   const drawGridRow = (widths, yPos, startIdx) => {
     let cx = gx + gPad;
@@ -1399,8 +1499,11 @@ function buildPage1(doc, styles, ox, oy) {
     for (let i = 0; i < 4; i++) {
       const idx = startIdx + i;
       const bw = availW * widths[i];
-      const sw = DIAL_SWATCHES[idx];
-      addRectShape(doc, makeRectPx(cx, yPos, bw, gRowH, ox, oy), sw.bg, null, 0, `p1_blk_${idx}`, 0);
+      const cs = coverStock[idx];
+      const blkRect = makeRectPx(cx, yPos, bw, gRowH, ox, oy);
+      const blkNode = addRectShape(doc, blkRect, cs.bg, cs.border, 1.0, `p1_blk_${idx}`, 0);
+      addClippedTextureImage(doc, blkNode, blkRect, idx + 1, `p1_tex_${idx}`);
+
       results.push(
         createTextFrameWithAutoFit(doc, styles, {
           id: `p1_num_${idx}`,
@@ -1415,7 +1518,7 @@ function buildPage1(doc, styles, ox, oy) {
               forceFontKey: 'monoBold',
               fontPt: 10.0,
               leadingPt: 11.0,
-              colour: sw.fg,
+              colour: cs.numCol,
               align: idx === 6 ? ParagraphAlignXType.Right : ParagraphAlignXType.Left,
               spaceAfterPt: 0,
             },
@@ -1435,7 +1538,7 @@ function buildPage1(doc, styles, ox, oy) {
               fontPt: 10.0,
               leadingPt: 11.0,
               caps: CapsType.AllCaps,
-              colour: sw.fg,
+              colour: cs.lblCol,
               spaceAfterPt: 0,
             },
           ],
@@ -1447,25 +1550,25 @@ function buildPage1(doc, styles, ox, oy) {
   drawGridRow(row1W, gy + gPad, 0);
   drawGridRow(row2W, gy + gPad + gRowH + gridGap, 4);
 
-  // Central Gold 4D Diamond Core (0.42 in, 10 pt numeral)
-  const coreSize = 0.42;
+  // Central Gold 4d8 Diamond Core (0.48 in, 10 pt numeral)
+  const coreSize = 0.48;
   const coreX = gx + gw / 2 - coreSize / 2;
   const coreY = gy + gh / 2 - coreSize / 2;
   addDiamondShape(doc, makeRectPx(coreX, coreY, coreSize, coreSize, ox, oy), PALETTE.neutralDark, PALETTE.neutralGold, 1.5, 'p1_core_d');
   const coreTxt = createTextFrameWithAutoFit(doc, styles, {
     id: 'p1_core_txt',
     pageNum: 1,
-    rect: makeRectPx(coreX, coreY + 0.11, coreSize, 0.20, ox, oy),
+    rect: makeRectPx(coreX, coreY + 0.14, coreSize, 0.20, ox, oy),
     theme: 'neutral',
     allowAutoTighten: false,
-    blocks: [{ kind: 'body', text: '4D', forceFontKey: 'displayHeavy', fontPt: 10.0, leadingPt: 11.0, colour: PALETTE.neutralGold, align: ParagraphAlignXType.Centre, spaceAfterPt: 0 }],
+    blocks: [{ kind: 'body', text: '4d8', forceFontKey: 'displayHeavy', fontPt: 10.0, leadingPt: 11.0, colour: PALETTE.neutralGold, align: ParagraphAlignXType.Centre, spaceAfterPt: 0 }],
   });
   centerTextInkInRect(doc, coreTxt.node, coreX, coreY, coreSize, coreSize, ox, oy, true);
   results.push(coreTxt);
 
   // R · P · G Editorial Step List (y: 5.04 .. 6.96)
   const rpgRows = [
-    { num: '01', verb: 'ROLL 4D8', verbCol: PALETTE.neutralGold, pips: [8, 3, 2, 5] },
+    { num: '01', verb: 'ROLL 4D8', verbCol: PALETTE.neutralGold, pips: [8, 7, 3, 2] },
     { num: '02', verb: 'PLACE', verbCol: PALETTE.white, copy: 'three dice into **Palette**, **Setting**, and **Tone**.' },
     { num: '03', verb: 'GRIND', verbCol: PALETTE.white, copy: 'the fourth into any Dial as the **Undertow**.' },
   ];
@@ -1576,88 +1679,87 @@ function buildPage2(doc, styles, ox, oy) {
 
   results.push(...addChamferedBanner(doc, styles, 2, ox, oy, 'neutral', '02 · PITCH POSTER ANATOMY', 'ANATOMY'));
 
-  // Full-Width Hero Dark Pitch Poster (y: 0.78 .. 4.18) — generous room for 10 pt bento labels
+  // Full-Width System-Neutral Hero Pitch Poster (y: 0.80 .. 3.34 — zero Cortex bleed!)
   results.push(
     ...addPitchPosterCard(doc, styles, {
       id: 'p2_hero_poster',
       pageNum: 2,
       xIn: MARGIN_IN,
-      yIn: 0.78,
+      yIn: 0.80,
       wIn: CONTENT_W_IN,
-      hIn: 3.40,
+      hIn: 2.52,
       ox,
       oy,
-      pIdx: 8,
-      sIdx: 8,
-      tIdx: 8,
-      uIdx: 3,
+      pIdx: 2,
+      sIdx: 2,
+      tIdx: 2,
+      uIdx: 1,
       uDial: 's',
-      pWord: 'RUST',
-      sWord: 'PRIMAL',
-      tWord: 'PERIL',
-      uWord: 'Space',
+      pWord: 'SEPIA',
+      sWord: 'INDUSTRIAL',
+      tWord: 'PULP',
+      uWord: 'Liminal',
       fullBento: true,
-      prompts: ['Scar', 'Kin', 'Liability'],
-      mods: ['Scarcity', 'Affiliations: Arenas', 'Reserves + Usage Dice'],
+      prompts: ['Relic', 'Trade', 'Trademark'],
+      mods: null,
     })
   );
 
-  // 2-Column Anatomy Key below Hero Poster (y: 4.34 .. 6.22, all >= 10 pt)
+  // 2-Column 100% System-Neutral Anatomy Key (y: 3.56 .. 5.90, all >= 10 pt)
   const leftKey = [
-    '**1 · Palette (Left)** — Visual texture & Engine Mod.',
-    '**2 · Setting (Center)** — Play space. The 4th die sits under its divider line.',
-    '**3 · Tone (Right)** — Campaign drive & Prime Set 3.',
+    '**1 · Palette (Left)** — Visual texture, light, and material mood.',
+    '**2 · Setting (Center)** — Play space and era. The 4th die sits under its divider.',
   ];
   const rightKey = [
-    '**Identity Prompts** — Three Pathways hooks & `d8` Distinctions.',
-    '**Cortex Picks** — Instant 3-Prime-Set sheet on Pages 11–13.',
+    '**3 · Tone (Right)** — Campaign drive, stakes, and genre rhythm.',
+    '**Identity Prompts** — Three character hooks used in Pass 1 on Page 6.',
   ];
 
   results.push(
     createTextFrameWithAutoFit(doc, styles, {
       id: 'p2_key_l',
       pageNum: 2,
-      rect: makeRectPx(col1X, 4.34, COL_W_IN, 1.88, ox, oy),
+      rect: makeRectPx(col1X, 3.56, COL_W_IN, 2.20, ox, oy),
       theme: 'neutral',
       blocks: leftKey.map((text, i) => ({
         kind: 'body',
         text,
-        fontPt: 10.0,
-        leadingPt: 12.2,
+        fontPt: 10.2,
+        leadingPt: 13.0,
         leadColour: PALETTE.neutralDark,
-        spaceAfterPt: i === 2 ? 0 : 6.0,
+        spaceAfterPt: i === 1 ? 0 : 10.0,
       })),
     }),
     createTextFrameWithAutoFit(doc, styles, {
       id: 'p2_key_r',
       pageNum: 2,
-      rect: makeRectPx(col2X, 4.34, COL_W_IN, 1.88, ox, oy),
+      rect: makeRectPx(col2X, 3.56, COL_W_IN, 2.20, ox, oy),
       theme: 'neutral',
       blocks: rightKey.map((text, i) => ({
         kind: 'body',
         text,
-        fontPt: 10.0,
-        leadingPt: 12.2,
-        leadColour: i === 0 ? PALETTE.neutralGoldText : PALETTE.cortexCyanDark,
-        spaceAfterPt: i === 1 ? 0 : 8.0,
+        fontPt: 10.2,
+        leadingPt: 13.0,
+        leadColour: i === 1 ? PALETTE.neutralGoldText : PALETTE.neutralDark,
+        spaceAfterPt: i === 1 ? 0 : 10.0,
       })),
     })
   );
 
-  // Matched Pair & 4-of-a-Kind Editorial Columns (y: 6.32 .. 7.56)
-  const boxY = 6.32;
-  const boxH = 1.24;
+  // Matched Pair & 4-of-a-Kind Editorial Columns (y: 6.08 .. 7.46)
+  const boxY = 6.08;
+  const boxH = 1.38;
   addLineSegment(doc, ox + col1X * IN, oy + boxY * IN, ox + (col1X + COL_W_IN) * IN, oy + boxY * IN, PALETTE.neutralGold, 1.8, 'p2_pair_top');
   addLineSegment(doc, ox + col1X * IN, oy + (boxY + boxH) * IN, ox + (col1X + COL_W_IN) * IN, oy + (boxY + boxH) * IN, PALETTE.neutralBorder, 0.7, 'p2_pair_bot');
   results.push(
     createTextFrameWithAutoFit(doc, styles, {
       id: 'p2_pair_txt',
       pageNum: 2,
-      rect: makeRectPx(col1X, boxY + 0.09, COL_W_IN, boxH - 0.14, ox, oy),
+      rect: makeRectPx(col1X, boxY + 0.12, COL_W_IN, boxH - 0.18, ox, oy),
       theme: 'neutral',
       blocks: [
-        { kind: 'body', text: '**Matched Pair → Double Down**', fontPt: 10.0, leadingPt: 12.0, colour: PALETTE.neutralGoldText, spaceAfterPt: 3.0 },
-        { kind: 'body', text: 'Undertow lands on its own number? Push that Dial to its extreme.', fontPt: 10.0, leadingPt: 12.2, spaceAfterPt: 0 },
+        { kind: 'body', text: '**Matched Pair → Double Down**', fontPt: 10.2, leadingPt: 12.4, colour: PALETTE.neutralGoldText, spaceAfterPt: 4.0 },
+        { kind: 'body', text: 'Polish instead of grind. Turn up the volume on one dial.', fontPt: 10.2, leadingPt: 12.8, spaceAfterPt: 0 },
       ],
     })
   );
@@ -1668,11 +1770,11 @@ function buildPage2(doc, styles, ox, oy) {
     createTextFrameWithAutoFit(doc, styles, {
       id: 'p2_quad_txt',
       pageNum: 2,
-      rect: makeRectPx(col2X, boxY + 0.09, COL_W_IN, boxH - 0.14, ox, oy),
+      rect: makeRectPx(col2X, boxY + 0.12, COL_W_IN, boxH - 0.18, ox, oy),
       theme: 'neutral',
       blocks: [
-        { kind: 'body', text: '**4-of-a-Kind → Pure Archetype**', fontPt: 10.0, leadingPt: 12.0, boldColour: PALETTE.neutralAccent, spaceAfterPt: 3.0 },
-        { kind: 'body', text: 'Skip the Undertow. Run that row straight at max volume.', fontPt: 10.0, leadingPt: 12.2, spaceAfterPt: 0 },
+        { kind: 'body', text: '**4-of-a-Kind → Pure Archetype**', fontPt: 10.2, leadingPt: 12.4, boldColour: PALETTE.neutralAccent, spaceAfterPt: 4.0 },
+        { kind: 'body', text: 'Skip the Undertow. Lean in on tropes. Enjoy some popcorn.', fontPt: 10.2, leadingPt: 12.8, spaceAfterPt: 0 },
       ],
     })
   );
@@ -1710,23 +1812,23 @@ function buildPage3(doc, styles, ox, oy) {
       col: DIAL_SWATCHES[0].text,
       ruleCol: DIAL_SWATCHES[0].bg,
       body: 'Split class, zone, or day and night: *Chrome spires, Rust slums*.',
-      poster: { pIdx: 3, sIdx: 2, tIdx: 2, uIdx: 8, uDial: 'p', pWord: 'CHROME', sWord: 'FUTURE', tWord: 'PUNK', uWord: 'Rust' },
+      poster: { pIdx: 7, sIdx: 3, tIdx: 3, uIdx: 8, uDial: 'p', pWord: 'CHROME', sWord: 'FUTURE', tWord: 'PUNK', uWord: 'Rust' },
     },
     {
       tag: 'LAYER',
       dial: 'On Setting',
-      col: DIAL_SWATCHES[2].text,
-      ruleCol: DIAL_SWATCHES[2].bg,
+      col: DIAL_SWATCHES[6].text,
+      ruleCol: DIAL_SWATCHES[6].bg,
       body: 'Stack or collide play spaces: *Modern streets, Mythic spirits*.',
-      poster: { pIdx: 4, sIdx: 4, tIdx: 4, uIdx: 6, uDial: 's', pWord: 'DARK', sWord: 'MODERN', tWord: 'NOIR', uWord: 'Mythic' },
+      poster: { pIdx: 6, sIdx: 6, tIdx: 6, uIdx: 5, uDial: 's', pWord: 'DARK', sWord: 'MODERN', tWord: 'NOIR', uWord: 'Mythic' },
     },
     {
       tag: 'COUNTER',
       dial: 'On Tone',
-      col: DIAL_SWATCHES[1].text,
-      ruleCol: DIAL_SWATCHES[1].bg,
+      col: DIAL_SWATCHES[2].text,
+      ruleCol: DIAL_SWATCHES[2].bg,
       body: 'Contrast front vs. stakes, or wilds vs. home: *wild Perils, Cozy camp*.',
-      poster: { pIdx: 8, sIdx: 8, tIdx: 8, uIdx: 7, uDial: 't', pWord: 'RUST', sWord: 'PRIMAL', tWord: 'PERIL', uWord: 'Cozy' },
+      poster: { pIdx: 4, sIdx: 4, tIdx: 8, uIdx: 4, uDial: 't', pWord: 'PASTEL', sWord: 'HEARTH', tWord: 'PERIL', uWord: 'Cozy' },
     },
   ];
 
@@ -1809,12 +1911,12 @@ function buildPage4(doc, styles, ox, oy) {
       headers: ['d8', '1 · Palette · Texture', '2 · Setting · Space'],
       rows: [
         ['1', '**Prismatic:** Reality-bleed, shifting hues.', '**Liminal:** Thresholds, portals, crossroads.'],
-        ['2', '**Neon:** Rain-slick glow, overload.', '**Future:** Wired sprawl, near-out tech.'],
-        ['3', '**Chrome:** Mirrored sheen, sterile polish.', '**Space:** Jump-lanes, habitats, void transit.'],
-        ['4', '**Dark:** Deep shadows, sodium-lit corners.', '**Modern:** A reflection of today\'s society and tech.'],
-        ['5', '**Sepia:** Brass warmth, weathered maps.', '**Industrial:** Coal smoke, ironworks, gears.'],
-        ['6', '**Bright:** Sun-drenched, high-contrast skies.', '**Mythic:** Active gods, spirits, sacred realms.'],
-        ['7', '**Pastel:** Soft light, hand-painted calm.', '**Hearth:** Workshops, ovens, tended valleys.'],
+        ['2', '**Sepia:** Brass warmth, weathered maps.', '**Industrial:** Coal smoke, ironworks, gears.'],
+        ['3', '**Neon:** Rain-slick glow, overload.', '**Future:** Wired sprawl, near-out tech.'],
+        ['4', '**Pastel:** Soft light, hand-painted calm.', '**Hearth:** Workshops, ovens, tended valleys.'],
+        ['5', '**Bright:** Sun-drenched, high-contrast skies.', '**Mythic:** Active gods, spirits, sacred realms.'],
+        ['6', '**Dark:** Deep shadows, sodium-lit corners.', '**Modern:** A reflection of today\'s society and tech.'],
+        ['7', '**Chrome:** Mirrored sheen, sterile polish.', '**Space:** Jump-lanes, habitats, void transit.'],
         ['8', '**Rust:** Corroded iron, patched salvage.', '**Primal:** Megafauna, untamed wilds, bone.'],
       ],
       theme: 'neutral',
@@ -1868,12 +1970,12 @@ function buildPage5(doc, styles, ox, oy) {
       headers: ['d8', '3 · Tone · Drive', 'Pure Archetype'],
       rows: [
         ['1', '**Weird:** Uncanny mystery, impossible rules.', '**Labyrinthine Surrealism** — *Control, Piranesi*'],
-        ['2', '**Punk:** Reject the system.', '**Classic Cyberpunk** — *Edgerunners, Akira*'],
-        ['3', '**Adventure:** Bold crews, uncharted horizons.', '**Golden-Age Sci-Fi** — *Star Trek, Mass Effect*'],
-        ['4', '**Noir:** A web of lies and hard choices.', '**Hardboiled Crime** — *Se7en, True Detective*'],
-        ['5', '**Pulp:** Two-fisted stunts, cliffhangers.', '**Gaslamp Serial** — *The Mummy, Arcane*'],
-        ['6', '**Heroic:** Clear stakes, shielding the weak.', '**High Mythic Fantasy** — *Hades, Mononoke*'],
-        ['7', '**Cozy:** Mutual aid, mending rifts, routine.', '**Pastoral Storycraft** — *Kiki\'s, Wanderhome*'],
+        ['2', '**Pulp:** Two-fisted stunts, cliffhangers.', '**Gaslamp Serial** — *The Mummy, Arcane*'],
+        ['3', '**Punk:** Reject the system.', '**Classic Cyberpunk** — *Edgerunners, Akira*'],
+        ['4', '**Cozy:** Mutual aid, mending rifts, routine.', '**Pastoral Storycraft** — *Kiki\'s, Wanderhome*'],
+        ['5', '**Heroic:** Clear stakes, shielding the weak.', '**High Mythic Fantasy** — *Hades, Mononoke*'],
+        ['6', '**Noir:** A web of lies and hard choices.', '**Hardboiled Crime** — *Se7en, True Detective*'],
+        ['7', '**Adventure:** Bold crews, uncharted horizons.', '**Golden-Age Sci-Fi** — *Star Trek, Mass Effect*'],
         ['8', '**Peril:** Scarce safety, lethal hazards.', '**Grim Survival** — *Mad Max, Scavengers Reign*'],
       ],
       theme: 'neutral',
@@ -1886,20 +1988,20 @@ function buildPage5(doc, styles, ox, oy) {
 function buildPage6(doc, styles, ox, oy) {
   const results = [];
 
-  results.push(...addChamferedBanner(doc, styles, 6, ox, oy, 'neutral', '06 · PATHWAYS SPAGHETTI MAP', 'PASS 1'));
+  results.push(...addChamferedBanner(doc, styles, 6, ox, oy, 'neutral', '06 · SESSION ZERO: PASS 1', 'PROMPTS'));
 
   results.push(
     createTextFrameWithAutoFit(doc, styles, {
       id: 'p6_intro',
       pageNum: 6,
-      rect: makeRectPx(MARGIN_IN, 0.74, CONTENT_W_IN, 0.66, ox, oy),
+      rect: makeRectPx(MARGIN_IN, 0.76, CONTENT_W_IN, 0.72, ox, oy),
       theme: 'neutral',
       blocks: [
         {
           kind: 'body',
-          text: 'Center your Pitch + Undertow on a blank canvas. Run 4 passes. **Pass 1:** Draw a PC Rectangle on the edge and write your 3 Dial prompt answers inside it:',
-          fontPt: 10.2,
-          leadingPt: 12.6,
+          text: 'Center your Pitch + Undertow on a blank canvas. Pass the pencil around the table 4 times. **Pass 1:** Draw a Character Circle on the edge and write your 3 Dial prompt answers inside it:',
+          fontPt: 10.4,
+          leadingPt: 13.0,
           spaceAfterPt: 0,
         },
       ],
@@ -1913,42 +2015,40 @@ function buildPage6(doc, styles, ox, oy) {
       originX: ox,
       originY: oy,
       xIn: MARGIN_IN,
-      yIn: 1.48,
+      yIn: 1.58,
       colWidthsIn: [0.42, 1.5489, 1.5489, 1.549],
-      headerHeightIn: 0.36,
+      headerHeightIn: 0.38,
       headerFontPt: 10.0,
-      rowHeightsIn: [0.50, 0.50, 0.50, 0.50, 0.50, 0.50, 0.50, 0.50],
-      cellFontPt: 10.5,
-      cellLeadPt: 12.2,
+      rowHeightsIn: [0.58, 0.58, 0.58, 0.58, 0.58, 0.58, 0.58, 0.58],
+      cellFontPt: 10.6,
+      cellLeadPt: 12.4,
       padHIn: 0.08,
-      padVIn: 0.12,
+      padVIn: 0.16,
       headers: ['d8', 'Texture', 'Foothold', 'Hook'],
       rows: [
         ['1', '**Aura**', '**Tether**', '**Obsession**'],
-        ['2', '**Vice**', '**Augment**', '**Grievance**'],
-        ['3', '**Pedigree**', '**World**', '**Horizon**'],
-        ['4', '**Secret**', '**Day Job**', '**Code**'],
-        ['5', '**Relic**', '**Trade**', '**Trademark**'],
-        ['6', '**Banner**', '**Calling**', '**Oath**'],
-        ['7', '**Comfort**', '**Workshop**', '**Routine**'],
+        ['2', '**Relic**', '**Trade**', '**Trademark**'],
+        ['3', '**Vice**', '**Augment**', '**Grievance**'],
+        ['4', '**Comfort**', '**Workshop**', '**Routine**'],
+        ['5', '**Banner**', '**Calling**', '**Oath**'],
+        ['6', '**Secret**', '**Day Job**', '**Code**'],
+        ['7', '**Pedigree**', '**World**', '**Horizon**'],
         ['8', '**Scar**', '**Kin**', '**Liability**'],
       ],
       theme: 'neutral',
     })
   );
 
-  // Editorial Note below Identity Prompts (y: 6.06 .. 7.58)
-  addLineSegment(doc, ox + MARGIN_IN * IN, oy + 6.06 * IN, ox + (MARGIN_IN + CONTENT_W_IN) * IN, oy + 6.06 * IN, PALETTE.neutralGold, 1.8, 'p6_tip_top');
-  addLineSegment(doc, ox + MARGIN_IN * IN, oy + 7.56 * IN, ox + (MARGIN_IN + CONTENT_W_IN) * IN, oy + 7.56 * IN, PALETTE.neutralBorder, 0.7, 'p6_tip_bot');
+  // Pure System-Neutral Tip (zero Cortex bleed!)
+  addLineSegment(doc, ox + MARGIN_IN * IN, oy + 6.76 * IN, ox + (MARGIN_IN + CONTENT_W_IN) * IN, oy + 6.76 * IN, PALETTE.neutralGold, 1.8, 'p6_tip_top');
   results.push(
     createTextFrameWithAutoFit(doc, styles, {
       id: 'p6_tip_txt',
       pageNum: 6,
-      rect: makeRectPx(MARGIN_IN, 6.16, CONTENT_W_IN, 1.34, ox, oy),
+      rect: makeRectPx(MARGIN_IN, 6.88, CONTENT_W_IN, 0.72, ox, oy),
       theme: 'neutral',
       blocks: [
-        { kind: 'h3', text: 'USING THIS IN CORTEX', fontPt: 10.0, leadingPt: 11.4, colour: PALETTE.neutralGoldText, spaceAfterPt: 4.0 },
-        { kind: 'body', text: '**Pass 1** feeds your three `d8` Distinctions (Prime Set 1). **Pass 2** Anchors become `d8` Supports, and Rumors seed Statements. **Pass 3** Edge sets your top `d10` in Prime Set 2; Drive sets your top `d10` or Goal in Prime Set 3.', fontPt: 10.0, leadingPt: 12.4, colour: PALETTE.ink, pillInk: PALETTE.neutralAccent, spaceAfterPt: 0 },
+        { kind: 'body', text: '**Keep it punchy:** Three short phrases per Character are enough. Let the wires on Page 7 fill in the rest.', fontPt: 10.2, leadingPt: 12.8, leadColour: PALETTE.neutralGoldText, spaceAfterPt: 0 },
       ],
     })
   );
@@ -1961,73 +2061,99 @@ function buildPage7(doc, styles, ox, oy) {
 
   results.push(...addChamferedBanner(doc, styles, 7, ox, oy, 'neutral', '07 · CROSS THE WIRES', 'PASS 2–4'));
 
-  // Pass 2, Pass 3 & Pass 4 (y: 0.72 .. 4.44)
   results.push(
     createTextFrameWithAutoFit(doc, styles, {
       id: 'p7_pass2_4',
       pageNum: 7,
-      rect: makeRectPx(MARGIN_IN, 0.72, CONTENT_W_IN, 3.74, ox, oy),
+      rect: makeRectPx(MARGIN_IN, 0.80, CONTENT_W_IN, 6.72, ox, oy),
       theme: 'neutral',
       blocks: [
-        { kind: 'h2', text: 'Pass 2: Cross the Wires', fontPt: 10.8, leadingPt: 12.2, spaceAfterPt: 3.5 },
+        { kind: 'h2', text: 'Pass 2: Cross the Wires', fontPt: 12.0, leadingPt: 13.8, spaceAfterPt: 8.0 },
         {
           kind: 'body',
           text: '• **Left · Rumor:** Draw a line to your left neighbor. State something you\'ve heard about them. They name the real truth.',
-          fontPt: 10.0,
-          leadingPt: 12.0,
-          leftIndentPt: 10,
-          firstIndentPt: -10,
-          spaceAfterPt: 3.5,
+          fontPt: 10.8,
+          leadingPt: 14.0,
+          leftIndentPt: 12,
+          firstIndentPt: -12,
+          spaceAfterPt: 10.0,
         },
         {
           kind: 'body',
-          text: '• **Right · Anchor:** Draw a shared Diamond with your right neighbor. Name what you both rely on: *Ride, Hideout, Workshop, Beast, Patron*.',
-          fontPt: 10.0,
-          leadingPt: 12.0,
-          leftIndentPt: 10,
-          firstIndentPt: -10,
-          spaceAfterPt: 8.0,
+          text: '• **Right · Bond:** Draw a shared Box between you and your right neighbor. Name a shared tie or asset you both rely on: *Ride, Hideout, Workshop, Beast, Patron*.',
+          fontPt: 10.8,
+          leadingPt: 14.0,
+          leftIndentPt: 12,
+          firstIndentPt: -12,
+          spaceAfterPt: 20.0,
         },
-        { kind: 'h2', text: 'Pass 3: Stake Your Claim', fontPt: 10.8, leadingPt: 12.2, spaceAfterPt: 3.5 },
+        { kind: 'h2', text: 'Pass 3: Stake Your Claim', fontPt: 12.0, leadingPt: 13.8, spaceAfterPt: 8.0 },
         {
           kind: 'body',
-          text: '• **Edge:** Tag your PC Rectangle with what you\'re best at in this Setting (your top role, skill, or turf).',
-          fontPt: 10.0,
-          leadingPt: 12.0,
-          leftIndentPt: 10,
-          firstIndentPt: -10,
-          spaceAfterPt: 3.5,
+          text: '• **Edge:** Tag your Character Circle with what you\'re best at in this Setting (your top role, skill, or turf).',
+          fontPt: 10.8,
+          leadingPt: 14.0,
+          leftIndentPt: 12,
+          firstIndentPt: -12,
+          spaceAfterPt: 10.0,
         },
         {
           kind: 'body',
-          text: '• **Drive:** Drop a Circle onto the canvas for a Faction, Neighbor, Belief, or Goal pulling at you. Wire your PC to it.',
-          fontPt: 10.0,
-          leadingPt: 12.0,
-          leftIndentPt: 10,
-          firstIndentPt: -10,
-          spaceAfterPt: 8.0,
+          text: '• **Fact:** Drop a Diamond onto the canvas for a world truth, Faction, Neighbor, Belief, or Goal pulling at you. Wire your Character to it.',
+          fontPt: 10.8,
+          leadingPt: 14.0,
+          leftIndentPt: 12,
+          firstIndentPt: -12,
+          spaceAfterPt: 20.0,
         },
-        { kind: 'h2', text: 'Pass 4: Ignition Triangle', fontPt: 10.8, leadingPt: 12.2, spaceAfterPt: 3.5 },
+        { kind: 'h2', text: 'Pass 4: Event Triangle', fontPt: 12.0, leadingPt: 13.8, spaceAfterPt: 8.0 },
         {
           kind: 'body',
-          text: 'GM drops a central Ignition Triangle where the *Undertow* bites and wires it to 2+ nodes on the map. Start *in medias res*.',
-          fontPt: 10.0,
-          leadingPt: 12.0,
+          text: 'GM drops a central inverted Event Triangle where the *Undertow* bites and wires it to 2+ nodes on the map. That trouble is live right now. Start *in medias res*.',
+          fontPt: 10.8,
+          leadingPt: 14.0,
           spaceAfterPt: 0,
         },
       ],
     })
   );
 
-  // Full-Width 4-Shape Spaghetti Map Schematic (y: 4.54 .. 7.62, all labels >= 10 pt)
-  const diagY = 4.54;
-  const diagH = 3.08;
-  addRectShape(doc, makeRectPx(MARGIN_IN, diagY, CONTENT_W_IN, diagH, ox, oy), PALETTE.neutralCream, PALETTE.neutralDark, 1.0, 'p7_diag_card', 0);
-  addRectShape(doc, makeRectPx(MARGIN_IN, diagY, CONTENT_W_IN, 0.30, ox, oy), PALETTE.neutralDark, null, 0, 'p7_diag_hdr_bg', 0);
+  return results;
+}
+
+function buildPage8(doc, styles, ox, oy) {
+  const results = [];
+
+  // CENTERFOLD LEFT (System-Neutral): Full-page Spaghetti Map Schematic facing Page 9 Pathways Handoff!
+  results.push(...addChamferedBanner(doc, styles, 8, ox, oy, 'neutral', '08 · SPAGHETTI MAP', 'SCHEMATIC'));
+
+  results.push(
+    createTextFrameWithAutoFit(doc, styles, {
+      id: 'p8_intro',
+      pageNum: 8,
+      rect: makeRectPx(MARGIN_IN, 0.76, CONTENT_W_IN, 0.62, ox, oy),
+      theme: 'neutral',
+      blocks: [
+        {
+          kind: 'body',
+          text: 'Four hand-drawn shapes turn a blank canvas into a playable campaign web. Use it as-is for any RPG, or snap it into Cortex Prime across the fold.',
+          fontPt: 10.3,
+          leadingPt: 13.0,
+          spaceAfterPt: 0,
+        },
+      ],
+    })
+  );
+
+  // Full-Width 4-Shape Spaghetti Map Schematic (y: 1.50 .. 5.88 — zero wire/label collisions!)
+  const diagY = 1.50;
+  const diagH = 4.38;
+  addRectShape(doc, makeRectPx(MARGIN_IN, diagY, CONTENT_W_IN, diagH, ox, oy), PALETTE.neutralCream, PALETTE.neutralDark, 1.0, 'p8_diag_card', 0);
+  addRectShape(doc, makeRectPx(MARGIN_IN, diagY, CONTENT_W_IN, 0.34, ox, oy), PALETTE.neutralDark, null, 0, 'p8_diag_hdr_bg', 0);
   const diagHdr = createTextFrameWithAutoFit(doc, styles, {
-    id: 'p7_diag_hdr',
-    pageNum: 7,
-    rect: makeRectPx(MARGIN_IN + 0.10, diagY + 0.05, CONTENT_W_IN - 0.20, 0.20, ox, oy),
+    id: 'p8_diag_hdr',
+    pageNum: 8,
+    rect: makeRectPx(MARGIN_IN + 0.10, diagY + 0.06, CONTENT_W_IN - 0.20, 0.22, ox, oy),
     theme: 'neutral',
     allowAutoTighten: false,
     blocks: [
@@ -2045,189 +2171,209 @@ function buildPage7(doc, styles, ox, oy) {
       },
     ],
   });
-  centerTextInkInRect(doc, diagHdr.node, MARGIN_IN + 0.10, diagY, CONTENT_W_IN - 0.20, 0.30, ox, oy, true);
+  centerTextInkInRect(doc, diagHdr.node, MARGIN_IN + 0.10, diagY, CONTENT_W_IN - 0.20, 0.34, ox, oy, true);
   results.push(diagHdr);
 
-  const pcAx = MARGIN_IN + 0.92;
-  const pcAy = diagY + 0.80;
-  const pcBx = MARGIN_IN + CONTENT_W_IN - 0.92;
-  const pcBy = diagY + 0.80;
-  const pcCx = MARGIN_IN + CONTENT_W_IN / 2;
-  const pcCy = diagY + 2.24;
-  const drvX = MARGIN_IN + 0.86;
-  const drvY = diagY + 1.66;
-  const ancX = MARGIN_IN + CONTENT_W_IN - 1.02;
-  const ancY = diagY + 1.56;
-  const triX = MARGIN_IN + CONTENT_W_IN / 2 - 0.06;
-  const triY = diagY + 1.44;
+  // Coordinates carefully spaced: Character Circles (C), Bond Box (B), Fact Diamond (F/d8), Event Inverted Triangle (V/d4)
+  const cAx = MARGIN_IN + 0.86;
+  const cAy = diagY + 1.06;
+  const cBx = MARGIN_IN + CONTENT_W_IN - 0.86;
+  const cBy = diagY + 1.06;
+  const cCx = MARGIN_IN + CONTENT_W_IN / 2 - 0.16;
+  const cCy = diagY + 3.16;
+  const facX = MARGIN_IN + 0.80;
+  const facY = diagY + 2.34;
+  const bndX = MARGIN_IN + CONTENT_W_IN - 0.86;
+  const bndY = diagY + 2.24;
+  const evtX = MARGIN_IN + CONTENT_W_IN / 2 + 0.28;
+  const evtY = diagY + 1.92;
 
   // Wires
-  addLineSegment(doc, ox + pcAx * IN, oy + pcAy * IN, ox + pcBx * IN, oy + pcBy * IN, DIAL_SWATCHES[2].bg, 1.8, 'p7_w_ab');
-  addLineSegment(doc, ox + pcAx * IN, oy + pcAy * IN, ox + pcCx * IN, oy + pcCy * IN, DIAL_SWATCHES[2].bg, 1.8, 'p7_w_ac');
-  addLineSegment(doc, ox + pcAx * IN, oy + pcAy * IN, ox + drvX * IN, oy + drvY * IN, DIAL_SWATCHES[0].bg, 1.8, 'p7_w_drv');
-  addLineSegment(doc, ox + pcBx * IN, oy + pcBy * IN, ox + ancX * IN, oy + ancY * IN, PALETTE.neutralGoldText, 1.8, 'p7_w_ba');
-  addLineSegment(doc, ox + ancX * IN, oy + ancY * IN, ox + pcCx * IN, oy + pcCy * IN, PALETTE.neutralGoldText, 1.8, 'p7_w_ac2');
-  addLineSegment(doc, ox + triX * IN, oy + triY * IN, ox + pcAx * IN, oy + pcAy * IN, PALETTE.neutralAccent, 1.8, 'p7_w_ta');
-  addLineSegment(doc, ox + triX * IN, oy + triY * IN, ox + ancX * IN, oy + ancY * IN, PALETTE.neutralAccent, 1.8, 'p7_w_tanc');
+  addLineSegment(doc, ox + cAx * IN, oy + cAy * IN, ox + cBx * IN, oy + cBy * IN, DIAL_SWATCHES[6].bg, 2.0, 'p8_w_ab');
+  addLineSegment(doc, ox + cAx * IN, oy + cAy * IN, ox + cCx * IN, oy + cCy * IN, DIAL_SWATCHES[6].bg, 2.0, 'p8_w_ac');
+  addLineSegment(doc, ox + cAx * IN, oy + cAy * IN, ox + facX * IN, oy + facY * IN, DIAL_SWATCHES[0].bg, 2.0, 'p8_w_fac');
+  addLineSegment(doc, ox + cBx * IN, oy + cBy * IN, ox + bndX * IN, oy + bndY * IN, PALETTE.neutralGoldText, 2.0, 'p8_w_bb');
+  addLineSegment(doc, ox + bndX * IN, oy + bndY * IN, ox + cCx * IN, oy + cCy * IN, PALETTE.neutralGoldText, 2.0, 'p8_w_bc');
+  addLineSegment(doc, ox + evtX * IN, oy + evtY * IN, ox + cAx * IN, oy + cAy * IN, PALETTE.neutralAccent, 2.0, 'p8_w_ea');
+  addLineSegment(doc, ox + evtX * IN, oy + evtY * IN, ox + bndX * IN, oy + bndY * IN, PALETTE.neutralAccent, 2.0, 'p8_w_eb');
 
-  // PC Rectangles
-  const pcs = [
-    { x: pcAx, y: pcAy, label: 'PC A' },
-    { x: pcBx, y: pcBy, label: 'PC B' },
-    { x: pcCx, y: pcCy, label: 'PC C' },
+  // Character Circles (C = Circle, 0.84 in diameter with stacked "Character / A" at 10 pt)
+  const chars = [
+    { x: cAx, y: cAy, line2: 'A' },
+    { x: cBx, y: cBy, line2: 'B' },
+    { x: cCx, y: cCy, line2: 'C' },
   ];
-  for (let i = 0; i < pcs.length; i++) {
-    const p = pcs[i];
-    addRectShape(doc, makeRectPx(p.x - 0.42, p.y - 0.17, 0.84, 0.34, ox, oy), PALETTE.white, PALETTE.neutralDark, 1.4, `p7_pc_${i}`, 2, ShapeCornerType.Round);
-    const pcTxt = createTextFrameWithAutoFit(doc, styles, {
-      id: `p7_pc_txt_${i}`,
-      pageNum: 7,
-      rect: makeRectPx(p.x - 0.40, p.y - 0.10, 0.80, 0.20, ox, oy),
+  const chDia = 0.84;
+  for (let i = 0; i < chars.length; i++) {
+    const p = chars[i];
+    addCircleShape(doc, makeRectPx(p.x - chDia / 2, p.y - chDia / 2, chDia, chDia, ox, oy), PALETTE.white, PALETTE.neutralDark, 1.5, `p8_ch_${i}`);
+    const chTxt = createTextFrameWithAutoFit(doc, styles, {
+      id: `p8_ch_txt_${i}`,
+      pageNum: 8,
+      rect: makeRectPx(p.x - 0.39, p.y - 0.22, 0.78, 0.44, ox, oy),
       theme: 'neutral',
       allowAutoTighten: false,
-      blocks: [{ kind: 'body', text: p.label, forceFontKey: 'displayHeavy', fontPt: 10.0, leadingPt: 11.0, colour: PALETTE.neutralDark, align: ParagraphAlignXType.Centre, spaceAfterPt: 0 }],
+      blocks: [
+        { kind: 'body', text: 'Character', forceFontKey: 'displayHeavy', fontPt: 10.0, leadingPt: 11.0, colour: PALETTE.neutralDark, align: ParagraphAlignXType.Centre, spaceAfterPt: 0 },
+        { kind: 'body', text: p.line2, forceFontKey: 'displayHeavy', fontPt: 10.0, leadingPt: 11.0, colour: PALETTE.neutralDark, align: ParagraphAlignXType.Centre, spaceAfterPt: 0 },
+      ],
     });
-    centerTextInkInRect(doc, pcTxt.node, p.x - 0.42, p.y - 0.17, 0.84, 0.34, ox, oy, true);
-    results.push(pcTxt);
+    centerTextInkInRect(doc, chTxt.node, p.x - chDia / 2, p.y - chDia / 2, chDia, chDia, ox, oy, true);
+    results.push(chTxt);
   }
 
-  // Drive Circle, Anchor Diamond & Ignition Triangle + Knockout Halo Pills
-  addCircleShape(doc, makeRectPx(drvX - 0.18, drvY - 0.18, 0.36, 0.36, ox, oy), DIAL_SWATCHES[0].bg, PALETTE.neutralDark, 1.4, 'p7_drive_node');
-  addDiamondShape(doc, makeRectPx(ancX - 0.20, ancY - 0.20, 0.40, 0.40, ox, oy), PALETTE.neutralGold, PALETTE.neutralDark, 1.4, 'p7_anchor_node');
-  addTriangleShape(doc, makeRectPx(triX - 0.23, triY - 0.20, 0.46, 0.40, ox, oy), PALETTE.neutralAccent, PALETTE.neutralDark, 1.4, 'p7_ignite_node');
+  // Fact Diamond (F = Facet / d8), Bond Box (B = Box), & Event Inverted Triangle (V = eVent / d4)
+  addDiamondShape(doc, makeRectPx(facX - 0.24, facY - 0.24, 0.48, 0.48, ox, oy), DIAL_SWATCHES[0].bg, PALETTE.neutralDark, 1.5, 'p8_fact_node');
+  addRectShape(doc, makeRectPx(bndX - 0.32, bndY - 0.19, 0.64, 0.38, ox, oy), PALETTE.neutralGold, PALETTE.neutralDark, 1.5, 'p8_bond_node', 2, ShapeCornerType.Round);
+  addInvertedTriangleShape(doc, makeRectPx(evtX - 0.27, evtY - 0.22, 0.54, 0.46, ox, oy), PALETTE.neutralAccent, PALETTE.neutralDark, 1.5, 'p8_event_node');
 
-  addRectShape(doc, makeRectPx(drvX - 0.34, drvY + 0.21, 0.68, 0.18, ox, oy), PALETTE.neutralCream, null, 0, 'p7_lbl_drv_halo', 0);
-  addRectShape(doc, makeRectPx(ancX - 0.40, ancY + 0.22, 0.80, 0.18, ox, oy), PALETTE.neutralCream, null, 0, 'p7_lbl_anc_halo', 0);
-  addRectShape(doc, makeRectPx(triX - 0.44, triY + 0.22, 0.88, 0.18, ox, oy), PALETTE.neutralCream, null, 0, 'p7_lbl_ign_halo', 0);
-
-  const lblDrv = createTextFrameWithAutoFit(doc, styles, {
-    id: 'p7_lbl_drive',
-    pageNum: 7,
-    rect: makeRectPx(drvX - 0.38, drvY + 0.21, 0.76, 0.20, ox, oy),
+  // Labels placed in open cream space (zero wire overlap!)
+  const lblFac = createTextFrameWithAutoFit(doc, styles, {
+    id: 'p8_lbl_fact',
+    pageNum: 8,
+    rect: makeRectPx(facX - 0.42, facY + 0.28, 0.84, 0.22, ox, oy),
     theme: 'neutral',
     allowAutoTighten: false,
-    blocks: [{ kind: 'body', text: 'DRIVE', forceFontKey: 'displayBold', fontPt: 10.0, leadingPt: 11.0, colour: DIAL_SWATCHES[0].text, align: ParagraphAlignXType.Centre, spaceAfterPt: 0 }],
+    blocks: [{ kind: 'body', text: 'FACT', forceFontKey: 'displayBold', fontPt: 10.0, leadingPt: 11.0, colour: DIAL_SWATCHES[0].text, align: ParagraphAlignXType.Centre, spaceAfterPt: 0 }],
   });
-  centerTextInkInRect(doc, lblDrv.node, drvX - 0.34, drvY + 0.21, 0.68, 0.18, ox, oy, true);
-
-  const lblAnc = createTextFrameWithAutoFit(doc, styles, {
-    id: 'p7_lbl_anchor',
-    pageNum: 7,
-    rect: makeRectPx(ancX - 0.44, ancY + 0.22, 0.88, 0.20, ox, oy),
+  const lblBnd = createTextFrameWithAutoFit(doc, styles, {
+    id: 'p8_lbl_bond',
+    pageNum: 8,
+    rect: makeRectPx(bndX - 0.48, bndY + 0.24, 0.96, 0.22, ox, oy),
     theme: 'neutral',
     allowAutoTighten: false,
-    blocks: [{ kind: 'body', text: 'ANCHOR', forceFontKey: 'displayBold', fontPt: 10.0, leadingPt: 11.0, colour: PALETTE.neutralGoldText, align: ParagraphAlignXType.Centre, spaceAfterPt: 0 }],
+    blocks: [{ kind: 'body', text: 'BOND', forceFontKey: 'displayBold', fontPt: 10.0, leadingPt: 11.0, colour: PALETTE.neutralGoldText, align: ParagraphAlignXType.Centre, spaceAfterPt: 0 }],
   });
-  centerTextInkInRect(doc, lblAnc.node, ancX - 0.40, ancY + 0.22, 0.80, 0.18, ox, oy, true);
-
-  const lblIgn = createTextFrameWithAutoFit(doc, styles, {
-    id: 'p7_lbl_ignite',
-    pageNum: 7,
-    rect: makeRectPx(triX - 0.48, triY + 0.22, 0.96, 0.20, ox, oy),
+  const lblEvt = createTextFrameWithAutoFit(doc, styles, {
+    id: 'p8_lbl_event',
+    pageNum: 8,
+    rect: makeRectPx(evtX - 0.46, evtY + 0.27, 0.92, 0.22, ox, oy),
     theme: 'neutral',
     allowAutoTighten: false,
-    blocks: [{ kind: 'body', text: 'IGNITION', forceFontKey: 'displayBold', fontPt: 10.0, leadingPt: 11.0, colour: PALETTE.neutralAccent, align: ParagraphAlignXType.Centre, spaceAfterPt: 0 }],
+    blocks: [{ kind: 'body', text: 'EVENT', forceFontKey: 'displayBold', fontPt: 10.0, leadingPt: 11.0, colour: PALETTE.neutralAccent, align: ParagraphAlignXType.Centre, spaceAfterPt: 0 }],
   });
-  centerTextInkInRect(doc, lblIgn.node, triX - 0.44, triY + 0.22, 0.88, 0.18, ox, oy, true);
 
   results.push(
     createTextFrameWithAutoFit(doc, styles, {
-      id: 'p7_lbl_rumor',
-      pageNum: 7,
-      rect: makeRectPx(MARGIN_IN + CONTENT_W_IN / 2 - 0.55, diagY + 0.49, 1.10, 0.22, ox, oy),
+      id: 'p8_lbl_rumor',
+      pageNum: 8,
+      rect: makeRectPx(MARGIN_IN + CONTENT_W_IN / 2 - 0.55, diagY + 0.72, 1.10, 0.22, ox, oy),
       theme: 'neutral',
       allowAutoTighten: false,
-      blocks: [{ kind: 'body', text: 'RUMOR', forceFontKey: 'displayBold', fontPt: 10.0, leadingPt: 11.0, colour: DIAL_SWATCHES[2].text, align: ParagraphAlignXType.Centre, spaceAfterPt: 0 }],
+      blocks: [{ kind: 'body', text: 'RUMOR', forceFontKey: 'displayBold', fontPt: 10.0, leadingPt: 11.0, colour: DIAL_SWATCHES[6].text, align: ParagraphAlignXType.Centre, spaceAfterPt: 0 }],
     }),
-    lblDrv,
-    lblAnc,
-    lblIgn
+    lblFac,
+    lblBnd,
+    lblEvt
   );
 
-  // 4-Item Legend Strip (10 pt floor)
-  const legY = diagY + 2.60;
-  addLineSegment(doc, ox + (MARGIN_IN + 0.14) * IN, oy + legY * IN, ox + (MARGIN_IN + CONTENT_W_IN - 0.14) * IN, oy + legY * IN, PALETTE.neutralBorder, 0.7, 'p7_leg_rule');
-  addRectShape(doc, makeRectPx(MARGIN_IN + 0.20, legY + 0.16, 0.22, 0.14, ox, oy), PALETTE.white, PALETTE.neutralDark, 1.0, 'p7_leg_pc', 1.5, ShapeCornerType.Round);
-  addDiamondShape(doc, makeRectPx(MARGIN_IN + 1.18, legY + 0.14, 0.18, 0.18, ox, oy), PALETTE.neutralGold, PALETTE.neutralDark, 1.0, 'p7_leg_anc');
-  addCircleShape(doc, makeRectPx(MARGIN_IN + 2.48, legY + 0.14, 0.18, 0.18, ox, oy), DIAL_SWATCHES[0].bg, PALETTE.neutralDark, 1.0, 'p7_leg_drv');
-  addTriangleShape(doc, makeRectPx(MARGIN_IN + 3.60, legY + 0.14, 0.18, 0.18, ox, oy), PALETTE.neutralAccent, PALETTE.neutralDark, 1.0, 'p7_leg_ign');
+  // 4-Item Legend Strip inside Schematic (y: diagY + 3.82)
+  const legY = diagY + 3.82;
+  addLineSegment(doc, ox + (MARGIN_IN + 0.16) * IN, oy + legY * IN, ox + (MARGIN_IN + CONTENT_W_IN - 0.16) * IN, oy + legY * IN, PALETTE.neutralBorder, 0.7, 'p8_leg_rule');
+  addCircleShape(doc, makeRectPx(MARGIN_IN + 0.18, legY + 0.18, 0.18, 0.18, ox, oy), PALETTE.white, PALETTE.neutralDark, 1.0, 'p8_leg_ch');
+  addRectShape(doc, makeRectPx(MARGIN_IN + 1.52, legY + 0.20, 0.22, 0.14, ox, oy), PALETTE.neutralGold, PALETTE.neutralDark, 1.0, 'p8_leg_bnd', 1.5, ShapeCornerType.Round);
+  addDiamondShape(doc, makeRectPx(MARGIN_IN + 2.74, legY + 0.18, 0.18, 0.18, ox, oy), DIAL_SWATCHES[0].bg, PALETTE.neutralDark, 1.0, 'p8_leg_fac');
+  addInvertedTriangleShape(doc, makeRectPx(MARGIN_IN + 3.82, legY + 0.18, 0.18, 0.18, ox, oy), PALETTE.neutralAccent, PALETTE.neutralDark, 1.0, 'p8_leg_evt');
 
   const legItems = [
-    { id: 'p7_leg_txt1', x: MARGIN_IN + 0.48, w: 0.62, text: 'PC' },
-    { id: 'p7_leg_txt2', x: MARGIN_IN + 1.42, w: 0.96, text: 'Anchor' },
-    { id: 'p7_leg_txt3', x: MARGIN_IN + 2.72, w: 0.80, text: 'Drive' },
-    { id: 'p7_leg_txt4', x: MARGIN_IN + 3.84, w: 1.04, text: 'Ignition' },
+    { id: 'p8_leg_t1', x: MARGIN_IN + 0.42, w: 1.00, text: 'Character' },
+    { id: 'p8_leg_t2', x: MARGIN_IN + 1.80, w: 0.84, text: 'Bond' },
+    { id: 'p8_leg_t3', x: MARGIN_IN + 2.98, w: 0.74, text: 'Fact' },
+    { id: 'p8_leg_t4', x: MARGIN_IN + 4.06, w: 0.84, text: 'Event' },
   ];
   for (const li of legItems) {
     const legNode = createTextFrameWithAutoFit(doc, styles, {
       id: li.id,
-      pageNum: 7,
-      rect: makeRectPx(li.x, legY + 0.13, li.w, 0.22, ox, oy),
+      pageNum: 8,
+      rect: makeRectPx(li.x, legY + 0.16, li.w, 0.22, ox, oy),
       theme: 'neutral',
       allowAutoTighten: false,
       blocks: [{ kind: 'body', text: li.text, forceFontKey: 'displaySemi', fontPt: 10.0, leadingPt: 11.2, spaceAfterPt: 0 }],
     });
-    centerTextInkInRect(doc, legNode.node, li.x, legY + 0.14, li.w, 0.18, ox, oy, false);
+    centerTextInkInRect(doc, legNode.node, li.x, legY + 0.18, li.w, 0.18, ox, oy, false);
     results.push(legNode);
   }
+
+  // Bottom Reading Guide (y: 6.08 .. 7.50)
+  results.push(
+    createTextFrameWithAutoFit(doc, styles, {
+      id: 'p8_guide',
+      pageNum: 8,
+      rect: makeRectPx(MARGIN_IN, 6.08, CONTENT_W_IN, 1.44, ox, oy),
+      theme: 'neutral',
+      blocks: [
+        { kind: 'body', text: '**Circle (Character):** Name + 3 Dial prompts + Setting Edge tag.', fontPt: 10.0, leadingPt: 12.6, spaceAfterPt: 4.0 },
+        { kind: 'body', text: '**Box (Bond) & Diamond (Fact):** Shared ties or assets and world truths wired directly into the web.', fontPt: 10.0, leadingPt: 12.6, spaceAfterPt: 4.0 },
+        { kind: 'body', text: '**Inverted Triangle (Event):** Where the Undertow strikes first.', fontPt: 10.0, leadingPt: 12.6, spaceAfterPt: 0 },
+      ],
+    })
+  );
 
   return results;
 }
 
-function buildPage8(doc, styles, ox, oy) {
+function buildPage9(doc, styles, ox, oy) {
   const results = [];
 
-  results.push(...addChamferedBanner(doc, styles, 8, ox, oy, 'cortex', '08 · HOUSE RULED CORTEX', 'ENGINE'));
+  // CENTERFOLD RIGHT (First Cortex Page): Seamless Pathways Handoff + Baseline Pool Equation!
+  results.push(...addChamferedBanner(doc, styles, 9, ox, oy, 'cortex', '09 · PATHWAYS TO CORTEX', 'HANDOFF'));
 
   results.push(
     createTextFrameWithAutoFit(doc, styles, {
-      id: 'p8_lede',
-      pageNum: 8,
-      rect: makeRectPx(MARGIN_IN, 0.76, CONTENT_W_IN, 0.44, ox, oy),
+      id: 'p9_lede',
+      pageNum: 9,
+      rect: makeRectPx(MARGIN_IN, 0.74, CONTENT_W_IN, 0.42, ox, oy),
       theme: 'cortex',
       blocks: [
         {
           kind: 'body',
-          text: 'A **Cortex Prime** baseplate to snap your `4d8` pitch to.',
-          fontPt: 11.0,
-          leadingPt: 13.8,
+          text: 'A **Cortex Prime** baseplate to snap your `4d8` pitch and Spaghetti Map to.',
+          fontPt: 10.6,
+          leadingPt: 13.2,
           spaceAfterPt: 0,
         },
       ],
     })
   );
 
-  // Baseline Pool Equation (2 architectural rows, all labels >= 10 pt, y: 1.30 .. 3.96)
-  addRectShape(doc, makeRectPx(MARGIN_IN, 1.30, CONTENT_W_IN, 2.66, ox, oy), PALETTE.cortexDark, null, 0, 'p8_eq_bg', 0);
-  addRectShape(doc, makeRectPx(MARGIN_IN, 1.30, CONTENT_W_IN, 0.04, ox, oy), PALETTE.cortexCyan, null, 0, 'p8_eq_top', 0);
+  // Pathways -> Cortex Bridge (y: 1.24 .. 4.38)
+  addLineSegment(doc, ox + MARGIN_IN * IN, oy + 1.24 * IN, ox + (MARGIN_IN + CONTENT_W_IN) * IN, oy + 1.24 * IN, PALETTE.cortexMagentaFill, 1.8, 'p9_bridge_top');
+  results.push(
+    createTextFrameWithAutoFit(doc, styles, {
+      id: 'p9_bridge_txt',
+      pageNum: 9,
+      rect: makeRectPx(MARGIN_IN, 1.36, CONTENT_W_IN, 3.04, ox, oy),
+      theme: 'cortex',
+      blocks: [
+        { kind: 'h2', text: 'Snap Your Map to Your Sheet', fontPt: 11.2, leadingPt: 12.8, colour: PALETTE.cortexDark, spaceAfterPt: 8.0 },
+        { kind: 'body', text: '• **Pass 1 (Character Circle):** Your 3 Dial prompt answers become your three `d8` Distinctions (**Prime Set 1**).', fontPt: 10.2, leadingPt: 12.8, leadColour: PALETTE.cortexMagentaDark, leftIndentPt: 10, firstIndentPt: -10, spaceAfterPt: 8.0 },
+        { kind: 'body', text: '• **Pass 2 (Rumor & Bond):** Shared Bond Boxes become `d8` Supports. Rumors seed Relationship or Value Statements.', fontPt: 10.2, leadingPt: 12.8, leadColour: PALETTE.cortexCyanDark, leftIndentPt: 10, firstIndentPt: -10, spaceAfterPt: 8.0 },
+        { kind: 'body', text: '• **Pass 3 (Edge & Fact):** Your Edge sets your top `d10` in **Prime Set 2** (Page 13). Your Fact Diamond sets your top `d10` or Goal in **Prime Set 3** (Page 14).', fontPt: 10.2, leadingPt: 12.8, leadColour: PALETTE.cortexMagentaDark, leftIndentPt: 10, firstIndentPt: -10, spaceAfterPt: 8.0 },
+        { kind: 'body', text: '• **Pass 4 (Event):** The inverted Event Triangle is your opening scene\'s opposition or Romp Pool.', fontPt: 10.2, leadingPt: 12.8, leadColour: PALETTE.cortexCyanDark, leftIndentPt: 10, firstIndentPt: -10, spaceAfterPt: 0 },
+      ],
+    })
+  );
+
+  // Baseline Pool Equation (2 architectural rows, y: 4.54 .. 7.52)
+  const eqY = 4.54;
+  addRectShape(doc, makeRectPx(MARGIN_IN, eqY, CONTENT_W_IN, 2.98, ox, oy), PALETTE.cortexDark, null, 0, 'p9_eq_bg', 0);
+  addRectShape(doc, makeRectPx(MARGIN_IN, eqY, CONTENT_W_IN, 0.04, ox, oy), PALETTE.cortexCyan, null, 0, 'p9_eq_top', 0);
 
   results.push(
     createTextFrameWithAutoFit(doc, styles, {
-      id: 'p8_eq_hdr1',
-      pageNum: 8,
-      rect: makeRectPx(MARGIN_IN + 0.14, 1.42, CONTENT_W_IN - 0.28, 0.22, ox, oy),
+      id: 'p9_eq_hdr1',
+      pageNum: 9,
+      rect: makeRectPx(MARGIN_IN + 0.14, eqY + 0.14, CONTENT_W_IN - 0.28, 0.22, ox, oy),
       theme: 'cortex',
       allowAutoTighten: false,
-      blocks: [
-        {
-          kind: 'body',
-          text: 'BUILD YOUR POOL',
-          forceFontKey: 'displayBold',
-          fontPt: 10.0,
-          leadingPt: 11.4,
-          trackingEm: 0.04,
-          caps: CapsType.AllCaps,
-          colour: PALETTE.cortexCyan,
-          spaceAfterPt: 0,
-        },
-      ],
+      blocks: [{ kind: 'body', text: 'BUILD YOUR POOL', forceFontKey: 'displayBold', fontPt: 10.0, leadingPt: 11.4, trackingEm: 0.04, caps: CapsType.AllCaps, colour: PALETTE.cortexCyan, spaceAfterPt: 0 }],
     })
   );
 
   const boxW = 1.44;
   const plusW = 0.2334;
-  const row1Y = 1.70;
-  const boxH = 0.68;
+  const row1Y = eqY + 0.42;
+  const boxH = 0.72;
   const terms = [
     { x: MARGIN_IN + 0.14, top: '1 · DISTINCTION', bot: 'd8 / d4', border: PALETTE.cortexMagenta, botCol: PALETTE.cortexMagentaLight },
     { x: MARGIN_IN + 0.14 + boxW + plusW, top: '2 · SETTING', bot: 'Prime 2', border: PALETTE.cortexCyan, botCol: PALETTE.cortexCyan },
@@ -2235,10 +2381,10 @@ function buildPage8(doc, styles, ox, oy) {
   ];
   for (let i = 0; i < terms.length; i++) {
     const t = terms[i];
-    addRectShape(doc, makeRectPx(t.x, row1Y, boxW, boxH, ox, oy), PALETTE.cortexPanel, t.border, 1.0, `p8_t_${i}`, 0);
+    addRectShape(doc, makeRectPx(t.x, row1Y, boxW, boxH, ox, oy), PALETTE.cortexPanel, t.border, 1.0, `p9_t_${i}`, 0);
     const tRes = createTextFrameWithAutoFit(doc, styles, {
-      id: `p8_t_txt_${i}`,
-      pageNum: 8,
+      id: `p9_t_txt_${i}`,
+      pageNum: 9,
       rect: makeRectPx(t.x + 0.04, row1Y + 0.08, boxW - 0.08, boxH - 0.14, ox, oy),
       theme: 'cortex',
       allowAutoTighten: false,
@@ -2252,9 +2398,9 @@ function buildPage8(doc, styles, ox, oy) {
     if (i < 2) {
       const px = t.x + boxW;
       const op = createTextFrameWithAutoFit(doc, styles, {
-        id: `p8_plus_${i}`,
-        pageNum: 8,
-        rect: makeRectPx(px, row1Y + 0.20, plusW, 0.26, ox, oy),
+        id: `p9_plus_${i}`,
+        pageNum: 9,
+        rect: makeRectPx(px, row1Y + 0.22, plusW, 0.26, ox, oy),
         theme: 'cortex',
         allowAutoTighten: false,
         blocks: [{ kind: 'body', text: '+', forceFontKey: 'displayHeavy', fontPt: 13.0, leadingPt: 14.0, colour: PALETTE.white, align: ParagraphAlignXType.Centre, spaceAfterPt: 0 }],
@@ -2266,51 +2412,28 @@ function buildPage8(doc, styles, ox, oy) {
 
   results.push(
     createTextFrameWithAutoFit(doc, styles, {
-      id: 'p8_eq_adds',
-      pageNum: 8,
-      rect: makeRectPx(MARGIN_IN + 0.14, 2.46, CONTENT_W_IN - 0.28, 0.24, ox, oy),
+      id: 'p9_eq_adds',
+      pageNum: 9,
+      rect: makeRectPx(MARGIN_IN + 0.14, eqY + 1.24, CONTENT_W_IN - 0.28, 0.24, ox, oy),
       theme: 'cortex',
       allowAutoTighten: false,
-      blocks: [
-        {
-          kind: 'body',
-          text: '+ Assets, Resources, and Foe Fallout',
-          fontPt: 10.0,
-          leadingPt: 11.6,
-          colour: PALETTE.neutralSubtleText,
-          align: ParagraphAlignXType.Centre,
-          spaceAfterPt: 0,
-        },
-      ],
+      blocks: [{ kind: 'body', text: '+ Assets, Resources, and Foe Fallout', fontPt: 10.0, leadingPt: 11.6, colour: PALETTE.neutralSubtleText, align: ParagraphAlignXType.Centre, spaceAfterPt: 0 }],
     })
   );
 
-  // Row 2: Read the Roll
-  addLineSegment(doc, ox + (MARGIN_IN + 0.14) * IN, oy + 2.76 * IN, ox + (MARGIN_IN + CONTENT_W_IN - 0.14) * IN, oy + 2.76 * IN, PALETTE.neutralDarkBorder, 0.7, 'p8_eq_div');
+  addLineSegment(doc, ox + (MARGIN_IN + 0.14) * IN, oy + (eqY + 1.56) * IN, ox + (MARGIN_IN + CONTENT_W_IN - 0.14) * IN, oy + (eqY + 1.56) * IN, PALETTE.neutralDarkBorder, 0.7, 'p9_eq_div');
   results.push(
     createTextFrameWithAutoFit(doc, styles, {
-      id: 'p8_eq_hdr2',
-      pageNum: 8,
-      rect: makeRectPx(MARGIN_IN + 0.14, 2.84, CONTENT_W_IN - 0.28, 0.22, ox, oy),
+      id: 'p9_eq_hdr2',
+      pageNum: 9,
+      rect: makeRectPx(MARGIN_IN + 0.14, eqY + 1.66, CONTENT_W_IN - 0.28, 0.22, ox, oy),
       theme: 'cortex',
       allowAutoTighten: false,
-      blocks: [
-        {
-          kind: 'body',
-          text: 'READ THE ROLL',
-          forceFontKey: 'displayBold',
-          fontPt: 10.0,
-          leadingPt: 11.4,
-          trackingEm: 0.04,
-          caps: CapsType.AllCaps,
-          colour: PALETTE.neutralGold,
-          spaceAfterPt: 0,
-        },
-      ],
+      blocks: [{ kind: 'body', text: 'READ THE ROLL', forceFontKey: 'displayBold', fontPt: 10.0, leadingPt: 11.4, trackingEm: 0.04, caps: CapsType.AllCaps, colour: PALETTE.neutralGold, spaceAfterPt: 0 }],
     })
   );
 
-  const row2Y = 3.12;
+  const row2Y = eqY + 1.98;
   const resBoxes = [
     { x: MARGIN_IN + 0.14, top: '1s', bot: 'OPENINGS', bg: PALETTE.cortexMagentaFill, fg: PALETTE.white },
     { x: MARGIN_IN + 0.14 + boxW + plusW, top: 'SUM 2', bot: 'TOTAL', bg: PALETTE.cortexCyan, fg: PALETTE.cortexDark },
@@ -2318,10 +2441,10 @@ function buildPage8(doc, styles, ox, oy) {
   ];
   for (let i = 0; i < resBoxes.length; i++) {
     const rb = resBoxes[i];
-    addRectShape(doc, makeRectPx(rb.x, row2Y, boxW, boxH, ox, oy), rb.bg, null, 0, `p8_rb_${i}`, 0);
+    addRectShape(doc, makeRectPx(rb.x, row2Y, boxW, boxH, ox, oy), rb.bg, null, 0, `p9_rb_${i}`, 0);
     const rbRes = createTextFrameWithAutoFit(doc, styles, {
-      id: `p8_rb_txt_${i}`,
-      pageNum: 8,
+      id: `p9_rb_txt_${i}`,
+      pageNum: 9,
       rect: makeRectPx(rb.x + 0.04, row2Y + 0.08, boxW - 0.08, boxH - 0.14, ox, oy),
       theme: 'cortex',
       allowAutoTighten: false,
@@ -2334,65 +2457,45 @@ function buildPage8(doc, styles, ox, oy) {
     results.push(rbRes);
   }
 
-  // Openings Section (y: 4.24 .. 7.40) — spacious, crisp print typography
-  addRectShape(doc, makeRectPx(MARGIN_IN, 4.24, CONTENT_W_IN, 2.38, ox, oy), PALETTE.cortexPinkTint, null, 0, 'p8_open_bg', 0);
-  addLineSegment(doc, ox + MARGIN_IN * IN, oy + 4.24 * IN, ox + (MARGIN_IN + CONTENT_W_IN) * IN, oy + 4.24 * IN, PALETTE.cortexMagentaFill, 2.0, 'p8_open_top');
+  return results;
+}
+
+function buildPage10(doc, styles, ox, oy) {
+  const results = [];
+
+  results.push(...addChamferedBanner(doc, styles, 10, ox, oy, 'cortex', '10 · OPENINGS & SPEEDS', 'ENGINE'));
+
+  // Openings Section (y: 0.76 .. 2.74)
+  addRectShape(doc, makeRectPx(MARGIN_IN, 0.76, CONTENT_W_IN, 1.98, ox, oy), PALETTE.cortexPinkTint, null, 0, 'p10_open_bg', 0);
+  addLineSegment(doc, ox + MARGIN_IN * IN, oy + 0.76 * IN, ox + (MARGIN_IN + CONTENT_W_IN) * IN, oy + 0.76 * IN, PALETTE.cortexMagentaFill, 2.0, 'p10_open_top');
   results.push(
     createTextFrameWithAutoFit(doc, styles, {
-      id: 'p8_open_txt',
-      pageNum: 8,
-      rect: makeRectPx(MARGIN_IN + 0.16, 4.38, CONTENT_W_IN - 0.32, 2.12, ox, oy),
+      id: 'p10_open_txt',
+      pageNum: 10,
+      rect: makeRectPx(MARGIN_IN + 0.14, 0.88, CONTENT_W_IN - 0.28, 1.78, ox, oy),
       theme: 'cortex',
       blocks: [
-        { kind: 'h2', text: 'Openings', fontPt: 12.0, leadingPt: 13.8, colour: PALETTE.cortexMagentaDark, spaceAfterPt: 6.0 },
+        { kind: 'h2', text: 'Openings', fontPt: 11.5, leadingPt: 13.0, colour: PALETTE.cortexMagentaDark, spaceAfterPt: 5.0 },
         {
           kind: 'body',
-          text: 'Set rolled `1`s aside. They never count toward Total or Impact.',
-          fontPt: 10.5,
-          leadingPt: 13.4,
-          spaceAfterPt: 6.0,
-        },
-        {
-          kind: 'body',
-          text: 'Foes seize your Openings, handing you `1 PP`, to inflict `d6` Fallout, step up Fallout, or claim an edge. Spend `1 PP` to seize GM Openings.',
-          fontPt: 10.5,
-          leadingPt: 13.4,
-          spaceAfterPt: 6.0,
-        },
-        {
-          kind: 'body',
-          text: 'Extra `1`s step up the die by +1 each.',
-          fontPt: 10.5,
-          leadingPt: 13.4,
+          text: 'Set rolled `1`s aside. They never count toward Total or Impact. Foes seize your Openings, handing you `1 PP`, to inflict `d6` Fallout, step up Fallout, or claim an edge. Spend `1 PP` to seize GM Openings. Extra `1`s step up the die by +1 each.',
+          fontPt: 10.2,
+          leadingPt: 13.0,
           spaceAfterPt: 0,
         },
       ],
     })
   );
 
-  return results;
-}
-
-function buildPage9(doc, styles, ox, oy) {
-  const results = [];
-
-  results.push(...addChamferedBanner(doc, styles, 9, ox, oy, 'cortex', '09 · THREE CONFLICT SPEEDS', 'SPEEDS'));
-
+  // Three Conflict Speeds (y: 2.94 .. 7.56)
   results.push(
     createTextFrameWithAutoFit(doc, styles, {
-      id: 'p9_lede',
-      pageNum: 9,
-      rect: makeRectPx(MARGIN_IN, 0.78, CONTENT_W_IN, 0.54, ox, oy),
+      id: 'p10_speeds_h2',
+      pageNum: 10,
+      rect: makeRectPx(MARGIN_IN, 2.94, CONTENT_W_IN, 0.26, ox, oy),
       theme: 'cortex',
-      blocks: [
-        {
-          kind: 'body',
-          text: 'Pick the speed that matches the scene\'s weight. Every speed uses the same baseline pool and Impact die.',
-          fontPt: 10.5,
-          leadingPt: 13.4,
-          spaceAfterPt: 0,
-        },
-      ],
+      allowAutoTighten: false,
+      blocks: [{ kind: 'h2', text: 'Three Conflict Speeds', fontPt: 11.5, leadingPt: 13.0, spaceAfterPt: 0 }],
     })
   );
 
@@ -2420,70 +2523,51 @@ function buildPage9(doc, styles, ox, oy) {
     },
   ];
 
-  let sy = 1.56;
-  const rowH = 1.90;
+  let sy = 3.30;
+  const rowH = 1.38;
   for (let i = 0; i < speeds.length; i++) {
     const sp = speeds[i];
-    addLineSegment(doc, ox + MARGIN_IN * IN, oy + sy * IN, ox + (MARGIN_IN + CONTENT_W_IN) * IN, oy + sy * IN, sp.ruleCol, 1.8, `p9_sp_rule_${i}`);
+    addLineSegment(doc, ox + MARGIN_IN * IN, oy + sy * IN, ox + (MARGIN_IN + CONTENT_W_IN) * IN, oy + sy * IN, sp.ruleCol, 1.5, `p10_sp_rule_${i}`);
     results.push(
       createTextFrameWithAutoFit(doc, styles, {
-        id: `p9_sp_hdr_${i}`,
-        pageNum: 9,
-        rect: makeRectPx(MARGIN_IN, sy + 0.14, CONTENT_W_IN, 0.28, ox, oy),
+        id: `p10_sp_hdr_${i}`,
+        pageNum: 10,
+        rect: makeRectPx(MARGIN_IN, sy + 0.10, CONTENT_W_IN, 0.24, ox, oy),
         theme: 'cortex',
         allowAutoTighten: false,
-        blocks: [
-          {
-            kind: 'body',
-            text: `**${sp.num}**   ${sp.name}`,
-            forceFontKey: 'displayHeavy',
-            fontPt: 11.5,
-            leadingPt: 13.0,
-            colour: PALETTE.cortexDark,
-            leadColour: sp.accent,
-            spaceAfterPt: 0,
-          },
-        ],
+        blocks: [{ kind: 'body', text: `**${sp.num}**   ${sp.name}`, forceFontKey: 'displayHeavy', fontPt: 10.8, leadingPt: 12.2, colour: PALETTE.cortexDark, leadColour: sp.accent, spaceAfterPt: 0 }],
       }),
       createTextFrameWithAutoFit(doc, styles, {
-        id: `p9_sp_body_${i}`,
-        pageNum: 9,
-        rect: makeRectPx(MARGIN_IN, sy + 0.48, CONTENT_W_IN, rowH - 0.56, ox, oy),
+        id: `p10_sp_body_${i}`,
+        pageNum: 10,
+        rect: makeRectPx(MARGIN_IN, sy + 0.38, CONTENT_W_IN, rowH - 0.42, ox, oy),
         theme: 'cortex',
-        blocks: [
-          {
-            kind: 'body',
-            text: sp.body,
-            fontPt: 10.8,
-            leadingPt: 14.0,
-            spaceAfterPt: 0,
-          },
-        ],
+        blocks: [{ kind: 'body', text: sp.body, fontPt: 10.2, leadingPt: 12.8, spaceAfterPt: 0 }],
       })
     );
-    sy += rowH + 0.08;
+    sy += rowH + 0.06;
   }
 
   return results;
 }
 
-function buildPage10(doc, styles, ox, oy) {
+function buildPage11(doc, styles, ox, oy) {
   const results = [];
 
-  results.push(...addChamferedBanner(doc, styles, 10, ox, oy, 'cortex', '10 · HOUSE CUTS & DISTINCTIONS', 'CUTS'));
+  results.push(...addChamferedBanner(doc, styles, 11, ox, oy, 'cortex', '11 · HOUSE CUTS & DISTINCTIONS', 'CUTS'));
 
   results.push(
     createTextFrameWithAutoFit(doc, styles, {
-      id: 'p10_cuts_h2',
-      pageNum: 10,
+      id: 'p11_cuts_h2',
+      pageNum: 11,
       rect: makeRectPx(MARGIN_IN, 0.76, CONTENT_W_IN, 0.26, ox, oy),
       theme: 'cortex',
       allowAutoTighten: false,
       blocks: [{ kind: 'h2', text: 'Four House Cuts', fontPt: 11.5, leadingPt: 13.0, spaceAfterPt: 0 }],
     }),
     createTextFrameWithAutoFit(doc, styles, {
-      id: 'p10_cuts_body',
-      pageNum: 10,
+      id: 'p11_cuts_body',
+      pageNum: 11,
       rect: makeRectPx(MARGIN_IN, 1.08, CONTENT_W_IN, 3.30, ox, oy),
       theme: 'cortex',
       blocks: [
@@ -2496,11 +2580,11 @@ function buildPage10(doc, styles, ox, oy) {
   );
 
   // Prime Set 1: Distinctions + Hinder (y: 4.52 .. 6.42)
-  addLineSegment(doc, ox + MARGIN_IN * IN, oy + 4.52 * IN, ox + (MARGIN_IN + CONTENT_W_IN) * IN, oy + 4.52 * IN, PALETTE.cortexMagentaFill, 1.8, 'p10_dist_rule');
+  addLineSegment(doc, ox + MARGIN_IN * IN, oy + 4.52 * IN, ox + (MARGIN_IN + CONTENT_W_IN) * IN, oy + 4.52 * IN, PALETTE.cortexMagentaFill, 1.8, 'p11_dist_rule');
   results.push(
     createTextFrameWithAutoFit(doc, styles, {
-      id: 'p10_dist_txt',
-      pageNum: 10,
+      id: 'p11_dist_txt',
+      pageNum: 11,
       rect: makeRectPx(MARGIN_IN, 4.64, CONTENT_W_IN, 0.80, ox, oy),
       theme: 'cortex',
       blocks: [
@@ -2509,11 +2593,11 @@ function buildPage10(doc, styles, ox, oy) {
       ],
     })
   );
-  addRectShape(doc, makeRectPx(MARGIN_IN, 5.52, CONTENT_W_IN, 0.86, ox, oy), PALETTE.cortexDark, null, 0, 'p10_hinder_bg', 0);
+  addRectShape(doc, makeRectPx(MARGIN_IN, 5.52, CONTENT_W_IN, 0.86, ox, oy), PALETTE.cortexDark, null, 0, 'p11_hinder_bg', 0);
   results.push(
     createTextFrameWithAutoFit(doc, styles, {
-      id: 'p10_hinder_txt',
-      pageNum: 10,
+      id: 'p11_hinder_txt',
+      pageNum: 11,
       rect: makeRectPx(MARGIN_IN + 0.16, 5.64, CONTENT_W_IN - 0.32, 0.64, ox, oy),
       theme: 'cortex',
       blocks: [
@@ -2524,12 +2608,12 @@ function buildPage10(doc, styles, ox, oy) {
   );
 
   // Undertow in Cortex Editorial Band (y: 6.60 .. 7.52)
-  addRectShape(doc, makeRectPx(MARGIN_IN, 6.60, CONTENT_W_IN, 0.90, ox, oy), PALETTE.cortexIce, null, 0, 'p10_ut_bg', 0);
-  addLineSegment(doc, ox + MARGIN_IN * IN, oy + 6.60 * IN, ox + (MARGIN_IN + CONTENT_W_IN) * IN, oy + 6.60 * IN, PALETTE.cortexCyanDark, 1.5, 'p10_ut_top');
-  addLineSegment(doc, ox + MARGIN_IN * IN, oy + 7.50 * IN, ox + (MARGIN_IN + CONTENT_W_IN) * IN, oy + 7.50 * IN, PALETTE.cortexRule, 0.7, 'p10_ut_bot');
+  addRectShape(doc, makeRectPx(MARGIN_IN, 6.60, CONTENT_W_IN, 0.90, ox, oy), PALETTE.cortexIce, null, 0, 'p11_ut_bg', 0);
+  addLineSegment(doc, ox + MARGIN_IN * IN, oy + 6.60 * IN, ox + (MARGIN_IN + CONTENT_W_IN) * IN, oy + 6.60 * IN, PALETTE.cortexCyanDark, 1.5, 'p11_ut_top');
+  addLineSegment(doc, ox + MARGIN_IN * IN, oy + 7.50 * IN, ox + (MARGIN_IN + CONTENT_W_IN) * IN, oy + 7.50 * IN, PALETTE.cortexRule, 0.7, 'p11_ut_bot');
   const utTxt = createTextFrameWithAutoFit(doc, styles, {
-    id: 'p10_ut_txt',
-    pageNum: 10,
+    id: 'p11_ut_txt',
+    pageNum: 11,
     rect: makeRectPx(MARGIN_IN + 0.12, 6.72, CONTENT_W_IN - 0.24, 0.68, ox, oy),
     theme: 'cortex',
     blocks: [
@@ -2542,26 +2626,26 @@ function buildPage10(doc, styles, ox, oy) {
   return results;
 }
 
-function buildPage11(doc, styles, ox, oy) {
+function buildPage12(doc, styles, ox, oy) {
   const results = [];
 
-  results.push(...addChamferedBanner(doc, styles, 11, ox, oy, 'cortex', '11 · PALETTE → ENGINE MOD', 'MODS'));
+  results.push(...addChamferedBanner(doc, styles, 12, ox, oy, 'cortex', '12 · PALETTE → ENGINE MOD', 'MODS'));
 
   const engineMods = [
     '**1. Prismatic · Bleed** — When the uncanny bleeds into a scene, `1`s & `2`s both count as Openings. Spend `1 PP` to rename any Asset or Fallout in play.',
-    '**2. Neon · Burnout** — Created Assets last 1 roll. Spend `1 PP` to sustain for the scene. **Lean In:** roll your own Fallout, then step it up.',
-    '**3. Chrome · Spec Sheet** — Gain two `d8` Signature Assets with *Gear Limit*: shut one down for the scene to gain `1 PP`.',
-    '**4. Dark · Doom Pool** — An escalating `d8, d6, d4` GM pool replaces difficulty dice pairs. It grows on player Openings and spends dice for twists or Romps.',
-    '**5. Sepia · Living Serial** — Log Session Titles as Session Records. Once per session, invoke one for a free `1 PP` effect or Flashback. Cross it off between sessions to step up a trait or add a `d8` Signature Asset.',
-    '**6. Bright · Open Table** — **No GM Bank:** GM `PP` spends go straight to targeted PCs. Allies share created Assets for free.',
-    '**7. Pastel · Gentle Stakes** — PC Fallout lands at `d6`, or steps up existing Fallout by one. It steps down automatically in quiet scenes.',
+    '**2. Sepia · Living Serial** — Log Session Titles as Session Records. Once per session, invoke one for a free `1 PP` effect or Flashback. Cross it off between sessions to step up a trait or add a `d8` Signature Asset.',
+    '**3. Neon · Burnout** — Created Assets last 1 roll. Spend `1 PP` to sustain for the scene. **Lean In:** roll your own Fallout, then step it up.',
+    '**4. Pastel · Gentle Stakes** — PC Fallout lands at `d6`, or steps up existing Fallout by one. It steps down automatically in quiet scenes.',
+    '**5. Bright · Open Table** — **No GM Bank:** GM `PP` spends go straight to targeted PCs. Allies share created Assets for free.',
+    '**6. Dark · Doom Pool** — An escalating `d8, d6, d4` GM pool replaces difficulty dice pairs. It grows on player Openings and spends dice for twists or Romps.',
+    '**7. Chrome · Spec Sheet** — Gain two `d8` Signature Assets with *Gear Limit*: shut one down for the scene to gain `1 PP`.',
     '**8. Rust · Scarcity** — Gain `2d6` Salvage Resources. **Stricken:** Any `d10+` Fallout restricts you to keeping 1 Total die.',
   ];
 
   results.push(
     createTextFrameWithAutoFit(doc, styles, {
-      id: 'p11_engine_mods',
-      pageNum: 11,
+      id: 'p12_engine_mods',
+      pageNum: 12,
       rect: makeRectPx(MARGIN_IN, 0.78, CONTENT_W_IN, 6.82, ox, oy),
       theme: 'cortex',
       blocks: engineMods.map((text, i) => ({
@@ -2580,26 +2664,26 @@ function buildPage11(doc, styles, ox, oy) {
   return results;
 }
 
-function buildPage12(doc, styles, ox, oy) {
+function buildPage13(doc, styles, ox, oy) {
   const results = [];
 
-  results.push(...addChamferedBanner(doc, styles, 12, ox, oy, 'cortex', '12 · SETTING → PRIME SET 2', 'PRIME 2'));
+  results.push(...addChamferedBanner(doc, styles, 13, ox, oy, 'cortex', '13 · SETTING → PRIME SET 2', 'PRIME 2'));
 
   const primeSet2 = [
     '**1. Liminal** — Attributes `d10, d8, d6`: *Pulse, Pattern, Poise* + one `d8` Ability with 1 Special & Limit: shut down for the scene for `+1 PP`.',
-    '**2. Future** — Roles `d10, 2×d8, d6, d4`: *Hacker, Fixer, Operator, Tech, Face*.',
-    '**3. Space** — Affiliations: Arenas `d10, d8, d6`: *Void, Station, Surface* + shared `d8` Vehicle rated in *Engines, Frame, Systems*.',
-    '**4. Modern** — Roles `d10, d8, d6`: *Mouth, Mind, Muscle* + one unrated narrative Talent.',
-    '**5. Industrial** — Skills `d10, 2×d8, 3×d6`, rest `d4`: *Brawl, Craft, Delve, Doctor, Prowl, Rig, Survey, Sway*.',
-    '**6. Mythic** — Attributes `d10, d8, d6`: *Might, Grace, Lore* + Power Set of two `d8` mythic Powers & a Limit.',
-    '**7. Hearth** — Skills `d10, 2×d8, 3×d6`, rest `d4`: *Cook, Grow, Mend, Notice, Parley, Tinker, Travel, Ward* + two `d6` Specialties.',
+    '**2. Industrial** — Skills `d10, 2×d8, 3×d6`, rest `d4`: *Brawl, Craft, Delve, Doctor, Prowl, Rig, Survey, Sway*.',
+    '**3. Future** — Roles `d10, 2×d8, d6, d4`: *Hacker, Fixer, Operator, Tech, Face*.',
+    '**4. Hearth** — Skills `d10, 2×d8, 3×d6`, rest `d4`: *Cook, Grow, Mend, Notice, Parley, Tinker, Travel, Ward* + two `d6` Specialties.',
+    '**5. Mythic** — Attributes `d10, d8, d6`: *Might, Grace, Lore* + Power Set of two `d8` mythic Powers & a Limit.',
+    '**6. Modern** — Roles `d10, d8, d6`: *Mouth, Mind, Muscle* + one unrated narrative Talent.',
+    '**7. Space** — Affiliations: Arenas `d10, d8, d6`: *Void, Station, Surface* + shared `d8` Vehicle rated in *Engines, Frame, Systems*.',
     '**8. Primal** — Affiliations: Arenas `d10, d8, d6`: *Camp, Wilds, Lair* + `d8` Beast Support or Signature Asset.',
   ];
 
   results.push(
     createTextFrameWithAutoFit(doc, styles, {
-      id: 'p12_prime_set_2',
-      pageNum: 12,
+      id: 'p13_prime_set_2',
+      pageNum: 13,
       rect: makeRectPx(MARGIN_IN, 0.78, CONTENT_W_IN, 6.82, ox, oy),
       theme: 'cortex',
       blocks: primeSet2.map((text, i) => ({
@@ -2618,26 +2702,26 @@ function buildPage12(doc, styles, ox, oy) {
   return results;
 }
 
-function buildPage13(doc, styles, ox, oy) {
+function buildPage14(doc, styles, ox, oy) {
   const results = [];
 
-  results.push(...addChamferedBanner(doc, styles, 13, ox, oy, 'cortex', '13 · TONE → PRIME SET 3', 'PRIME 3'));
+  results.push(...addChamferedBanner(doc, styles, 14, ox, oy, 'cortex', '14 · TONE → PRIME SET 3', 'PRIME 3'));
 
   const primeSet3 = [
     '**1. Weird** — Values `d10, d8, 2×d6`: *Order, Truth, Wonder, Self* with Statements. **Question** a belief to triple its die for one roll, then step down & rewrite.',
-    '**2. Punk** — Relationships: Factions `d10, d8, d6` across 3 dominant Blocs with Statements. **Question** your stance to triple its die & burn standing.',
-    '**3. Adventure** — Values `d10, d8, 2×d6, d4`: *Discovery, Duty, Fortune, Glory, Loyalty* + three Goals at `d6, d8, d10`: roll & cross off in opposition, or check off when achieved to step up a trait.',
-    '**4. Noir** — Relationships `d10, 2×d8`, rest `d6` toward PCs, informants & suspects with Statements + **GMC Vices:** GMCs oppose using *Greed, Control, Wrath*.',
-    '**5. Pulp** — Affiliations `d10, d8, d6`: *Solo, Duo, Team* + **Hero Dice:** win by 5+ to bank a foe\'s top-rolling die. Spend `1 PP` later to roll & add to Total.',
-    '**6. Heroic** — Values `d10, d8, 2×d6`: *Courage, Justice, Mercy, Truth* + **Moral Support:** step down your Value for the session to step up an ally\'s.',
-    '**7. Cozy** — Relationships `d10, 2×d8`, rest `d6` toward PCs & neighbors + **Team Up:** lend your Relationship die into an ally\'s pool risk-free.',
+    '**2. Pulp** — Affiliations `d10, d8, d6`: *Solo, Duo, Team* + **Hero Dice:** win by 5+ to bank a foe\'s top-rolling die. Spend `1 PP` later to roll & add to Total.',
+    '**3. Punk** — Relationships: Factions `d10, d8, d6` across 3 dominant Blocs with Statements. **Question** your stance to triple its die & burn standing.',
+    '**4. Cozy** — Relationships `d10, 2×d8`, rest `d6` toward PCs & neighbors + **Team Up:** lend your Relationship die into an ally\'s pool risk-free.',
+    '**5. Heroic** — Values `d10, d8, 2×d6`: *Courage, Justice, Mercy, Truth* + **Moral Support:** step down your Value for the session to step up an ally\'s.',
+    '**6. Noir** — Relationships `d10, 2×d8`, rest `d6` toward PCs, informants & suspects with Statements + **GMC Vices:** GMCs oppose using *Greed, Control, Wrath*.',
+    '**7. Adventure** — Values `d10, d8, 2×d6, d4`: *Discovery, Duty, Fortune, Glory, Loyalty* + three Goals at `d6, d8, d10`: roll & cross off in opposition, or check off when achieved to step up a trait.',
     '**8. Peril** — Reserves `d10, d8, 2×d6`: *Stamina, Resolve, Supply, Luck* + **Usage Dice:** rolling `1–2` on a Reserve steps it down after the roll. `d4` drops out. Rest resets them.',
   ];
 
   results.push(
     createTextFrameWithAutoFit(doc, styles, {
-      id: 'p13_prime_set_3',
-      pageNum: 13,
+      id: 'p14_prime_set_3',
+      pageNum: 14,
       rect: makeRectPx(MARGIN_IN, 0.78, CONTENT_W_IN, 6.82, ox, oy),
       theme: 'cortex',
       blocks: primeSet3.map((text, i) => ({
@@ -2656,87 +2740,73 @@ function buildPage13(doc, styles, ox, oy) {
   return results;
 }
 
-function buildSamplePitchPage(doc, styles, ox, oy, cfg) {
+function buildPage15(doc, styles, ox, oy) {
   const results = [];
-  results.push(...addChamferedBanner(doc, styles, cfg.pageNum, ox, oy, 'cortex', cfg.bannerTitle, cfg.badge));
 
-  results.push(
-    ...addPitchPosterCard(doc, styles, {
-      id: `p${cfg.pageNum}_poster`,
-      pageNum: cfg.pageNum,
-      xIn: MARGIN_IN,
-      yIn: 0.80,
-      wIn: CONTENT_W_IN,
-      hIn: 3.44,
-      ox,
-      oy,
-      pIdx: cfg.pIdx,
-      sIdx: cfg.sIdx,
-      tIdx: cfg.tIdx,
-      uIdx: cfg.uIdx,
-      uDial: cfg.uDial,
-      pWord: cfg.pWord,
-      sWord: cfg.sWord,
-      tWord: cfg.tWord,
-      uWord: cfg.uWord,
-      fullBento: true,
-      prompts: cfg.prompts,
-      mods: cfg.mods,
-    })
-  );
+  results.push(...addChamferedBanner(doc, styles, 15, ox, oy, 'cortex', '15 · SAMPLE PITCHES', 'SAMPLES'));
 
-  addLineSegment(doc, ox + MARGIN_IN * IN, oy + 4.44 * IN, ox + (MARGIN_IN + CONTENT_W_IN) * IN, oy + 4.44 * IN, cfg.accentCol, 1.8, `p${cfg.pageNum}_div`);
+  const samples = [
+    {
+      y: 0.78,
+      id: 'p15_s1',
+      pIdx: 8, sIdx: 7, tIdx: 3, uIdx: 2, uDial: 'p',
+      pWord: 'RUST', sWord: 'SPACE', tWord: 'PUNK', uWord: 'Sepia',
+      roll: '`8·7·3 +2` Sepia Undertow (Divide)',
+      sheet: '**Sheet:** Distinctions *Scar · World · Grievance* + Arenas & `d8` Vehicle + Factions.',
+      engine: '**Engine:** `2d6` Salvage Resources, Stricken, pre-war Flashbacks.',
+    },
+    {
+      y: 4.26,
+      id: 'p15_s2',
+      pIdx: 5, sIdx: 8, tIdx: 7, uIdx: 4, uDial: 't',
+      pWord: 'BRIGHT', sWord: 'PRIMAL', tWord: 'ADVENTURE', uWord: 'Cozy',
+      roll: '`5·8·7 +4` Cozy Undertow (Counter)',
+      sheet: '**Sheet:** Distinctions *Banner · Kin · Horizon* + Arenas & `d8` Beast Support + Values & 3 Goals.',
+      engine: '**Engine:** Open Table `PP` & shared Assets, campfire recovery scenes.',
+    },
+  ];
 
-  results.push(
-    createTextFrameWithAutoFit(doc, styles, {
-      id: `p${cfg.pageNum}_breakdown`,
-      pageNum: cfg.pageNum,
-      rect: makeRectPx(MARGIN_IN, 4.58, CONTENT_W_IN, 3.00, ox, oy),
-      theme: 'cortex',
-      blocks: [
-        { kind: 'h2', text: cfg.rollLine, fontPt: 11.5, leadingPt: 13.5, colour: PALETTE.cortexDark, spaceAfterPt: 8.0 },
-        { kind: 'body', text: cfg.sheet, fontPt: 10.5, leadingPt: 13.6, spaceAfterPt: 9.0 },
-        { kind: 'body', text: cfg.engine, fontPt: 10.5, leadingPt: 13.6, spaceAfterPt: 9.0 },
-        { kind: 'body', text: cfg.undertow, fontPt: 10.5, leadingPt: 13.6, spaceAfterPt: 0 },
-      ],
-    })
-  );
+  for (let i = 0; i < samples.length; i++) {
+    const s = samples[i];
+    if (i > 0) {
+      addLineSegment(doc, ox + MARGIN_IN * IN, oy + (s.y - 0.14) * IN, ox + (MARGIN_IN + CONTENT_W_IN) * IN, oy + (s.y - 0.14) * IN, PALETTE.cortexRule, 0.8, `${s.id}_sep`);
+    }
+    results.push(
+      ...addPitchPosterCard(doc, styles, {
+        id: `${s.id}_poster`,
+        pageNum: 15,
+        xIn: MARGIN_IN,
+        yIn: s.y,
+        wIn: CONTENT_W_IN,
+        hIn: 1.44,
+        ox,
+        oy,
+        pIdx: s.pIdx,
+        sIdx: s.sIdx,
+        tIdx: s.tIdx,
+        uIdx: s.uIdx,
+        uDial: s.uDial,
+        pWord: s.pWord,
+        sWord: s.sWord,
+        tWord: s.tWord,
+        uWord: s.uWord,
+        fullBento: false,
+      }),
+      createTextFrameWithAutoFit(doc, styles, {
+        id: `${s.id}_txt`,
+        pageNum: 15,
+        rect: makeRectPx(MARGIN_IN, s.y + 1.54, CONTENT_W_IN, 1.72, ox, oy),
+        theme: 'cortex',
+        blocks: [
+          { kind: 'body', text: s.roll, fontPt: 10.2, leadingPt: 12.2, colour: PALETTE.cortexDark, spaceAfterPt: 4.0 },
+          { kind: 'body', text: s.sheet, fontPt: 10.0, leadingPt: 12.2, spaceAfterPt: 4.0 },
+          { kind: 'body', text: s.engine, fontPt: 10.0, leadingPt: 12.2, spaceAfterPt: 0 },
+        ],
+      })
+    );
+  }
 
   return results;
-}
-
-function buildPage14(doc, styles, ox, oy) {
-  return buildSamplePitchPage(doc, styles, ox, oy, {
-    pageNum: 14,
-    bannerTitle: '14 · SAMPLE PITCH 01',
-    badge: 'SAMPLE 1',
-    pIdx: 8, sIdx: 3, tIdx: 2, uIdx: 5, uDial: 'p',
-    pWord: 'RUST', sWord: 'SPACE', tWord: 'PUNK', uWord: 'Sepia',
-    prompts: ['Scar', 'World', 'Grievance'],
-    mods: ['Scarcity', 'Affiliations: Arenas', 'Relationships: Factions'],
-    accentCol: DIAL_SWATCHES[7].bg,
-    rollLine: 'ROLL 8 · 3 · 2  +  5 SEPIA UNDERTOW',
-    sheet: '**Sheet:** Three `d8` Distinctions (*Scar · World · Grievance*), Affiliations: Arenas (*Void, Station, Surface*) + shared `d8` Vehicle, and Relationships: Factions across 3 Blocs.',
-    engine: '**Engine Mod:** Rust Scarcity gives `2d6` Salvage Resources. Any `d10+` Fallout makes you Stricken, restricting you to keeping 1 Total die.',
-    undertow: '**Undertow (Divide on Palette):** Sepia splits old brass hulls from rusted salvage decks. Players gain a related `d8` Support or pre-war Flashback.',
-  });
-}
-
-function buildPage15(doc, styles, ox, oy) {
-  return buildSamplePitchPage(doc, styles, ox, oy, {
-    pageNum: 15,
-    bannerTitle: '15 · SAMPLE PITCH 02',
-    badge: 'SAMPLE 2',
-    pIdx: 6, sIdx: 8, tIdx: 3, uIdx: 7, uDial: 't',
-    pWord: 'BRIGHT', sWord: 'PRIMAL', tWord: 'ADVENTURE', uWord: 'Cozy',
-    prompts: ['Banner', 'Kin', 'Horizon'],
-    mods: ['Open Table', 'Affiliations: Arenas', 'Values + Goals'],
-    accentCol: DIAL_SWATCHES[5].bg,
-    rollLine: 'ROLL 6 · 8 · 3  +  7 COZY UNDERTOW',
-    sheet: '**Sheet:** Three `d8` Distinctions (*Banner · Kin · Horizon*), Affiliations: Arenas (*Camp, Wilds, Lair*) + `d8` Beast Support, and Values + 3 Goals (`d6, d8, d10`).',
-    engine: '**Engine Mod:** Bright Open Table removes the GM Bank. GM `PP` spends flow straight to targeted PCs, and allies share created Assets for free.',
-    undertow: '**Undertow (Counter on Tone):** Cozy contrasts fierce wilds with warm campfire recovery scenes. Players gain a related `d8` Support or Special.',
-  });
 }
 
 function buildPage16(doc, styles, ox, oy) {
@@ -2847,7 +2917,7 @@ function buildPage16(doc, styles, ox, oy) {
       theme: 'cortex',
       blocks: [
         { kind: 'body', text: 'palette.lynnjones.rocks', forceFontKey: 'monoBold', fontPt: 11.0, leadingPt: 12.8, colour: PALETTE.neutralGold, spaceAfterPt: 3.0 },
-        { kind: 'body', text: '**4D Combinatoric Worldbuilding** · Lynn Jones', fontPt: 10.0, leadingPt: 12.0, colour: PALETTE.white, spaceAfterPt: 4.0 },
+        { kind: 'body', text: '**4d8 Worlds** · Lynn Jones', fontPt: 10.0, leadingPt: 12.0, colour: PALETTE.white, spaceAfterPt: 4.0 },
         { kind: 'body', text: 'Compatible with Cortex Prime; not affiliated with Dire Wolf Digital, Inc. Cortex Prime is a registered trademark of Dire Wolf Digital, Inc.', fontPt: 10.0, leadingPt: 11.8, colour: PALETTE.neutralSubtleText, spaceAfterPt: 0 },
       ],
     })
@@ -2917,11 +2987,9 @@ function main() {
   opts.pageCount = 2;
 
   const doc = Document.create(opts);
-  // Master 0 = Neutral|Neutral (P1-P6), Master 1 = Cortex|Cortex (P9-P16), Master 2 = Neutral|Cortex (P7-P8)
+  // Exact 8+8 split: Master 0 = Neutral|Neutral (P1-P8), Master 1 = Cortex|Cortex (P9-P16)
   doc.addMasterPages(0, 1, 2);
-  doc.addMasterPages(1, 1, 2);
-  doc.addPages(1, true, 4, 0, PageInsertMode.DocumentFlow);
-  doc.addPages(5, true, 2, 2, PageInsertMode.DocumentFlow);
+  doc.addPages(1, true, 6, 0, PageInsertMode.DocumentFlow);
   doc.addPages(7, true, 8, 1, PageInsertMode.DocumentFlow);
 
   const bg = BaselineGridOptions.create();
@@ -2935,7 +3003,6 @@ function main() {
   const masters = doc.masterSpreads.toArray();
   populateMasterSpread(doc, styles, masters[0], 'neutral', 'neutral');
   populateMasterSpread(doc, styles, masters[1], 'cortex', 'cortex');
-  populateMasterSpread(doc, styles, masters[2], 'neutral', 'cortex');
 
   const spreads = doc.spreads.toArray();
   const buildLogs = [];
