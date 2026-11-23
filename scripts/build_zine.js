@@ -2465,14 +2465,14 @@ function buildPage10(doc, styles, ox, oy) {
 
   results.push(...addChamferedBanner(doc, styles, 10, ox, oy, 'cortex', '10 · OPENINGS & SPEEDS', 'ENGINE'));
 
-  // Openings Section (y: 0.76 .. 2.74)
-  addRectShape(doc, makeRectPx(MARGIN_IN, 0.76, CONTENT_W_IN, 1.98, ox, oy), PALETTE.cortexPinkTint, null, 0, 'p10_open_bg', 0);
+  // Openings Section (y: 0.76 .. 2.24 — tightened cleanly to match copy height)
+  addRectShape(doc, makeRectPx(MARGIN_IN, 0.76, CONTENT_W_IN, 1.48, ox, oy), PALETTE.cortexPinkTint, null, 0, 'p10_open_bg', 0);
   addLineSegment(doc, ox + MARGIN_IN * IN, oy + 0.76 * IN, ox + (MARGIN_IN + CONTENT_W_IN) * IN, oy + 0.76 * IN, PALETTE.cortexMagentaFill, 2.0, 'p10_open_top');
   results.push(
     createTextFrameWithAutoFit(doc, styles, {
       id: 'p10_open_txt',
       pageNum: 10,
-      rect: makeRectPx(MARGIN_IN + 0.14, 0.88, CONTENT_W_IN - 0.28, 1.78, ox, oy),
+      rect: makeRectPx(MARGIN_IN + 0.14, 0.88, CONTENT_W_IN - 0.28, 1.28, ox, oy),
       theme: 'cortex',
       blocks: [
         { kind: 'h2', text: 'Openings', fontPt: 11.5, leadingPt: 13.0, colour: PALETTE.cortexMagentaDark, spaceAfterPt: 5.0 },
@@ -2487,12 +2487,12 @@ function buildPage10(doc, styles, ox, oy) {
     })
   );
 
-  // Three Conflict Speeds (y: 2.94 .. 7.56)
+  // Three Conflict Speeds (y: 2.50 .. 7.52)
   results.push(
     createTextFrameWithAutoFit(doc, styles, {
       id: 'p10_speeds_h2',
       pageNum: 10,
-      rect: makeRectPx(MARGIN_IN, 2.94, CONTENT_W_IN, 0.26, ox, oy),
+      rect: makeRectPx(MARGIN_IN, 2.50, CONTENT_W_IN, 0.26, ox, oy),
       theme: 'cortex',
       allowAutoTighten: false,
       blocks: [{ kind: 'h2', text: 'Three Conflict Speeds', fontPt: 11.5, leadingPt: 13.0, spaceAfterPt: 0 }],
@@ -2523,8 +2523,8 @@ function buildPage10(doc, styles, ox, oy) {
     },
   ];
 
-  let sy = 3.30;
-  const rowH = 1.38;
+  let sy = 2.88;
+  const rowH = 1.48;
   for (let i = 0; i < speeds.length; i++) {
     const sp = speeds[i];
     addLineSegment(doc, ox + MARGIN_IN * IN, oy + sy * IN, ox + (MARGIN_IN + CONTENT_W_IN) * IN, oy + sy * IN, sp.ruleCol, 1.5, `p10_sp_rule_${i}`);

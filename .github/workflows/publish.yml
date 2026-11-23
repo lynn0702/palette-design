@@ -32,8 +32,11 @@ jobs:
 
       - name: Stage files for Pages
         run: |
-          mkdir -p _site
+          mkdir -p _site/pdf
           cp -r site/. _site/
+          cp 4D_Combinatoric_Worldbuilding_Review_SinglePages.pdf _site/pdf/4d8-Worlds-Zine-SinglePages.pdf
+          cp 4D_Combinatoric_Worldbuilding_PrinterSpreads_USLetter.pdf _site/pdf/4d8-Worlds-Zine-USLetter-Booklet.pdf
+          cp 4D_Combinatoric_Worldbuilding_PrinterSpreads_A4.pdf _site/pdf/4d8-Worlds-Zine-A4-Booklet.pdf
           rm -f _site/*.md
           touch _site/.nojekyll
 

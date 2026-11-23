@@ -25,7 +25,7 @@
       }
     } catch {}
   </script>
-  <link rel="stylesheet" href="styles.css?v=6">
+  <link rel="stylesheet" href="styles.css?v=7">
   <script src="app.js?v=3" type="module"></script>
 </head>
 <body>
@@ -69,6 +69,7 @@
             <li><a href="#matrix">Matrix</a></li>
             <li><a href="#session-zero">Pathways</a></li>
             <li><a href="#cortex">Cortex</a></li>
+            <li><a href="#pdf">PDF</a></li>
           </ul>
         </nav>
         <button type="button" class="theme-toggle" id="theme-toggle" data-requires-js hidden aria-label="Toggle color theme" title="Toggle color theme">
@@ -474,8 +475,18 @@
       <div class="wrap">
         <header class="section-head">
           <h2 id="cortex-title">House Ruled Cortex</h2>
-          <p class="section-head__lede">A <strong>Cortex Prime</strong> baseplate to snap your <code>4d8</code> pitch to.</p>
+          <p class="section-head__lede">A <strong>Cortex Prime</strong> baseplate to snap your <code>4d8</code> pitch and Spaghetti Map to.</p>
         </header>
+
+        <article class="card handoff">
+          <h3>Snap your map to your sheet</h3>
+          <ul class="bullets bullets--cortex handoff__list">
+            <li><strong>Pass 1 (Character Circle):</strong> Your 3 Dial prompt answers become your three <code>d8</code> Distinctions (<strong>Prime Set 1</strong>).</li>
+            <li><strong>Pass 2 (Rumor &amp; Bond):</strong> Shared Bond Boxes become <code>d8</code> Supports. Rumors seed Relationship or Value Statements.</li>
+            <li><strong>Pass 3 (Edge &amp; Fact):</strong> Your Edge sets your top <code>d10</code> in <strong>Prime Set 2</strong>. Your Fact Diamond sets your top <code>d10</code> or Goal in <strong>Prime Set 3</strong>.</li>
+            <li><strong>Pass 4 (Event):</strong> The inverted Event Triangle is your opening scene's opposition or Romp Pool.</li>
+          </ul>
+        </article>
 
         <figure class="equation">
           <figcaption>Baseline pool equation <span class="muted">· + Assets, Resources, Foe Fallout</span></figcaption>
@@ -603,8 +614,14 @@
     </section>
   </main>
 
-  <footer class="site-footer">
+  <footer class="site-footer" id="pdf">
     <div class="wrap site-footer__inner">
+      <p class="site-footer__downloads">
+        <strong>Zine PDF</strong>
+        <a href="pdf/4d8-Worlds-Zine-SinglePages.pdf" download>Single pages</a>
+        <a href="pdf/4d8-Worlds-Zine-USLetter-Booklet.pdf" download>US Letter booklet</a>
+        <a href="pdf/4d8-Worlds-Zine-A4-Booklet.pdf" download>A4 booklet</a>
+      </p>
       <p><strong>4d8 Worlds</strong> · by Lynn Jones</p>
       <p class="muted">System-neutral engine · Cortex Prime compatible</p>
       <p class="muted site-footer__legal">Independent work compatible with Cortex Prime; not affiliated with or endorsed by Dire Wolf Digital, Inc. Cortex Prime is a registered trademark of Dire Wolf Digital, Inc.</p>

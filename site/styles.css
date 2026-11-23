@@ -623,100 +623,61 @@
     --card-strike-cut: #f2e8d7;
   }
 
-  /* 1 · Prismatic — refracted diagonal prism band, reality-bleed edge */
+  /* 1 · Prismatic — refracted diagonal prism spectrum (1:1 zine texture parity) */
   :root:has(#p1:checked) .pitch-card {
-    --grain-opacity: 0.06;
-    background:
-      linear-gradient(126deg,
-        transparent 14%,
-        rgba(124, 58, 237, 0.20) 30%,
-        rgba(0, 194, 217, 0.14) 46%,
-        rgba(233, 30, 118, 0.16) 62%,
-        rgba(236, 173, 35, 0.10) 76%,
-        transparent 90%),
-      linear-gradient(180deg, #171221 0%, #120f1a 100%);
+    --grain-opacity: 0;
+    background: url("textures/p1_prismatic.png") center / cover no-repeat, #150f22;
   }
 
-  /* 2 · Sepia — true weathered parchment (warm aged vellum + paper tooth + darkened edges) */
+  /* 2 · Sepia — true weathered parchment (1:1 zine texture parity) */
   :root:has(#p2:checked) .pitch-card {
     --grain-opacity: 0;
     --card-accent: #7a4408;
     --card-strike-cut: #dfd0b4;
     border-color: #8c5a20;
-    background-color: #dfd0b4;
-    background-image:
-      url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.78' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23p)' opacity='0.22'/%3E%3C/svg%3E"),
-      radial-gradient(ellipse at 20% 22%, rgba(255, 248, 232, 0.65) 0%, transparent 55%),
-      radial-gradient(ellipse at 82% 78%, rgba(138, 94, 42, 0.28) 0%, transparent 58%),
-      linear-gradient(142deg, #eadcc2 0%, #dbc5a0 54%, #cbb084 100%);
-    background-blend-mode: multiply, soft-light, multiply, normal;
-    box-shadow: inset 0 0 36px rgba(82, 50, 14, 0.34), 0.45rem 0.45rem 0 var(--pitch-p);
+    background: url("textures/p2_sepia.png") center / cover no-repeat, #dfd0b4;
+    box-shadow: inset 0 0 32px rgba(82, 50, 14, 0.28), 0.45rem 0.45rem 0 var(--pitch-p);
   }
 
-  /* 3 · Neon — the one backlit Palette: rain-slick glow & saturated electric bloom */
+  /* 3 · Neon — rain-slick electric magenta/cyan glow (1:1 zine texture parity) */
   :root:has(#p3:checked) .pitch-card {
-    --grain-opacity: 0.05;
-    background:
-      radial-gradient(24rem 14rem at 12% 8%, color-mix(in oklab, var(--pitch-p) 38%, transparent), transparent 70%),
-      radial-gradient(22rem 14rem at 92% 88%, color-mix(in oklab, var(--pitch-s) 28%, transparent), transparent 72%),
-      repeating-linear-gradient(180deg, rgba(255, 255, 255, 0.02) 0 1px, transparent 1px 4px),
-      #0f0b14;
+    --grain-opacity: 0;
+    background: url("textures/p3_neon.png") center / cover no-repeat, #0f0b14;
   }
 
-  /* 4 · Pastel — unmistakably soft mint-sage matte gouache on cotton paper */
+  /* 4 · Pastel — soft mint-sage matte cotton paper (1:1 zine texture parity) */
   :root:has(#p4:checked) .pitch-card {
     --grain-opacity: 0;
     --card-accent: #16614f;
     --card-strike-cut: #dcf0e6;
     border-color: #2f8c74;
-    background-color: #dcf0e6;
-    background-image:
-      url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.92' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)' opacity='0.14'/%3E%3C/svg%3E"),
-      radial-gradient(ellipse at 18% 18%, rgba(118, 214, 184, 0.46) 0%, transparent 58%),
-      radial-gradient(ellipse at 85% 82%, rgba(232, 224, 212, 0.40) 0%, transparent 56%),
-      linear-gradient(145deg, #d6efe3 0%, #e4f4ec 52%, #d8ede4 100%);
-    background-blend-mode: multiply, normal, normal, normal;
-    box-shadow: inset 0 0 24px rgba(32, 96, 78, 0.14), 0.45rem 0.45rem 0 var(--pitch-p);
+    background: url("textures/p4_pastel.png") center / cover no-repeat, #dcf0e6;
+    box-shadow: inset 0 0 22px rgba(32, 96, 78, 0.12), 0.45rem 0.45rem 0 var(--pitch-p);
   }
 
-  /* 5 · Bright — sun-drenched, high-contrast crisp ivory stock with clean sunlight cut */
+  /* 5 · Bright — sun-drenched crisp ivory with golden cut (1:1 zine texture parity) */
   :root:has(#p5:checked) .pitch-card {
-    --grain-opacity: 0.035;
-    --grain-blend: multiply;
+    --grain-opacity: 0;
     --card-accent: #915200;
     --card-strike-cut: #fffcf4;
     border-color: #d4900a;
-    background:
-      linear-gradient(122deg,
-        rgba(248, 184, 56, 0.22) 0 33%,
-        rgba(248, 184, 56, 0.07) 33% 36%,
-        transparent 36% 100%),
-      linear-gradient(180deg, #fffdf6 0%, #f6eedc 100%);
+    background: url("textures/p5_bright.png") center / cover no-repeat, #fffdf6;
     box-shadow: 0.45rem 0.45rem 0 var(--pitch-p);
   }
 
-  /* 6 · Dark — clean deep midnight indigo-slate matte vignette (zero brown corner) */
+  /* 6 · Dark — clean deep midnight indigo-slate vignette (1:1 zine texture parity) */
   :root:has(#p6:checked) .pitch-card {
-    --grain-opacity: 0.11;
-    background:
-      radial-gradient(115% 95% at 50% 42%, #181e30 0%, #0a0c14 78%, #07080d 100%);
+    --grain-opacity: 0;
+    background: url("textures/p6_dark.png") center / cover no-repeat, #0a0c14;
   }
 
-  /* 7 · Chrome — bluer brushed metallic cobalt-steel with sharp mirrored specular band */
+  /* 7 · Chrome — brushed metallic cobalt-blue steel (1:1 zine texture parity) */
   :root:has(#p7:checked) .pitch-card {
-    --grain-opacity: 0.04;
-    background:
-      linear-gradient(118deg,
-        transparent 0 36%,
-        rgba(170, 220, 255, 0.12) 36% 42%,
-        rgba(235, 248, 255, 0.18) 42% 45%,
-        rgba(130, 198, 248, 0.08) 45% 53%,
-        transparent 53% 100%),
-      repeating-linear-gradient(0deg, rgba(190, 228, 255, 0.03) 0 1px, transparent 1px 3px),
-      linear-gradient(165deg, #17304d 0%, #0e2036 100%);
+    --grain-opacity: 0;
+    background: url("textures/p7_chrome.png") center / cover no-repeat, #142c48;
   }
 
-  /* 8 · Rust — matches the procedural pitted oxidized-iron texture from the zine 1:1 */
+  /* 8 · Rust — pitted oxidized iron-red (1:1 zine texture parity) */
   :root:has(#p8:checked) .pitch-card {
     --grain-opacity: 0;
     border-color: #8c3d20;
@@ -1217,6 +1178,24 @@
   .knot-figure figcaption span:nth-child(3) polygon { fill: var(--d1); stroke: var(--ink); }
   .knot-figure figcaption span:nth-child(4) polygon { fill: var(--vermilion); stroke: var(--ink); }
 
+  /* Cortex handoff bridge (matches Zine Page 9) */
+  .handoff {
+    margin-block-end: var(--space-l);
+    border-block-start: 4px solid var(--magenta);
+    box-shadow: var(--offset) var(--offset) 0 var(--magenta);
+  }
+  .handoff h3 {
+    margin-block-end: var(--space-s);
+    color: var(--magenta-ink);
+  }
+  .handoff__list {
+    display: grid;
+    gap: 0.55rem var(--space-l);
+  }
+  @media (width >= 52rem) {
+    .handoff__list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+
   /* Cortex equation */
   .equation {
     display: grid;
@@ -1374,6 +1353,18 @@
     --muted: #b8ab9c;
   }
   .site-footer__inner { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--space-xs) var(--space-l); font-size: var(--step--1); }
+  .site-footer__downloads {
+    flex-basis: 100%;
+    max-inline-size: none;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-xs) var(--space-m);
+    padding-block-end: var(--space-s);
+    margin-block-end: var(--space-xs);
+    border-block-end: 1px solid rgba(255, 255, 255, 0.14);
+  }
+  .site-footer__downloads a { color: var(--gold); font-weight: 600; }
   .site-footer__legal { flex-basis: 100%; max-inline-size: none; font-size: 0.85em; }
 }
 
