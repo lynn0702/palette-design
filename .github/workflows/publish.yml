@@ -24,8 +24,9 @@ jobs:
 
       - name: Validate site
         run: |
-          npx --yes html-validate@9 site/index.html
+          npx --yes html-validate@9 site/index.html site/table.html
           node --check site/app.js
+          node --check site/table.js
 
       - name: Setup Pages
         uses: actions/configure-pages@v6

@@ -126,7 +126,20 @@ function apply([p, s, t, u], undertowDial) {
 
 const BASE_TITLE = document.title;
 
+function syncTableLinks([p, s, t, u], undertowDial) {
+  const params = new URLSearchParams();
+  if (p) params.set('palette', String(p));
+  if (s) params.set('setting', String(s));
+  if (t) params.set('tone', String(t));
+  if (undertowDial && undertowDial !== 'none') params.set('undertow-dial', undertowDial);
+  if (u) params.set('undertow', String(u));
+  const qs = params.toString();
+  const href = qs ? `table.html?${qs}` : 'table.html';
+  document.querySelectorAll('a[data-table-link]').forEach((a) => { a.href = href; });
+}
+
 function announceStatus([p, s, t, u], undertowDial) {
+  syncTableLinks([p, s, t, u], undertowDial);
   if (!pitchStatus || !p || !s || !t) return;
   const base = `${WORDS.palette[p]} ${WORDS.setting[s]} ${WORDS.tone[t]}`;
   document.title = `${base} · ${BASE_TITLE}`;

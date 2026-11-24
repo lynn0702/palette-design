@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pathways Table · 4d8 Worlds</title>
+  <meta name="description" content="Interactive Session Zero Spaghetti Map and instant House Ruled Cortex character sheet compiler for 4d8 Worlds.">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#1a1718">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <script>
+    try {
+      const t = localStorage.getItem('palette-theme');
+      if (t === 'light' || t === 'dark') {
+        document.documentElement.dataset.theme = t;
+        document.documentElement.style.colorScheme = t;
+      }
+    } catch {}
+  </script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+  <link rel="stylesheet" href="table.css?v=1">
+  <script src="table.js?v=1" type="module"></script>
+</head>
+<body>
+  <svg class="sprite" aria-hidden="true" focusable="false">
+    <symbol id="d8" viewBox="0 0 24 24">
+      <polygon points="12,2.5 21.5,12 12,21.5 2.5,12" fill="currentColor"/>
+    </symbol>
+    <symbol id="icon-sun" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="4.2" fill="none" stroke="currentColor" stroke-width="2.1"/>
+      <path d="M12 2.5v2.2M12 19.3v2.2M4.9 4.9l1.6 1.6M17.5 17.5l1.6 1.6M2.5 12h2.2M19.3 12h2.2M4.9 19.1l1.6-1.6M17.5 6.5l1.6-1.6" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="icon-moon" viewBox="0 0 24 24">
+      <path d="M20.2 14.8A8.5 8.5 0 0 1 9.2 3.8a8.5 8.5 0 1 0 11 11Z" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+  </svg>
+
+  <a class="skip-link" href="#main">Skip to table</a>
+
+  <header class="site-header">
+    <div class="wrap site-header__inner">
+      <a class="brand" id="back-to-pitch" href="index.html">
+        <svg class="brand__mark" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#d8"/></svg>
+        <span class="brand__text">4d8 Worlds</span>
+      </a>
+      <div class="site-header__actions">
+        <nav aria-label="Pages">
+          <ul class="site-nav">
+            <li><a id="nav-pitch" href="index.html">Pitch</a></li>
+            <li><a href="table.html" aria-current="page">Table</a></li>
+          </ul>
+        </nav>
+        <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Toggle color theme" title="Toggle color theme">
+          <svg class="theme-toggle__sun" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#icon-sun"/></svg>
+          <svg class="theme-toggle__moon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#icon-moon"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="world-bar" aria-label="Active world pitch">
+      <div class="wrap world-bar__inner">
+        <div class="world-stamp">
+          <div class="world-stamp__dice" id="world-dice" aria-hidden="true"></div>
+          <div class="world-stamp__text">
+            <h1 class="world-stamp__title" id="world-title">Chrome Space Adventure</h1>
+            <p class="world-stamp__sub" id="world-undertow">Undertow: Sepia on Palette (Divide)</p>
+          </div>
+        </div>
+
+        <div class="world-actions">
+          <button type="button" class="btn btn--accent" id="btn-roll-world">
+            <i class="fa-solid fa-dice-d20" aria-hidden="true"></i>
+            <span>Roll 4d8</span>
+          </button>
+          <button type="button" class="btn" id="btn-sample-cast">
+            <i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i>
+            <span>Sample cast</span>
+          </button>
+          <button type="button" class="btn" id="btn-share-table" title="Copy shareable table link">
+            <i class="fa-solid fa-share-nodes" aria-hidden="true"></i>
+            <span>Share</span>
+          </button>
+          <button type="button" class="btn" id="btn-export-md" title="Copy cast and map as Markdown">
+            <i class="fa-solid fa-file-lines" aria-hidden="true"></i>
+            <span>Copy MD</span>
+          </button>
+          <button type="button" class="btn" id="btn-print" title="Print sheets">
+            <i class="fa-solid fa-print" aria-hidden="true"></i>
+            <span>Print</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="wrap toolbar">
+        <div class="pass-strip" role="tablist" aria-label="Session Zero passes">
+          <button type="button" class="pass-btn is-active" role="tab" aria-selected="true" data-pass="1">
+            <span class="pass-btn__num">1</span>
+            <span>Identity</span>
+          </button>
+          <button type="button" class="pass-btn" role="tab" aria-selected="false" data-pass="2">
+            <span class="pass-btn__num">2</span>
+            <span>Wires</span>
+          </button>
+          <button type="button" class="pass-btn" role="tab" aria-selected="false" data-pass="3">
+            <span class="pass-btn__num">3</span>
+            <span>Claim</span>
+          </button>
+          <button type="button" class="pass-btn" role="tab" aria-selected="false" data-pass="4">
+            <span class="pass-btn__num">4</span>
+            <span>Event</span>
+          </button>
+        </div>
+
+        <div class="view-switch" role="tablist" aria-label="Table view">
+          <button type="button" class="view-btn is-active" role="tab" aria-selected="true" data-view="map">
+            <i class="fa-solid fa-diagram-project" aria-hidden="true"></i>
+            <span>Spaghetti Map</span>
+          </button>
+          <button type="button" class="view-btn" role="tab" aria-selected="false" data-view="sheets">
+            <i class="fa-solid fa-id-card" aria-hidden="true"></i>
+            <span>Cortex Sheets</span>
+          </button>
+          <button type="button" class="view-btn" role="tab" aria-selected="false" data-view="scene">
+            <i class="fa-solid fa-bolt" aria-hidden="true"></i>
+            <span>GM Scene 1</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <div class="toast" id="table-toast" role="status" aria-live="polite" hidden></div>
+
+    <!-- VIEW 1: INTERACTIVE SPAGHETTI MAP -->
+    <section class="workspace wrap" id="view-map" aria-label="Spaghetti Map workspace">
+      <div class="canvas-shell">
+        <div class="canvas-hud">
+          <p class="canvas-hud__hint" id="pass-hint">Pass 1: Click a Character Circle to write their name and 3 Identity Prompts. Drag any node to arrange the table.</p>
+          <div class="canvas-hud__tools">
+            <button type="button" class="chip-btn" id="btn-add-pc" title="Add character circle">
+              <i class="fa-solid fa-circle-plus" aria-hidden="true"></i>
+              <span>Add PC</span>
+            </button>
+            <button type="button" class="chip-btn" id="btn-add-fact" title="Drop a Fact diamond">
+              <i class="fa-solid fa-diamond" aria-hidden="true"></i>
+              <span>Add Fact</span>
+            </button>
+            <button type="button" class="chip-btn" id="btn-auto-layout" title="Tidy ring layout">
+              <i class="fa-solid fa-compass-drafting" aria-hidden="true"></i>
+              <span>Tidy</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="canvas-stage" id="canvas-stage">
+          <svg id="map-svg" class="map-svg" viewBox="0 0 900 620" role="application" aria-label="Interactive Pathways Spaghetti Map. Click a node to edit, drag to move.">
+            <defs>
+              <marker id="arrow-rumor" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 1.5 L 9 5 L 0 8.5 z" fill="currentColor"/>
+              </marker>
+            </defs>
+            <g id="layer-wires"></g>
+            <g id="layer-nodes"></g>
+          </svg>
+        </div>
+
+        <div class="canvas-legend" aria-label="Map key">
+          <span class="legend-item legend-item--pc"><i class="fa-regular fa-circle" aria-hidden="true"></i> Character</span>
+          <span class="legend-item legend-item--rumor"><i class="fa-solid fa-arrow-right-long" aria-hidden="true"></i> Rumor</span>
+          <span class="legend-item legend-item--bond"><i class="fa-regular fa-square" aria-hidden="true"></i> Bond</span>
+          <span class="legend-item legend-item--fact"><i class="fa-solid fa-diamond" aria-hidden="true"></i> Fact</span>
+          <span class="legend-item legend-item--event"><i class="fa-solid fa-caret-down" aria-hidden="true"></i> Event</span>
+        </div>
+      </div>
+
+      <aside class="inspector" id="inspector" aria-label="Node inspector">
+        <div class="inspector__head">
+          <h2 class="inspector__title" id="inspector-title">Select a node</h2>
+          <span class="inspector__badge" id="inspector-badge">Pass 1</span>
+        </div>
+        <div class="inspector__body" id="inspector-body"></div>
+      </aside>
+    </section>
+
+    <!-- VIEW 2: COMPILED CORTEX SHEETS -->
+    <section class="sheets-view wrap" id="view-sheets" aria-label="Compiled Cortex Prime sheets" hidden>
+      <header class="view-head">
+        <div>
+          <h2>Compiled Cortex Sheets</h2>
+          <p class="muted" id="sheets-summary">Every Pass 1–4 answer snapped onto the 3-Prime-Set baseplate.</p>
+        </div>
+        <div class="engine-pill" id="sheets-engine-mod"></div>
+      </header>
+      <div class="sheets-grid" id="sheets-grid"></div>
+    </section>
+
+    <!-- VIEW 3: GM SCENE 1 / EVENT & ROMP POOL -->
+    <section class="scene-view wrap" id="view-scene" aria-label="GM Scene 1 ignition board" hidden>
+      <div class="scene-layout">
+        <article class="scene-card" id="scene-event-card">
+          <div class="scene-card__head">
+            <span class="scene-tag"><i class="fa-solid fa-caret-down" aria-hidden="true"></i> Opening Event</span>
+            <h2 id="scene-event-title">Where the Undertow bites</h2>
+          </div>
+          <p class="scene-card__lead" id="scene-event-desc"></p>
+          <div class="scene-wires" id="scene-wires"></div>
+          <div class="scene-undertow-box" id="scene-undertow-box"></div>
+        </article>
+
+        <article class="scene-card pool-card" aria-labelledby="pool-heading">
+          <div class="scene-card__head">
+            <span class="scene-tag scene-tag--cyan"><i class="fa-solid fa-dice" aria-hidden="true"></i> Interactive Table Pool</span>
+            <h2 id="pool-heading">Romp &amp; Doom Pool</h2>
+          </div>
+          <p class="muted">Click any die to step it down (<code>d12 → d10 → d8 → d6 → d4 → gone</code>). Right-click or use Step Up to escalate.</p>
+
+          <div class="pool-tray" id="pool-tray" role="group" aria-label="Active opposition dice"></div>
+
+          <div class="pool-controls">
+            <button type="button" class="btn btn--accent" id="btn-roll-pool">
+              <i class="fa-solid fa-dice-d6" aria-hidden="true"></i>
+              <span>Roll pool</span>
+            </button>
+            <button type="button" class="btn" id="btn-add-die">
+              <i class="fa-solid fa-plus" aria-hidden="true"></i>
+              <span>Add d8</span>
+            </button>
+            <button type="button" class="btn" id="btn-preset-romp">4d8 Romp</button>
+            <button type="button" class="btn" id="btn-preset-doom">Doom Pool</button>
+          </div>
+
+          <output class="pool-roll-out" id="pool-roll-out" aria-live="polite"></output>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap site-footer__inner">
+      <p><strong>4d8 Worlds</strong> · Pathways Table (experimental)</p>
+      <p class="muted">Auto-saves locally in your browser · <a href="index.html">Back to Pitch &amp; Rules</a></p>
+    </div>
+  </footer>
+</body>
+</html>
